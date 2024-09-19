@@ -18,21 +18,8 @@
                 "source": false
               }
             }
-          },
-          {
-            "id": "3d24ee591c2435ce",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "docs/QEMU虚拟机-QuickStart.md",
-                "mode": "source",
-                "source": false
-              }
-            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -98,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/QEMU虚拟机-QuickStart.md",
+                "file": "docs/交换机配置脚本.md.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/QEMU虚拟机-QuickStart.md",
+                "file": "docs/交换机配置脚本.md.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -138,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/QEMU虚拟机-QuickStart.md"
+                "file": "docs/交换机配置脚本.md.md"
               }
             }
           }
@@ -159,13 +146,14 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "3d24ee591c2435ce",
+  "active": "e91d484e66ec7919",
   "lastOpenFiles": [
+    "docs/QEMU虚拟机-QuickStart.md",
+    "docs/termux+qemu+alpine.md",
+    "docs/Ubuntu常用脚本.md.md",
     "新建 文本文档.txt",
     "docs/MarkDown语法.md",
     "docs/交换机配置脚本.md.md",
-    "docs/QEMU虚拟机-QuickStart.md",
-    "docs/Ubuntu常用脚本.md.md",
     "material/漏扫.png",
     "notebook/material/漏扫.png",
     "notebook/docs/MarkDown语法.md",
