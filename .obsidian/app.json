@@ -1,0 +1,8 @@
+{
+  "promptDelete": false,
+  "alwaysUpdateLinks": true,
+  "trashOption": "none",
+  "attachmentFolderPath": "notebook/material",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "docs"
+}
