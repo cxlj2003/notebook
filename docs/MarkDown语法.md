@@ -20,7 +20,7 @@
 
 **加粗**
  *倾斜*
- ==高亮==
+ 
  ~~删除~~
 ```
 代码块
@@ -35,10 +35,10 @@ $$
 
 # 3. 链接
 - 内部链接
-[[1.Ubuntu常用脚本.md]]
-![[1.Ubuntu常用脚本.md]]
+[[Ubuntu常用脚本.md]]
+![[Ubuntu常用脚本.md]]
 - 外部链接
 [百度](https://www.baidu.com)
 
-# ==4. 引用素材==
+# 4. 引用素材
 ![漏扫](https://github.com/cxlj2003/notebook/blob/main/material/%E6%BC%8F%E6%89%AB.png)
