@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/1.交换机配置脚本.md.md",
+                "file": "docs/MarkDown语法.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/1.交换机配置脚本.md.md",
+                "file": "docs/MarkDown语法.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/1.交换机配置脚本.md.md",
+                "file": "docs/MarkDown语法.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/1.交换机配置脚本.md.md"
+                "file": "docs/MarkDown语法.md"
               }
             }
           }
@@ -148,10 +148,10 @@
   },
   "active": "e91d484e66ec7919",
   "lastOpenFiles": [
+    "docs/1.交换机配置脚本.md.md",
     "docs/1.Ubuntu常用脚本.md.md",
     "docs/MarkDown语法.md",
     "material/漏扫.png",
-    "docs/1.交换机配置脚本.md.md",
     "notebook/material/漏扫.png",
     "notebook/docs/MarkDown语法.md",
     "notebook/docs/1.Ubuntu常用脚本.md.md",
