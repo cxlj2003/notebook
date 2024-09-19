@@ -64,6 +64,8 @@ reboot
 ```
 ## 2.2. Windows 11
 
+[tap驱动下载](https://build.openvpn.net/downloads/releases/tap-windows-9.24.7-I601-Win10.exe)
+
 # 3. 使用ISO镜像安装和运行Alpine3.20
 ## 3.1. 安装脚本
 
@@ -139,7 +141,11 @@ if [ ! -e /data/debian12 ];then
 	mkdir -p /data/debian12
 fi
 cd /data/debian12
-cat <<EOF >/data/debian12/run.sh
+wget https://gemmei.ftp.acc.umu.se/images/cloud/bookworm/latest/debian-12-nocloud-amd64.qcow2
+truncate -s 64m varstore.img
+truncate -s 64m efi.img
+dd if=/usr/share/qemu-efi-aarch64/QEMU_EFI.fd of=efi.img conv=notrunc
+cat <<EOF > /data/debian12/run.sh
 qemu-system-x86_64 \
 -m 2048 \
 -cpu max \
@@ -150,4 +156,8 @@ qemu-system-x86_64 \
 -drive if=none,file=ubuntu-24.04-server-cloudimg-arm64.img,id=hd0 -device virtio-blk-device,drive=hd0 \
 -netdev bridge,br=br0,id=net0 -device virtio-net-device,netdev=net0
 EOF
+```
+
+```
+bash /data/debian12/run.sh
 ```
