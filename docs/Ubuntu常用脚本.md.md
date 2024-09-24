@@ -8,6 +8,7 @@ url=`cat /etc/apt/sources.list|egrep -v "#"|awk -F "/" '{print $3}'|uniq`;for i 
 - 24.04版本
 ```
 
+url=`cat /etc/apt/sources.list.d/ubuntu.sources|egrep -v "#"|egrep -v "key"|awk -F "/" '{print $3}'|uniq`;for i in $url;do sed -i "s/$i/mirrors.ustc.edu.cn/g" /etc/apt/sources.list.d/ubuntu.sources;done
 
 ```
 
