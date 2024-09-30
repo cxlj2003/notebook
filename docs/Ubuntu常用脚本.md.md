@@ -15,9 +15,61 @@ url=`cat /etc/apt/sources.list.d/ubuntu.sources|egrep -v "#"|egrep -v "key"|awk 
 
 ```
 
+rm -rf /etc/netplan/*
+declare -a NIC
+NIC=`ip route | egrep -v "br|docker|default" | egrep "eth|ens|enp"|awk '{print $3}'` 
+for n in ${NIC[*]}
+do
+cat  >/etc/netplan/${n}.yaml <<EOF
+network:
+  ethernets:
+    ${n}:
+      dhcp4: false
+      dhcp6: false
+      addresses:
+EOF
+	for i in `ip add show dev ${n}|egrep "inet "|awk '{print $2}'`
+	do
+	cat  >>/etc/netplan/${n}.yaml <<EOF
+        - ${i}
+EOF
+	done
+	if [ ${n} == `ip route|egrep "default" | awk '{print $5}'` ]
+	then
+	DFGW=`ip route|egrep "default" | awk '{print $3}'`
+	cat  >>/etc/netplan/${n}.yaml <<-EOF
+      routes:
+        - to: default
+          via: ${DFGW}
+EOF
+	fi
+cat >>/etc/netplan/${n}.yaml	<<'EOF'
+      nameservers:
+        addresses:
+          - 114.114.114.114
+          - 8.8.8.8
+EOF
+done
+netplan apply
+```
+3. 内核模块
 
 ```
-4. screen软件使用
+#查看模块
+lsmod 
+#加载模块
+modprobe <modname>
+#卸载模块
+rmmod <modmanme>
+```
+	开机预加载模块
+```
+cat <<EOF > /etc/modules-load.d/pre-load.conf
+tun
+EOF
+```
+4. 
+5. screen软件使用
 ```
 screen -S yourname -> 新建一个叫yourname的session
 screen -ls -> 列出当前所有的session
