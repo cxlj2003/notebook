@@ -66,7 +66,9 @@ systemctl stop apparmor
 systemctl start xinetd
 
 ```
-[]
+
+[NOTE]>
+>后续步骤通过tenet登录目标服务器进行操作
 # 2. 文件下载
 
 ```
