@@ -37,7 +37,6 @@ EOF
 systemctl stop firewalld
 setenforce 0
 systemctl start xinetd telnet.socket
-
 ```
 ## 1.2 Debian/Ubuntu
 
@@ -58,7 +57,6 @@ cat >/etc/inetd.conf <<EOF
 telnet stream tcp nowait telnetd /usr/sbin/tcpd /usr/sbin/telnetd
 EOF
 fi
-
 cat << EOF > /etc/xinetd.d/telnet
 service telnet
 {
@@ -83,7 +81,6 @@ cat << EOF >> /etc/xinetd.d/telnet
     log_on_failure  += USERID
 }
 EOF
-
 if apt list |grep installed |grep ufw
 then
 	systemctl stop ufw
@@ -117,7 +114,6 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 
 ```
 yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd wget tar lrzsz nano
-
 ```
 
 ## 3.2 Debian/Ubuntu
@@ -148,12 +144,11 @@ OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl
 make -j 4 && make install
-
-mv -fi /usr/bin/openssl /usr/bin/oldopenssl
+alias mv='mv'
+mv -f /usr/bin/openssl /usr/bin/oldopenssl
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 ln -s /usr/local/openssl/lib/libssl.so.3 /usr/lib64/libssl.so.3
 ln -s /usr/local/openssl/lib/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-
 cat <<EOF >> /etc/ld.so.conf
 /usr/local/zlib/lib
 /usr/local/openssl/lib
@@ -168,22 +163,18 @@ OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl
 make -j 4 && make install
-
 alias mv='mv'
 mv -f /usr/bin/openssl /usr/bin/oldopenssl
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
-
 rm -rf /lib/x86_64-linux-gnu/libssl.so.3
 rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
 ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
-
 cat <<EOF >> /etc/ld.so.conf
 /usr/local/zlib/lib
 /usr/local/openssl/lib64
 EOF
 ldconfig
-
 ```
 
 # 6. 安装openssh
@@ -201,13 +192,11 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 --with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
-
 make -j 4 && make install
 rm -f /etc/init.d/sshd
 alias cp='cp'
 cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.init /etc/init.d/sshd
 cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.pam /etc/pam.d/sshd
-
 chkconfig --add sshd
 chkconfig sshd on
 systemctl start sshd
@@ -231,10 +220,8 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 --with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
-
 make -j 4 && make install
-
-cat << EOF >>/etc/ssh/sshd_config
+cat << EOF >> /etc/ssh/sshd_config
 PermitRootLogin yes
 PasswordAuthentication yes
 EOF
@@ -243,7 +230,6 @@ chmod +x /etc/init.d/ssh
 systemctl unmask ssh
 systemctl start ssh
 systemctl enable ssh
-
 ```
 
 # 7. 完整安装脚本
@@ -305,8 +291,6 @@ PermitRootLogin yes
 PasswordAuthentication yes
 EOF
 systemctl restart sshd
-
-
 ```
 ## 7.2 Debian/Ubuntu
 
