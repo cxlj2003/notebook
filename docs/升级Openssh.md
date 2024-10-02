@@ -45,7 +45,6 @@ systemctl start xinetd telnet.socket
 export DEBIAN_FRONTEND=noninteractive
 apt -y update
 apt -y install xinetd telnetd
-
 if [ -e /usr/sbin/in.telnetd ]
 then
 cat >/etc/inetd.conf <<EOF
