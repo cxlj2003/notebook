@@ -1,9 +1,19 @@
+# 已测试操作系统
+
+- AnolisOS7.9(不支持)
+- AnolisOS8.9
+- AnolisOS23.1
+- KylinV10SP2
+- KylinV10SP3
+- Debian12.7
+- Ubuntu20.04lts
 # 1. 安装Telnet服务器
-## 1.1 CentOS/RHEL
+## 1.1 AnolisOS/KylinV10
 
 ```
 #!/bin/bash
-yum install xinetd telnet-server -y
+yum install wget  telnet-server -y
+yum install xinetd -y
 cat <<EOF > /etc/xinetd.d/telnet
 service telnet
 {
@@ -36,7 +46,8 @@ pts/15
 EOF
 systemctl stop firewalld
 setenforce 0
-systemctl start xinetd telnet.socket
+systemctl start xinetd 
+systemctl start telnet.socket
 ```
 ## 1.2 Debian/Ubuntu
 
@@ -102,17 +113,17 @@ ZLIB_RELEASE=zlib-1.3.1
 OPENSSL_RELEASE=openssl-3.3.2
 OPENSSH_RELEASE=openssh-9.9p1
 wget -nc -P /usr/local/src https://www.zlib.net/${ZLIB_RELEASE}.tar.gz 
-wget -nc -P /usr/local/src https://github.com/openssl/openssl/releases/download/${OPENSSL_RELEASE}/${OPENSSL_RELEASE}.tar.gz
+wget -nc -P /usr/local/src https://www.openssl.org/source/${OPENSSL_RELEASE}.tar.gz
 wget -nc -P /usr/local/src  https://mirrors.aliyun.com/pub/OpenBSD/OpenSSH/portable/${OPENSSH_RELEASE}.tar.gz
 tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ```
 # 3. 安装编译环境
-## 3.1 CentOS/RHEL
+## 3.1 AnolisOS/KylinV10
 
 ```
-yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd wget tar lrzsz nano
+yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel  libedit-devel perl-IPC-Cmd wget tar lrzsz nano
 ```
 
 ## 3.2 Debian/Ubuntu
@@ -124,7 +135,7 @@ apt install -y gcc make libpam0g-dev
 ```
 
 # 4.安装zlib
-## CentOS/RHEL/Debian/Ubuntu
+## AnolisOS/KylinV10/Debian/Ubuntu
 
 将zlib安装至/usr/local/zlib目录下
 ```
@@ -136,7 +147,7 @@ make -j 4 && make test && make install
 
 # 5. 安装openssl
 将openssl安装至/usr/local/openssl目录下
-##  5.1 CentOS/RHEL
+##  5.1 AnolisOS/KylinV10
 
 ```
 OPENSSL_RELEASE=openssl-3.3.2
@@ -146,11 +157,11 @@ make -j 4 && make install
 alias mv='mv'
 mv -f /usr/bin/openssl /usr/bin/oldopenssl
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
-ln -s /usr/local/openssl/lib/libssl.so.3 /usr/lib64/libssl.so.3
-ln -s /usr/local/openssl/lib/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-cat <<EOF >> /etc/ld.so.conf
+ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
+cat <<EOF > /etc/ld.so.conf
 /usr/local/zlib/lib
-/usr/local/openssl/lib
+/usr/local/openssl/lib64
 EOF
 ldconfig
 ```
@@ -169,7 +180,7 @@ rm -rf /lib/x86_64-linux-gnu/libssl.so.3
 rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
 ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
-cat <<EOF >> /etc/ld.so.conf
+cat <<EOF > /etc/ld.so.conf
 /usr/local/zlib/lib
 /usr/local/openssl/lib64
 EOF
@@ -178,7 +189,7 @@ ldconfig
 
 # 6. 安装openssh
 
-## 6.1 CentOS/RHEL
+## 6.1 AnolisOS/KylinV10
 
 ```
 yum -y remove openssh openssh-clients openssh-server 
@@ -232,43 +243,46 @@ systemctl enable ssh
 ```
 
 # 7. 完整安装脚本
-## 7.1 CentOS/RHEL
+## 7.1 AnolisOS/KylinV10
 
 ```
 #!/bin/bash
 #文件下载与解压
+yum -y install tar wget
 ZLIB_RELEASE=zlib-1.3.1
 OPENSSL_RELEASE=openssl-3.3.2
 OPENSSH_RELEASE=openssh-9.9p1
 wget -nc -P /usr/local/src https://www.zlib.net/${ZLIB_RELEASE}.tar.gz 
-wget -nc -P /usr/local/src https://github.com/openssl/openssl/releases/download/${OPENSSL_RELEASE}/${OPENSSL_RELEASE}.tar.gz
+wget -nc -P /usr/local/src https://www.openssl.org/source/${OPENSSL_RELEASE}.tar.gz
 wget -nc -P /usr/local/src  https://mirrors.aliyun.com/pub/OpenBSD/OpenSSH/portable/${OPENSSH_RELEASE}.tar.gz
 tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 #安装编译环境
-yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd wget tar lrzsz nano
+yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel  libedit-devel perl-IPC-Cmd wget tar nano
 #安装zlib
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
 #安装openssl
+OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl
 make -j 4 && make install
 alias mv='mv'
 mv -f /usr/bin/openssl /usr/bin/oldopenssl
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
-ln -s /usr/local/openssl/lib/libssl.so.3 /usr/lib64/libssl.so.3
-ln -s /usr/local/openssl/lib/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-cat <<EOF >> /etc/ld.so.conf
+ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
+cat <<EOF > /etc/ld.so.conf
 /usr/local/zlib/lib
-/usr/local/openssl/lib
+/usr/local/openssl/lib64
 EOF
 ldconfig
 #安装openssh
 yum -y remove openssh openssh-clients openssh-server 
 rm -rf /etc/ssh/*
+OPENSSH_RELEASE=openssh-9.9p1
 cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
@@ -279,13 +293,14 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 make -j 4 && make install
 rm -f /etc/init.d/sshd
 alias cp='cp'
-cp -rf /usr/local/src/openssh/contrib/redhat/sshd.init /etc/init.d/sshd
-cp -rf /usr/local/src/openssh/contrib/redhat/sshd.pam /etc/pam.d/sshd
+cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.init /etc/init.d/sshd
+cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.pam /etc/pam.d/sshd
 chkconfig --add sshd
 chkconfig sshd on
+systemctl daemon-reload
 systemctl start sshd
 chmod 600 /etc/ssh/*_key
-cat << EOF >> /etc/ssh/sshd_config
+cat << EOF >>/etc/ssh/sshd_config
 PermitRootLogin yes
 PasswordAuthentication yes
 EOF
@@ -296,11 +311,11 @@ systemctl restart sshd
 ```
 #!/bin/bash
 #文件下载与解压
-ZLIB_RELEASE=zlib-1.3.1
+ZZLIB_RELEASE=zlib-1.3.1
 OPENSSL_RELEASE=openssl-3.3.2
 OPENSSH_RELEASE=openssh-9.9p1
 wget -nc -P /usr/local/src https://www.zlib.net/${ZLIB_RELEASE}.tar.gz 
-wget -nc -P /usr/local/src https://github.com/openssl/openssl/releases/download/${OPENSSL_RELEASE}/${OPENSSL_RELEASE}.tar.gz
+wget -nc -P /usr/local/src https://www.openssl.org/source/${OPENSSL_RELEASE}.tar.gz
 wget -nc -P /usr/local/src  https://mirrors.aliyun.com/pub/OpenBSD/OpenSSH/portable/${OPENSSH_RELEASE}.tar.gz
 tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
@@ -324,7 +339,7 @@ rm -rf /lib/x86_64-linux-gnu/libssl.so.3
 rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
 ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
-cat <<EOF >> /etc/ld.so.conf
+cat <<EOF > /etc/ld.so.conf
 /usr/local/zlib/lib
 /usr/local/openssl/lib64
 EOF
