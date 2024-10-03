@@ -8,7 +8,7 @@
 - Debian12.7
 - Ubuntu20.04lts
 # 1. 安装Telnet服务器
-## 1.1 AnolisOS/KylinV10
+## 1.1 AnolisOS/KylinV10/openEuler
 
 ```
 #!/bin/bash
@@ -120,10 +120,10 @@ tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ```
 # 3. 安装编译环境
-## 3.1 AnolisOS/KylinV10
+## 3.1 AnolisOS/KylinV10/openEuler
 
 ```
-yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel  libedit-devel perl-IPC-Cmd wget tar lrzsz nano
+yum -y install gcc make pam-devel perl
 ```
 
 ## 3.2 Debian/Ubuntu
@@ -135,7 +135,7 @@ apt install -y gcc make libpam0g-dev
 ```
 
 # 4.安装zlib
-## AnolisOS/KylinV10/Debian/Ubuntu
+## AnolisOS/KylinV10/openEuler/Debian/Ubuntu
 
 将zlib安装至/usr/local/zlib目录下
 ```
@@ -147,16 +147,24 @@ make -j 4 && make test && make install
 
 # 5. 安装openssl
 将openssl安装至/usr/local/openssl目录下
-##  5.1 AnolisOS/KylinV10
+##  5.1 AnolisOS/KylinV10/openEuler
 
 ```
 OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl
+./config --prefix=/usr/local/openssl enable-md2 shared
 make -j 4 && make install
 alias mv='mv'
-mv -f /usr/bin/openssl /usr/bin/oldopenssl
+if [ -e /usr/bin/openssl ];then
+  mv -f /usr/bin/openssl /usr/bin/oldopenssl
+fi
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
+if [ -e /usr/lib64/libssl.so.3 ];then
+  rm -f /usr/lib64/libssl.so.3
+fi
+if [ -e /usr/lib64/libcrypto.so.3 ];then
+  rm -f /usr/lib64/libcrypto.so.3
+fi
 ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf
@@ -174,10 +182,16 @@ cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl
 make -j 4 && make install
 alias mv='mv'
-mv -f /usr/bin/openssl /usr/bin/oldopenssl
+if [ -e /usr/bin/openssl ];then
+  mv -f /usr/bin/openssl /usr/bin/oldopenssl
+fi
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
-rm -rf /lib/x86_64-linux-gnu/libssl.so.3
-rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
+  rm -rf /lib/x86_64-linux-gnu/libssl.so.3
+fi
+if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
+  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+fi
 ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf
@@ -189,7 +203,8 @@ ldconfig
 
 # 6. 安装openssh
 
-## 6.1 AnolisOS/KylinV10
+安装说明详见源代码目录的INSTALL文件
+## 6.1 AnolisOS/KylinV10/openEuler
 
 ```
 yum -y remove openssh openssh-clients openssh-server 
@@ -243,7 +258,7 @@ systemctl enable ssh
 ```
 
 # 7. 完整安装脚本
-## 7.1 AnolisOS/KylinV10
+## 7.1 AnolisOS/KylinV10/openEuler
 
 ```
 #!/bin/bash
@@ -259,7 +274,7 @@ tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 #安装编译环境
-yum -y install vim gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel  libedit-devel perl-IPC-Cmd wget tar nano
+yum -y install gcc make pam-devel perl
 #安装zlib
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
@@ -267,11 +282,19 @@ make -j 4 && make test && make install
 #安装openssl
 OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl
+./config --prefix=/usr/local/openssl enable-md2 shared
 make -j 4 && make install
 alias mv='mv'
-mv -f /usr/bin/openssl /usr/bin/oldopenssl
+if [ -e /usr/bin/openssl ];then
+  mv -f /usr/bin/openssl /usr/bin/oldopenssl
+fi
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
+if [ -e /usr/lib64/libssl.so.3 ];then
+  rm -f /usr/lib64/libssl.so.3
+fi
+if [ -e /usr/lib64/libcrypto.so.3 ];then
+  rm -f /usr/lib64/libcrypto.so.3
+fi
 ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf
@@ -333,10 +356,16 @@ cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl
 make -j 4 && make install
 alias mv='mv'
-mv -f /usr/bin/openssl /usr/bin/oldopenssl
+if [ -e /usr/bin/openssl ];then
+  mv -f /usr/bin/openssl /usr/bin/oldopenssl
+fi
 ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
-rm -rf /lib/x86_64-linux-gnu/libssl.so.3
-rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
+  rm -rf /lib/x86_64-linux-gnu/libssl.so.3
+fi
+if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
+  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+fi
 ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf
