@@ -74,6 +74,7 @@ lspci | grep VGA
 uname -r
 #查看系统版本
 cat /etc/os-release
+cat /etc/system-release
 cat /etc/issue
 lsb_release -a
 hostnamectl status
@@ -84,6 +85,11 @@ hostnamectl status
 lsb_release -a |grep Release |awk '{print $NF}'
 cat /etc/redhat-release | awk '{print $(NF-1)}'
 lsb_release -a |grep Description |awk '{print $(NF-1)}'
+```
+
+```
+#KylinV10
+cat /etc/.kyinfo
 ```
 
 ```

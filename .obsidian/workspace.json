@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/获取Linux配置信息.md",
                 "mode": "source",
                 "source": false
               }
@@ -110,7 +110,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/获取Linux配置信息.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -127,7 +127,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/获取Linux配置信息.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -150,7 +150,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/升级Openssh.md"
+                "file": "docs/获取Linux配置信息.md"
               }
             }
           }
@@ -173,8 +173,8 @@
   },
   "active": "f6c16e7d4db9aa37",
   "lastOpenFiles": [
-    "docs/MarkDown语法.md",
     "docs/升级Openssh.md",
+    "docs/MarkDown语法.md",
     "docs/交换机配置脚本.md.md",
     "docs/获取Linux配置信息.md",
     "docs/QEMU虚拟机-QuickStart.md",
