@@ -1,13 +1,13 @@
 # 已测试操作系统
 
-- AnolisOS7.9
+- AnolisOS7.9（安装openssl时需要特殊处理）
 - AnolisOS8.9
 - AnolisOS23.1
 - KylinV10SP2
 - KylinV10SP3
 - Debian12.7
 - Ubuntu20.04lts
-- OpenEuler
+- OpenEuler24.03
 # 1. 安装Telnet服务器
 ## 1.1 AnolisOS/KylinV10/openEuler
 
