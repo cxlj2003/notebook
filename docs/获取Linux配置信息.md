@@ -7,7 +7,7 @@ CentOS
 ```
 yum install redhat-lsb
 ```
-# 1. CPU
+# 1.CPU
 
 ```
 #查看型号
