@@ -131,7 +131,6 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ## 3.1 AnolisOS/KylinV10/openEuler
 
 ```
-#KylinV10
 yum -y install gcc make pam-devel perl-IPC-Cmd perl-CPAN
 echo yes |cpan List::Util
 #yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
@@ -300,7 +299,6 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 yum -y install gcc make pam-devel perl-IPC-Cmd perl-CPAN
 echo yes |cpan List::Util
 #安装zlib
-ZLIB_RELEASE=zlib-1.3.1
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
@@ -309,7 +307,6 @@ cat <<EOF > /etc/ld.so.conf.d/zlib.conf
 EOF
 ldconfig
 #安装openssl
-OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl \
 --with-zlib-lib=/usr/local/zlib/lib \
@@ -337,7 +334,7 @@ ldconfig
 #安装openssh
 yum -y remove openssh openssh-clients openssh-server 
 rm -rf /etc/ssh/*
-OPENSSH_RELEASE=openssh-9.9p1
+#OPENSSH_RELEASE=openssh-9.9p1
 cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
@@ -379,7 +376,6 @@ export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y gcc make libpam0g-dev
 #安装zlib
-ZLIB_RELEASE=zlib-1.3.1
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
@@ -388,7 +384,6 @@ cat <<EOF > /etc/ld.so.conf.d/zlib.conf
 EOF
 ldconfig
 #安装openssl
-OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
 ./config --prefix=/usr/local/openssl \
 --with-zlib-lib=/usr/local/zlib/lib \
