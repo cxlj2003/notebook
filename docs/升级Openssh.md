@@ -131,8 +131,7 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ## 3.1 AnolisOS/KylinV10/openEuler
 
 ```
-yum -y install gcc make pam-devel perl-IPC-Cmd perl-CPAN
-echo yes |cpan List::Util
+yum -y install gcc make pam-devel perl-IPC-Cmd
 #yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
 ```
 
@@ -171,6 +170,7 @@ cd /usr/local/src/${OPENSSL_RELEASE}
 --with-zlib-include=/usr/local/zlib/include \
 enable-md2 \
 shared
+#AnolisOS7运行以下2条命令
 #yum -y install perl-CPAN
 #echo yes |cpan List::Util
 #make clean
@@ -296,8 +296,10 @@ tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 #安装编译环境
-yum -y install gcc make pam-devel perl-IPC-Cmd perl-CPAN
-echo yes |cpan List::Util
+yum -y install gcc make pam-devel perl-IPC-Cmd 
+#AnolisOS7运行以下2条命令
+#yum -y install perl-CPAN
+#echo yes |cpan List::Util
 #安装zlib
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
