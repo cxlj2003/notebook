@@ -133,7 +133,7 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ```
 #KylinV10
 yum -y install wget tar vim nano
-yum -y install gcc make pam-devel perl-IPC-Cmd
+yum -y install gcc make pam-devel perl-IPC-Cmd perl-CPAN
 #yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
 ```
 
@@ -172,6 +172,8 @@ cd /usr/local/src/${OPENSSL_RELEASE}
 --with-zlib-include=/usr/local/zlib/include \
 enable-md2 \
 shared
+#yum -y install perl-CPAN
+#echo yes |cpan List::Util
 make -j 4 && make install
 alias mv='mv'
 if [ -e /usr/bin/openssl ];then
