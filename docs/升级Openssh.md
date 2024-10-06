@@ -1,6 +1,6 @@
 # 已测试操作系统
 
-- AnolisOS7.9(不支持)
+- AnolisOS7.9
 - AnolisOS8.9
 - AnolisOS23.1
 - KylinV10SP2
