@@ -12,7 +12,8 @@
 
 ```
 #!/bin/bash
-yum install wget  telnet-server -y
+yum install vim wget tar nano -y
+yum install telnet-server -y
 yum install xinetd -y
 cat <<EOF > /etc/xinetd.d/telnet
 service telnet
@@ -47,7 +48,11 @@ EOF
 systemctl stop firewalld
 setenforce 0
 systemctl start xinetd 
-systemctl start telnet.socket
+until ss -lnp |grep -E ':23.*xinetd'
+do
+	systemctl restart xinetd
+done
+
 ```
 ## 1.2 Debian/Ubuntu
 
@@ -55,7 +60,9 @@ systemctl start telnet.socket
 #!/bin/bash -e
 export DEBIAN_FRONTEND=noninteractive
 apt -y update
-apt -y install xinetd telnetd
+apt -y install vim wget tar nano
+apt -y install xinetd
+apt -y install telnetd
 if [ -e /usr/sbin/in.telnetd ]
 then
 cat >/etc/inetd.conf <<EOF
@@ -123,7 +130,11 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 ## 3.1 AnolisOS/KylinV10/openEuler
 
 ```
-yum -y install gcc make pam-devel perl
+#KylinV10
+yum -y install wget tar vim nano
+yum -y install gcc make pam-devel perl-IPC-Cmd
+#
+yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
 ```
 
 ## 3.2 Debian/Ubuntu
@@ -143,6 +154,10 @@ ZLIB_RELEASE=zlib-1.3.1
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
+cat <<EOF > /etc/ld.so.conf.d/zlib.conf
+/usr/local/zlib/lib
+EOF
+ldconfig
 ```
 
 # 5. 安装openssl
@@ -152,23 +167,26 @@ make -j 4 && make test && make install
 ```
 OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl enable-md2 shared
+./config --prefix=/usr/local/openssl \
+--with-zlib-lib=/usr/local/zlib/lib \
+--with-zlib-include=/usr/local/zlib/include \
+enable-md2 \
+shared
 make -j 4 && make install
 alias mv='mv'
 if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
+  ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
-ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 if [ -e /usr/lib64/libssl.so.3 ];then
-  rm -f /usr/lib64/libssl.so.3
+  mv -f /usr/lib64/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
+  ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 fi
 if [ -e /usr/lib64/libcrypto.so.3 ];then
-  rm -f /usr/lib64/libcrypto.so.3
+  mv -f /usr/lib64/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
+  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 fi
-ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
-ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-cat <<EOF > /etc/ld.so.conf
-/usr/local/zlib/lib
+cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
 ldconfig
@@ -179,23 +197,26 @@ ldconfig
 ```
 OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl
+./config --prefix=/usr/local/openssl \
+--with-zlib-lib=/usr/local/zlib/lib \
+--with-zlib-include=/usr/local/zlib/include \
+enable-md2 \
+shared
 make -j 4 && make install
 alias mv='mv'
 if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
+  ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
-ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
-  rm -rf /lib/x86_64-linux-gnu/libssl.so.3
+  mv -f /lib/x86_64-linux-gnu/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
+  ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 fi
 if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
-  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+  mv -f /lib/x86_64-linux-gnu/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
+  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 fi
-ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
-ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
-cat <<EOF > /etc/ld.so.conf
-/usr/local/zlib/lib
+cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
 ldconfig
@@ -214,7 +235,6 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
---with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
 make -j 4 && make install
@@ -242,7 +262,6 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
---with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
 make -j 4 && make install
@@ -274,31 +293,39 @@ tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
 tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 #安装编译环境
-yum -y install gcc make pam-devel perl
+yum -y install gcc make pam-devel perl-IPC-Cmd
 #安装zlib
+ZLIB_RELEASE=zlib-1.3.1
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
+cat <<EOF > /etc/ld.so.conf.d/zlib.conf
+/usr/local/zlib/lib
+EOF
+ldconfig
 #安装openssl
 OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl enable-md2 shared
+./config --prefix=/usr/local/openssl \
+--with-zlib-lib=/usr/local/zlib/lib \
+--with-zlib-include=/usr/local/zlib/include \
+enable-md2 \
+shared
 make -j 4 && make install
 alias mv='mv'
 if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
+  ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
-ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 if [ -e /usr/lib64/libssl.so.3 ];then
-  rm -f /usr/lib64/libssl.so.3
+  mv -f /usr/lib64/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
+  ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 fi
 if [ -e /usr/lib64/libcrypto.so.3 ];then
-  rm -f /usr/lib64/libcrypto.so.3
+  mv -f /usr/lib64/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
+  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 fi
-ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
-ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-cat <<EOF > /etc/ld.so.conf
-/usr/local/zlib/lib
+cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
 ldconfig
@@ -310,7 +337,6 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
---with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
 make -j 4 && make install
@@ -323,7 +349,7 @@ chkconfig sshd on
 systemctl daemon-reload
 systemctl start sshd
 chmod 600 /etc/ssh/*_key
-cat << EOF >>/etc/ssh/sshd_config
+cat << EOF >> /etc/ssh/sshd_config
 PermitRootLogin yes
 PasswordAuthentication yes
 EOF
@@ -348,28 +374,37 @@ export DEBIAN_FRONTEND=noninteractive
 apt update
 apt install -y gcc make libpam0g-dev
 #安装zlib
+ZLIB_RELEASE=zlib-1.3.1
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
+cat <<EOF > /etc/ld.so.conf.d/zlib.conf
+/usr/local/zlib/lib
+EOF
+ldconfig
 #安装openssl
+OPENSSL_RELEASE=openssl-3.3.2
 cd /usr/local/src/${OPENSSL_RELEASE}
-./config --prefix=/usr/local/openssl
+./config --prefix=/usr/local/openssl \
+--with-zlib-lib=/usr/local/zlib/lib \
+--with-zlib-include=/usr/local/zlib/include \
+enable-md2 \
+shared
 make -j 4 && make install
 alias mv='mv'
 if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
+  ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
-ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
-  rm -rf /lib/x86_64-linux-gnu/libssl.so.3
+  mv -f /lib/x86_64-linux-gnu/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
+  ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 fi
 if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
-  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3
+  mv -f /lib/x86_64-linux-gnu/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
+  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 fi
-ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
-ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
-cat <<EOF > /etc/ld.so.conf
-/usr/local/zlib/lib
+cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
 ldconfig
@@ -380,7 +415,6 @@ cd /usr/local/src/${OPENSSH_RELEASE}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
---with-md5-passwords \
 --with-ssl-dir=/usr/local/openssl \
 --with-zlib=/usr/local/zlib
 make -j 4 && make install
