@@ -4,47 +4,22 @@
     "type": "split",
     "children": [
       {
-        "id": "0937d53662de7238",
+        "id": "1f480b29b9e8d600",
         "type": "tabs",
         "children": [
           {
-            "id": "e91d484e66ec7919",
+            "id": "59e9113b1605336e",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/Ubuntu常用脚本.md.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "b5f7489ce7476aed",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "docs/获取Linux配置信息.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "f6c16e7d4db9aa37",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "docs/获取Linux配置信息.md",
+                "file": "docs/升级Openssh.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -110,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/获取Linux配置信息.md",
+                "file": "docs/升级Openssh.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -127,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/获取Linux配置信息.md",
+                "file": "docs/升级Openssh.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -150,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/获取Linux配置信息.md"
+                "file": "docs/升级Openssh.md"
               }
             }
           }
@@ -171,15 +146,15 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "f6c16e7d4db9aa37",
+  "active": "59e9113b1605336e",
   "lastOpenFiles": [
+    "docs/Ubuntu常用脚本.md.md",
+    "docs/获取Linux配置信息.md",
     "docs/升级Openssh.md",
     "docs/MarkDown语法.md",
     "docs/交换机配置脚本.md.md",
-    "docs/获取Linux配置信息.md",
     "docs/QEMU虚拟机-QuickStart.md",
     "docs/termux+qemu+alpine.md",
-    "docs/Ubuntu常用脚本.md.md",
     "新建 文本文档.txt",
     "material/漏扫.png",
     "notebook/material/漏扫.png",
