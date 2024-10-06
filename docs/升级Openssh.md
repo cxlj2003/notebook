@@ -7,6 +7,7 @@
 - KylinV10SP3
 - Debian12.7
 - Ubuntu20.04lts
+- OpenEuler
 # 1. 安装Telnet服务器
 ## 1.1 AnolisOS/KylinV10/openEuler
 
@@ -48,7 +49,7 @@ EOF
 systemctl stop firewalld
 setenforce 0
 systemctl start xinetd 
-until ss -lnp |grep -E ':23.*xinetd'
+until ss -lnp |grep -E ':23'
 do
 	systemctl restart xinetd
 done
@@ -105,7 +106,7 @@ fi
 systemctl stop apparmor
 systemctl daemon-reload
 systemctl start xinetd
-until ss -lnp |grep -E ':23.*xinetd'
+until ss -lnp |grep -E ':23'
 do
 	systemctl restart xinetd
 done
