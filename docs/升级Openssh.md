@@ -134,8 +134,7 @@ tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 #KylinV10
 yum -y install wget tar vim nano
 yum -y install gcc make pam-devel perl-IPC-Cmd
-#
-yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
+#yum -y install gcc gcc-c++ glibc make autoconf openssl openssl-devel pcre-devel pam-devel zlib-devel tcp_wrappers-devel tcp_wrappers libedit-devel perl-IPC-Cmd 
 ```
 
 ## 3.2 Debian/Ubuntu
@@ -180,13 +179,13 @@ if [ -e /usr/bin/openssl ];then
   ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
 if [ -e /usr/lib64/libssl.so.3 ];then
-  mv -f /usr/lib64/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
-  ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
+  rm -rf /usr/lib64/libssl.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 if [ -e /usr/lib64/libcrypto.so.3 ];then
-  mv -f /usr/lib64/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
-  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
+  rm -rf /usr/lib64/libcrypto.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
@@ -210,13 +209,13 @@ if [ -e /usr/bin/openssl ];then
   ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
 if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
-  mv -f /lib/x86_64-linux-gnu/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
-  ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
+  rm -rf /lib/x86_64-linux-gnu/libssl.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
-  mv -f /lib/x86_64-linux-gnu/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
-  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
+  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
@@ -229,6 +228,7 @@ ldconfig
 ## 6.1 AnolisOS/KylinV10/openEuler
 
 ```
+#--without-openssl 
 yum -y remove openssh openssh-clients openssh-server 
 rm -rf /etc/ssh/*
 OPENSSH_RELEASE=openssh-9.9p1
@@ -319,13 +319,13 @@ if [ -e /usr/bin/openssl ];then
   ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
 if [ -e /usr/lib64/libssl.so.3 ];then
-  mv -f /usr/lib64/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
-  ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
+  rm -rf /usr/lib64/libssl.so.3*
 fi
+ln -s /usr/local/openssl/lib64/libssl.so.3 /usr/lib64/libssl.so.3
 if [ -e /usr/lib64/libcrypto.so.3 ];then
-  mv -f /usr/lib64/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
-  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
+  rm -rf /usr/lib64/libcrypto.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
@@ -398,13 +398,13 @@ if [ -e /usr/bin/openssl ];then
   ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
 fi
 if [ -e /lib/x86_64-linux-gnu/libssl.so.3 ];then
-  mv -f /lib/x86_64-linux-gnu/libssl.so.3 /usr/local/src/${OPENSSL_RELEASE}/libssl.so.3
-  ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
+  rm -rf /lib/x86_64-linux-gnu/libssl.so.3*
 fi
+ln -s /usr/local/openssl/lib64/libssl.so.3 /lib/x86_64-linux-gnu/libssl.so.3
 if [ -e /lib/x86_64-linux-gnu/libcrypto.so.3 ];then
-  mv -f /lib/x86_64-linux-gnu/libcrypto.so.3 /usr/local/src/${OPENSSL_RELEASE}/libcrypto.so.3
-  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
+  rm -rf /lib/x86_64-linux-gnu/libcrypto.so.3*  
 fi
+ln -s /usr/local/openssl/lib64/libcrypto.so.3 /lib/x86_64-linux-gnu/libcrypto.so.3
 cat <<EOF > /etc/ld.so.conf.d/openssl_lib.conf
 /usr/local/openssl/lib64
 EOF
@@ -433,6 +433,7 @@ systemctl enable ssh
 # 8. 验证安装并关闭telnet
 
 ```
+openssl version
 ssh -V
 rm -rf /usr/local/src/*
 systemctl disable telnet.socket --now
