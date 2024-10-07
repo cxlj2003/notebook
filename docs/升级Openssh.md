@@ -6,7 +6,7 @@
 - KylinV10SP2
 - KylinV10SP3
 - Debian12.7
-- Ubuntu20.04lts
+- Ubuntu22.04lts
 - OpenEuler24.03
 # 1. 安装Telnet服务器
 ## 1.1 AnolisOS/KylinV10/openEuler
