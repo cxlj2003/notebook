@@ -13,13 +13,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/获取Linux配置信息.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "55549f7ac6f842fc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/Bash编程语法.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -85,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/Bash编程语法.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/升级Openssh.md",
+                "file": "docs/Bash编程语法.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/升级Openssh.md"
+                "file": "docs/Bash编程语法.md"
               }
             }
           }
@@ -146,17 +159,18 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "59e9113b1605336e",
+  "active": "55549f7ac6f842fc",
   "lastOpenFiles": [
-    "docs/升级Openssh.md",
+    "docs/获取Linux配置信息.md",
+    "docs/Bash编程语法.md",
+    "docs/交换机配置脚本.md",
     "docs/Ubuntu常用脚本.md",
+    "docs/升级Openssh.md",
     "docs/update_openssh_zwc.sh",
     "docs/新建 文本文档.txt",
     "docs/Ubuntu常用脚本.md.md",
     "docs/update_openssh_allinone.sh",
-    "docs/获取Linux配置信息.md",
     "docs/openssh.sh",
-    "docs/交换机配置脚本.md",
     "docs/MarkDown语法.md",
     "docs/交换机配置脚本.md.md",
     "docs/QEMU虚拟机-QuickStart.md",

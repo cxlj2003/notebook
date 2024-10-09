@@ -443,26 +443,30 @@ incorrect_selection() {
 
 until [ "$selection" = "0" ]; do
   clear
-  echo "************烟台市电子政务云************"
-  echo "    将Openssl升级至3.3.2"
-  echo "    将Openssh升级至9.9P1"
-  echo "************支持操作系统列表************"
-  echo "    AnolisOS 7.X 8.X 23.X"
-  echo "    KylinV10 SP2 SP3"
-  echo "    openEuler 20.03LTS"
-  echo "              22.04LTS"
-  echo "              24.03LTS"
-  echo "    Debian 11 12"
-  echo "    Ubuntu  20.04LTS"
-  echo "            22.04LTS"
-  echo "            24.04LTS"
-  echo "************烟台市电子政务云************"
-  echo "    1  -  信创(互联网、政务外、行政服务域)"
-  echo "    2  -  X86(政务外)"
-  echo "    3  -  X86(行政服务域)"
-  echo "    0  -  Exit"
-  echo "************烟台市电子政务云************"
-  echo -n "  Enter selection: "
+    cat<<EOF
+    =====================================================
+    ## 烟台市电子政务云OpenSSH升级脚本 V1.0
+    ## zlib版本:      1.3.1
+    ## openssl版本:   3.3.2
+    ## openssh版本:   9.9p1
+    -----------------------------------------------------
+    ## 支持的操作系统
+    ## AnolisOS 7/8/23
+    ## KylinV10 SP2/SP3
+    ## openEuler 20.03/22.04/24.03 lts
+    ## Debian 11/12
+    ## Ubuntu 20.04/22.04/24.04 lts
+    -----------------------------------------------------
+    ## 请输入服务器的所在区域:
+    ## 
+    ## (1) 国产化信创区域(含互联网、公共域、行政域)
+    ## (2) X86 政务外网(公共服务域)
+    ## (3) X86 行政服务域
+    ##
+    ## (0) 退出脚本
+    -----------------------------------------------------
+EOF
+  echo -n "  请输入相应的数字: "
   read selection
   echo ""
   case $selection in
