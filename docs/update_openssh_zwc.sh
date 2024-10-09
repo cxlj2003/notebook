@@ -149,7 +149,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/OS'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [everything]
@@ -158,7 +158,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/everything/\$basearch/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/everything'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/everything/\$basearch/RPM-GPG-KEY-openEuler
 
 [EPOL]
@@ -167,7 +167,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/EPOL/main/\$basearch/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/EPOL/main'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [debuginfo]
@@ -176,7 +176,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/debuginfo/\$basearch/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/debuginfo'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/debuginfo/\$basearch/RPM-GPG-KEY-openEuler
 
 [source]
@@ -185,7 +185,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/source/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever'&'arch=source
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
 
 [update]
@@ -194,7 +194,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/update/\$basearch/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/update'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [update-source]
@@ -203,7 +203,7 @@ baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/update/source/
 metalink=http://${SERVER_IP}/metalink?repo=\$releasever/update'&'arch=source
 metadata_expire=1h
 enabled=1
-gpgcheck=1
+gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
 EOF
 elif [[ $ID == 'debian' ]];then
