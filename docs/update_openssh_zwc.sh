@@ -443,7 +443,7 @@ incorrect_selection() {
 
 until [ "$selection" = "0" ]; do
   clear
-    cat<<EOF
+    cat<<_EOF_
     =====================================================
     ## 烟台市电子政务云OpenSSH升级脚本 V1.0
     ## zlib版本:      1.3.1
@@ -465,7 +465,7 @@ until [ "$selection" = "0" ]; do
     ##
     ## (0) 退出脚本
     -----------------------------------------------------
-EOF
+_EOF_
   echo -n "  请输入相应的数字: "
   read selection
   echo ""
