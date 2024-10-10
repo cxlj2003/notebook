@@ -35,8 +35,8 @@ $$
 
 # 3. 链接
 - 内部链接
-[[Ubuntu常用脚本.md]]
-![[Ubuntu常用脚本.md]]
+[[Bash实用脚本]]
+![[Bash实用脚本]]
 - 外部链接
 [百度](https://www.baidu.com)
 

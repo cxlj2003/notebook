@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/获取Linux配置信息.md",
+                "file": "docs/Linux相关/获取Linux配置信息.md",
                 "mode": "source",
                 "source": false
               }
@@ -25,14 +25,62 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/Bash编程语法.md",
+                "file": "docs/Linux相关/Bash实用脚本.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "49ac1897a481bad3",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/MarkDown语法.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "5489c5e682527b60",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/Linux相关/Bash编程语法.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "88b665356717eb16",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/Linux相关/Linux实用软件.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "2a0f4209632db6e4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/Linux相关/Bash编程语法.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -98,7 +146,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/Bash编程语法.md",
+                "file": "docs/MarkDown语法.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +163,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/Bash编程语法.md",
+                "file": "docs/MarkDown语法.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -138,7 +186,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/Bash编程语法.md"
+                "file": "docs/MarkDown语法.md"
               }
             }
           }
@@ -159,13 +207,20 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "55549f7ac6f842fc",
+  "active": "49ac1897a481bad3",
   "lastOpenFiles": [
-    "docs/获取Linux配置信息.md",
-    "docs/Bash编程语法.md",
+    "docs/Linux相关/Linux实用命令.md",
+    "docs/Linux相关/Bash编程语法.md",
+    "docs/Linux相关/升级Openssh.md",
+    "docs/Linux相关/Bash实用函数.md",
+    "docs/Linux相关/Linux实用软件.md",
+    "docs/Linux相关/Bash实用脚本.md",
+    "docs/Linux相关/获取Linux配置信息.md",
+    "docs/Linux相关/QEMU虚拟机-QuickStart.md",
+    "docs/Linux相关/termux+qemu+alpine.md",
     "docs/交换机配置脚本.md",
-    "docs/Ubuntu常用脚本.md",
-    "docs/升级Openssh.md",
+    "docs/Linux相关",
+    "docs/Linux相关",
     "docs/update_openssh_zwc.sh",
     "docs/新建 文本文档.txt",
     "docs/Ubuntu常用脚本.md.md",
@@ -173,8 +228,6 @@
     "docs/openssh.sh",
     "docs/MarkDown语法.md",
     "docs/交换机配置脚本.md.md",
-    "docs/QEMU虚拟机-QuickStart.md",
-    "docs/termux+qemu+alpine.md",
     "新建 文本文档.txt",
     "material/漏扫.png",
     "notebook/material/漏扫.png",

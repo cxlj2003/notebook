@@ -23,7 +23,7 @@ if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
 elif [[ $ID == 'debian' ]];then
  echo '# Debian sources have moved to /etc/apt/sources.list.d/debian.sources' > /etc/apt/sources.list
 elif [[ $ID == 'ubuntu' ]];then
- '# Ubuntu sources have moved to /etc/apt/sources.list.d/ubuntu.sources' > /etc/apt/sources.list
+ echo '# Ubuntu sources have moved to /etc/apt/sources.list.d/ubuntu.sources' > /etc/apt/sources.list
 fi
 if [[ $ID == 'anolis' && `echo $VERSION |awk -F . '{print $1}'` -eq 7 ]];then 
  cat << EOF > /etc/yum.repos.d/AnolisOS-os.repo
