@@ -80,7 +80,7 @@
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -146,7 +146,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/Linux相关/Bash编程语法.md",
+                "file": "docs/Linux相关/Bash实用脚本.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -163,7 +163,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/Linux相关/Bash编程语法.md",
+                "file": "docs/Linux相关/Bash实用脚本.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -186,7 +186,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/Linux相关/Bash编程语法.md"
+                "file": "docs/Linux相关/Bash实用脚本.md"
               }
             }
           }
@@ -207,14 +207,14 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "5489c5e682527b60",
+  "active": "55549f7ac6f842fc",
   "lastOpenFiles": [
-    "docs/MarkDown语法.md",
-    "docs/Linux相关/Bash编程语法.md",
-    "docs/Linux相关/Bash实用脚本.md",
-    "docs/Linux相关/Linux实用软件.md",
-    "docs/Linux相关/Linux实用命令.md",
     "docs/Linux相关/Bash实用函数.md",
+    "docs/Linux相关/Linux实用命令.md",
+    "docs/Linux相关/Bash实用脚本.md",
+    "docs/Linux相关/Bash编程语法.md",
+    "docs/Linux相关/Linux实用软件.md",
+    "docs/MarkDown语法.md",
     "docs/Linux相关/获取Linux配置信息.md",
     "docs/Linux相关/升级Openssh.md",
     "docs/Linux相关/QEMU虚拟机-QuickStart.md",

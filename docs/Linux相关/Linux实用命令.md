@@ -25,6 +25,11 @@ tzselect
 #选择Asia/Shanghai
 ```
 
+## 2.3 链接/etc/localtime
+
+```
+ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+```
 # 3. date 格式显示
 
 ```
@@ -52,5 +57,12 @@ rmmod <modmanme>
 cat <<EOF > /etc/modules-load.d/pre-load.conf
 tun
 EOF
+```
+
+# 5. 检查脚本语法
+
+```
+bash -n script.sh
+bash -ex script.sh
 ```
 
