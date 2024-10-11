@@ -39,26 +39,39 @@ df -hT
 
 ```
 #查看所有网卡信息
-lspci | grep Ethernet
+lspci | egrep "Ethernet (C|c)ontroller"
+lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}'
 ```
 
 ```
-#查看所有网卡的名称
-for i in `lspci |grep Ethernet |awk '{print $1}' |xargs`
+#遍历所有网卡的名称
+for i in `lspci | egrep "Ethernet (C|c)ontroller" |awk '{print $1}' |xargs`
 do
 	lshw -C network -businfo |grep $i |awk '{print $2}'
+done
+
+for i in `lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs`
+do 
+	echo $i
 done
 ```
 
 ```
 #查看活动的网卡
-for i in `lspci |grep Ethernet |awk '{print $1}' |xargs`
+for i in `lspci | egrep "Ethernet (C|c)ontroller" |awk '{print $1}' |xargs`
 do
 	NIC=`lshw -C network -businfo |grep $i |awk '{print $2}'`
-	if ip link show $NIC |grep LOWER_UP;then
+	if ip link show $NIC |grep LOWER_UP &> /dev/null;then
 		echo $NIC
 	fi
-done
+done |xargs
+
+for i in `lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs`
+do 
+	if ip link show $NIC |grep LOWER_UP &> /dev/null;then
+		echo $i
+	fi
+done |xargs
 ```
 # 5. 显卡
 

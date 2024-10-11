@@ -22,8 +22,20 @@ EOF
 ```
 #!/bin/bash
 rm -rf /etc/netplan/*
+
+get_active_netdev_names() {
+	All_NICs=$(lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs)
+	for i in ${All_NICs}
+	do
+		if ip link show $i |grep LOWER_UP &> /dev/null
+		then
+				echo $i
+		fi
+	done	
+}
 declare -a NIC
-NIC=`ip route | egrep -v "br|docker|default" | egrep "eth|ens|enp"|awk '{print $3}'` 
+NIC=$(get_active_netdev_names |xargs)
+
 for n in ${NIC[*]}
 do
 cat  >/etc/netplan/${n}.yaml <<EOF
