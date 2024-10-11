@@ -397,6 +397,7 @@ systemctl enable ssh
 fi
 }
 
+menu_list() {
 menu_option_one() {
   local SERVER_IP='100.201.3.111'
   use_custom_mirrors $SERVER_IP $ID $VERSION 
@@ -441,6 +442,7 @@ incorrect_selection() {
   echo "Incorrect selection! Try again."
 }
 
+
 until [ "$selection" = "0" ]; do
   clear
     cat<<_EOF_
@@ -477,3 +479,6 @@ _EOF_
     * ) clear ; incorrect_selection ; press_enter ;;
   esac
 done
+}
+
+menu_list

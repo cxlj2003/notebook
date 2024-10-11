@@ -9,13 +9,14 @@ _EOF_
 
 ```
 #!/bin/bash
+menu_list() {
 
 menu_option_one() {
-  echo "Hello John!!!"
+  echo "Option One!"
 }
 
 menu_option_two() {
-  echo "Some super cool code by John."
+  echo "Option two!"
 }
 
 press_enter() {
@@ -28,6 +29,7 @@ press_enter() {
 incorrect_selection() {
   echo "Incorrect selection! Try again."
 }
+
 until [ "$selection" = "0" ]; do
   clear
     clear
@@ -54,5 +56,30 @@ _EOF_
     * ) clear ; incorrect_selection ; press_enter ;;
   esac
 done
+}
+menu_list
+```
 
+# 3.判断操作系统类型
+
+```
+get_os_type() {
+if [ ! -e /etc/os-release ];then
+  echo 'Unable get linux distribution !'
+fi
+source /etc/os-release
+echo $ID
+}
+get_os_type
+```
+
+```
+get_os_versionid() {
+if [ ! -e /etc/os-release ];then
+  echo 'Unable get linux distribution !'
+fi
+source /etc/os-release
+echo $VERSION_ID
+}
+get_os_versionid
 ```
