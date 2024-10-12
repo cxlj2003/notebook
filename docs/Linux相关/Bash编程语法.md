@@ -542,7 +542,7 @@ filename=${1:?"filename missing."}
 
 ### 6.2.4 声明特殊类型的变量
 
--  **`declare`命令**
+#### -  **`declare`命令**
 
 `declare`命令可以声明一些特殊类型的变量，为变量设置一些限制，比如声明只读类型的变量和整数类型的变量。
 
@@ -686,7 +686,7 @@ $ declare -F
 ```
 
 
-- ** `readonly`命令**
+#### - ** `readonly`命令**
 
 `readonly`命令等同于`declare -r`，用来声明只读变量，不能改变变量值，也不能`unset`变量。
 
@@ -706,7 +706,7 @@ $ echo $?
 - `-p`：打印出所有的只读变量。
 - `-a`：声明的变量为数组。
 
-- **`let`命令**
+#### - **`let`命令**
 
 `let`命令声明变量时，可以直接执行算术表达式。
 
@@ -922,11 +922,17 @@ declare -a arry #声明关联数组（类似字典）
 ```
 
 ```
-declare -a NIC
 NIC=`ip route | egrep -v "br|docker|default" | egrep "eth|ens|enp"|awk '{print $3}'` 
 ```
 
 
+```
+declare -A master
+master=([ip]="172.16.41.50" [cnc]="61.156.14.176" [ctcc]="144.123.23.125" [cmcc]="120.220.248.125" [other]="61.156.14.176")
+
+echo ${master[ip]}
+
+```
 ### 6.6.2 数组相关操作
 
 ```
@@ -961,9 +967,323 @@ for i in ${!array[*]}
 do
 	echo ${array[$i]}
 done
+```
+
+# 7. 基础操作符
+
+## 7.1 交互式输入
+
+有时，脚本需要在执行过程中，由用户提供一部分数据，这时可以使用`read`命令。它将用户的输入存入一个变量，方便后面的代码使用。用户按下回车键，就表示输入结束。
+
+`read`命令的格式如下。
+
+```
+read [-options] [variable...]
+```
+
+上面语法中，`options`是参数选项，`variable`是用来保存输入数值的一个或多个变量名。如果没有提供变量名，环境变量`REPLY`会包含用户输入的一整行数据。
+
+下面是一个例子`demo.sh`。
+
+```
+#!/bin/bash
+
+echo -n "输入一些文本 > "
+read text
+echo "你的输入：$text"
+```
+
+上面例子中，先显示一行提示文本，然后会等待用户输入文本。用户输入的文本，存入变量`text`，在下一行显示出来。
+
+```
+$ bash demo.sh
+输入一些文本 > 你好，世界
+你的输入：你好，世界
+```
+
+`read`可以接受用户输入的多个值。
+
+```
+#!/bin/bash
+echo Please, enter your firstname and lastname
+read FN LN
+echo "Hi! $LN, $FN !"
+```
+
+上面例子中，`read`根据用户的输入，同时为两个变量赋值。
+
+如果用户的输入项少于`read`命令给出的变量数目，那么额外的变量值为空。如果用户的输入项多于定义的变量，那么多余的输入项会包含到最后一个变量中。
+
+如果`read`命令之后没有定义变量名，那么环境变量`REPLY`会包含所有的输入。
+
+```
+#!/bin/bash
+# read-single: read multiple values into default variable
+echo -n "Enter one or more values > "
+read
+echo "REPLY = '$REPLY'"
+```
+
+上面脚本的运行结果如下。
+
+```
+$ read-single
+Enter one or more values > a b c d
+REPLY = 'a b c d'
+```
+
+`read`命令除了读取键盘输入，可以用来读取文件。
+
+```
+#!/bin/bash
+
+filename='/etc/hosts'
+
+while read myline
+do
+  echo "$myline"
+done < $filename
+```
+
+上面的例子通过`read`命令，读取一个文件的内容。`done`命令后面的定向符`<`，将文件内容导向`read`命令，每次读取一行，存入变量`myline`，直到文件读取完毕。
+
+## 7.2 重定向
+
+### 7.2.1 输出重定向
 
 ```
 
+```
 
+### 7.2.2 输入重定向
 
+```
 
+```
+# 8. 条件判断
+
+## 8.1 `if-then`语句
+
+最基本的结构化命令就是if-then语句。if-then语句有如下格式。
+
+```
+if command
+then
+	commands
+fi
+```
+
+## 8.2 `if-then-else` 语句
+
+if-then-else语句在语句中提供了另外一组命令。
+```
+if command
+then
+	commands
+else
+	commands
+fi
+```
+
+## 8.3 嵌套if
+
+elif使用另一个if-then语句延续else部分。
+
+```
+if command1
+then
+	commands
+elif command2
+then
+	more commands
+fi
+```
+
+可以继续将多个elif语句串起来，形成一个大的if-then-elif嵌套组合。
+
+```
+if command1
+then
+	command set 1
+elif command2
+then
+	command set 2
+elif command3
+then
+	command set 3
+elif command4
+then
+	command set 4
+fi
+```
+
+>[!NOTE]
+>1.`if-then`语句只能以命令退出状态码为测试条件。
+>2.bash shell会依次执行if语句，只有第一个返回退出状态码0的语句中的`then`部分会被执行。
+
+## 8.4 `test`命令
+
+test命令提供了在if-then语句中测试不同条件的途径。
+- 如果test命令中列出的条件成立，test命令就会退出并返回退出状态码0
+- 如果条件不成立，test命令就会退出并返回非零的退出状态码
+
+`if`结构的判断条件，一般使用`test`命令，有三种形式。
+
+```
+# 写法一
+test condition
+
+# 写法二
+[ condition ]
+
+# 写法三
+[[ condition ]]
+```
+
+上面三种形式是等价的，但是第三种形式还支持正则判断，前两种不支持。
+
+>[!IMPORTANT]
+>第一个方括号之后和第二个方括号之前必须加上一个空格，否则就会报错。
+>例如:`[ condition ]`
+
+### 8.5 判断表达式
+
+`if`关键字后面，跟的是一个命令。这个命令可以是`test`命令，也可以是其他命令。命令的返回值为`0`表示判断成立，否则表示不成立。因为这些命令主要是为了得到返回值，所以可以视为表达式。
+
+### 8.5.1 文件判断
+
+以下表达式用来判断文件状态。
+
+- `[ -a file ]`：如果 file 存在，则为`true`。
+- `[ -b file ]`：如果 file 存在并且是一个块（设备）文件，则为`true`。
+- `[ -c file ]`：如果 file 存在并且是一个字符（设备）文件，则为`true`。
+- `[ -d file ]`：如果 file 存在并且是一个目录，则为`true`。
+- `[ -e file ]`：如果 file 存在，则为`true`。
+- `[ -f file ]`：如果 file 存在并且是一个普通文件，则为`true`。
+- `[ -g file ]`：如果 file 存在并且设置了组 ID，则为`true`。
+- `[ -G file ]`：如果 file 存在并且属于有效的组 ID，则为`true`。
+- `[ -h file ]`：如果 file 存在并且是符号链接，则为`true`。
+- `[ -k file ]`：如果 file 存在并且设置了它的“sticky bit”，则为`true`。
+- `[ -L file ]`：如果 file 存在并且是一个符号链接，则为`true`。
+- `[ -N file ]`：如果 file 存在并且自上次读取后已被修改，则为`true`。
+- `[ -O file ]`：如果 file 存在并且属于有效的用户 ID，则为`true`。
+- `[ -p file ]`：如果 file 存在并且是一个命名管道，则为`true`。
+- `[ -r file ]`：如果 file 存在并且可读（当前用户有可读权限），则为`true`。
+- `[ -s file ]`：如果 file 存在且其长度大于零，则为`true`。
+- `[ -S file ]`：如果 file 存在且是一个网络 socket，则为`true`。
+- `[ -t fd ]`：如果 fd 是一个文件描述符，并且重定向到终端，则为`true`。 这可以用来判断是否重定向了标准输入／输出／错误。
+- `[ -u file ]`：如果 file 存在并且设置了 setuid 位，则为`true`。
+- `[ -w file ]`：如果 file 存在并且可写（当前用户拥有可写权限），则为`true`。
+- `[ -x file ]`：如果 file 存在并且可执行（有效用户有执行／搜索权限），则为`true`。
+- `[ FILE1 -nt FILE2 ]`：如果 FILE1 比 FILE2 的更新时间更近，或者 FILE1 存在而 FILE2 不存在，则为`true`。
+- `[ FILE1 -ot FILE2 ]`：如果 FILE1 比 FILE2 的更新时间更旧，或者 FILE2 存在而 FILE1 不存在，则为`true`。
+- `[ FILE1 -ef FILE2 ]`：如果 FILE1 和 FILE2 引用相同的设备和 inode 编号，则为`true`。
+
+### 8.5.2 字符串判断
+
+以下表达式用来判断字符串。
+
+- `[ string ]`：如果`string`不为空（长度大于0），则判断为真。
+- `[ -n string ]`：如果字符串`string`的长度大于零，则判断为真。
+- `[ -z string ]`：如果字符串`string`的长度为零，则判断为真。
+- `[ string1 = string2 ]`：如果`string1`和`string2`相同，则判断为真。
+- `[ string1 == string2 ]` 等同于`[ string1 = string2 ]`。
+- `[ string1 != string2 ]`：如果`string1`和`string2`不相同，则判断为真。
+- `[ string1 '>' string2 ]`：如果按照字典顺序`string1`排列在`string2`之后，则判断为真。
+- `[ string1 '<' string2 ]`：如果按照字典顺序`string1`排列在`string2`之前，则判断为真。
+
+>[!NOTE]
+>`test`命令内部的`>`和`<`，必须用引号引起来（或者是用反斜杠转义）。
+>否则，它们会被 shell 解释为重定向操作符。
+
+### 8.5.3 整数判断
+
+下面的表达式用于判断整数。
+
+- `[ integer1 -eq integer2 ]`：如果`integer1`等于`integer2`，则为`true`。
+- `[ integer1 -ne integer2 ]`：如果`integer1`不等于`integer2`，则为`true`。
+- `[ integer1 -le integer2 ]`：如果`integer1`小于或等于`integer2`，则为`true`。
+- `[ integer1 -lt integer2 ]`：如果`integer1`小于`integer2`，则为`true`。
+- `[ integer1 -ge integer2 ]`：如果`integer1`大于或等于`integer2`，则为`true`。
+- `[ integer1 -gt integer2 ]`：如果`integer1`大于`integer2`，则为`true`。
+### 8.5.4 正则判断
+
+`[[ expression ]]`这种判断形式，支持正则表达式。
+
+```
+[[ string1 =~ regex ]]
+```
+
+上面的语法中，`regex`是一个正则表示式，`=~`是正则比较运算符。
+
+下面是一个例子。
+
+```
+#!/bin/bash
+
+INT=-5
+
+if [[ "$INT" =~ ^-?[0-9]+$ ]]; then
+  echo "INT is an integer."
+  exit 0
+else
+  echo "INT is not an integer." >&2
+  exit 1
+fi
+```
+
+上面代码中，先判断变量`INT`的字符串形式，是否满足`^-?[0-9]+$`的正则模式，如果满足就表明它是一个整数。
+
+### 8.5.5 判断的逻辑运算
+
+通过逻辑运算，可以把多个`test`判断表达式结合起来，创造更复杂的判断。三种逻辑运算`AND`，`OR`，和`NOT`，都有自己的专用符号。
+
+- `AND`运算：符号`&&`，也可使用参数`-a`。
+- `OR`运算：符号`||`，也可使用参数`-o`。
+- `NOT`运算：符号`!`。
+
+示例：`AND`运算格式
+
+```
+if [ condition1 && condition2 ]
+then
+	command
+fi
+```
+
+```
+if [ condition1 ] && [ conditiron2 ]
+then
+	command
+fi
+```
+
+示例：`OR`运算格式
+```
+if [ condition1 || condition2 ]
+then
+	command
+fi
+```
+
+```
+if [ condition1 ] || [ conditiron2 ]
+then
+	command
+fi
+```
+
+示例：`NOT`运算格式
+```
+if !([ condition1 ] && [ condition2 ] )
+then
+	command
+if
+```
+
+```
+if !([ condition1 ] || [ condition2 ] )
+then
+	command
+if
+```

@@ -33,9 +33,10 @@ get_active_netdev_names() {
 		fi
 	done	
 }
-declare -a NIC
-NIC=$(get_active_netdev_names |xargs)
 
+NIC=$(get_active_netdev_names |xargs)
+#等价于
+#NIC=`get_active_netdev_names |xargs`
 for n in ${NIC[*]}
 do
 cat  >/etc/netplan/${n}.yaml <<EOF
