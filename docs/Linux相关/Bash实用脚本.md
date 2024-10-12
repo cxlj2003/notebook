@@ -24,7 +24,7 @@ EOF
 rm -rf /etc/netplan/*
 
 get_active_netdev_names() {
-	All_NICs=$(lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs)
+	All_NICs=$(lshw -C network -businfo  |awk '/(E|e)thernet (C|c)ontroller/{print $2}' |xargs)
 	for i in ${All_NICs}
 	do
 		if ip link show $i |grep LOWER_UP &> /dev/null

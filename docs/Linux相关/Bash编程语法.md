@@ -27,11 +27,20 @@
 ```
 ## 2.2 多行注释
 
+方式1：
 ```
 :<<EOF
 注释1
 注释2
 EOF
+```
+
+方式2：`: + 空格 + 单引号`
+```
+: '
+注释1
+注释2
+'
 ```
 # 3. 命令格式及操作符
 
@@ -238,7 +247,7 @@ echo $(ls -l $(pwd))
 
 ## 4.10 算术（`$((...))`）
 
-`$((...))`可以扩展成整数运算的结果，详见《Bash 的算术运算》一章。
+`$((...))`可以扩展成整数运算的结果.
 
 ```
 echo $((2 + 2))
@@ -1047,19 +1056,38 @@ done < $filename
 
 上面的例子通过`read`命令，读取一个文件的内容。`done`命令后面的定向符`<`，将文件内容导向`read`命令，每次读取一行，存入变量`myline`，直到文件读取完毕。
 
+```
+cat file | while read line
+do 
+	echo $line
+done
+```
+
 ## 7.2 重定向
 
 ### 7.2.1 输出重定向
 
 ```
-
+command1 > file1
 ```
 
+```
+command1 >> file1
+```
+
+```
+command1 &> /dev/null
+```
 ### 7.2.2 输入重定向
 
 ```
-
+command1 < file1
 ```
+
+### 7.2.3 `|`管道符
+
+
+
 # 8. 条件判断
 
 ## 8.1 `if-then`语句
@@ -1146,7 +1174,7 @@ test condition
 >第一个方括号之后和第二个方括号之前必须加上一个空格，否则就会报错。
 >例如:`[ condition ]`
 
-### 8.5 判断表达式
+## 8.5 判断表达式
 
 `if`关键字后面，跟的是一个命令。这个命令可以是`test`命令，也可以是其他命令。命令的返回值为`0`表示判断成立，否则表示不成立。因为这些命令主要是为了得到返回值，所以可以视为表达式。
 
@@ -1234,7 +1262,7 @@ fi
 
 上面代码中，先判断变量`INT`的字符串形式，是否满足`^-?[0-9]+$`的正则模式，如果满足就表明它是一个整数。
 
-### 8.5.5 判断的逻辑运算
+### 8.5.5 逻辑运算
 
 通过逻辑运算，可以把多个`test`判断表达式结合起来，创造更复杂的判断。三种逻辑运算`AND`，`OR`，和`NOT`，都有自己的专用符号。
 
@@ -1287,3 +1315,1204 @@ then
 	command
 if
 ```
+
+### 8.5.6 算术判断
+
+Bash 还提供了`((...))`作为算术条件，进行算术运算的判断。
+
+示例：
+```
+if ((3 > 2)); then
+  echo "true"
+fi
+```
+
+>[!NOTE]
+>算术判断不需要使用`test`命令，而是直接使用`((...))`结构。
+>这个结构的返回值，决定了判断的真伪。
+>如果算术计算的结果是非零值，则表示判断成立。这一点跟命令的返回值正好相反，需要小心。
+
+## 8.6 `case`语句
+
+`case`结构用于多值判断，可以为每个值指定对应的命令，跟包含多个`elif`的`if`结构等价，但是语义更好。它的语法如下。
+
+```
+case expression in
+  pattern )
+    commands ;;
+  pattern )
+    commands ;;
+  ...
+esac
+```
+
+```
+case variable in
+pattern1 | pattern2) commands1;;
+pattern3) commands2;;
+*) default commands;;
+esac
+```
+上面代码中，`expression`是一个表达式，`pattern`是表达式的值或者一个模式，可以有多条，用来匹配多个值，每条以两个分号（`;`）结尾。
+
+```
+#!/bin/bash
+
+echo -n "输入一个1到3之间的数字"
+read character
+case character in
+  1 ) echo 1
+    ;;
+  2 ) echo 2
+    ;;
+  3 ) echo 3
+    ;;
+  * ) echo 输入不符合要求
+esac
+```
+
+上面例子中，最后一条匹配语句的模式是`*`，这个通配符可以匹配其他字符和没有输入字符的情况，类似`if`的`else`部分。
+
+下面是另一个例子。
+
+```
+#!/bin/bash
+
+OS=$(uname -s)
+
+case "$OS" in
+  FreeBSD) echo "This is FreeBSD" ;;
+  Darwin) echo "This is Mac OSX" ;;
+  AIX) echo "This is AIX" ;;
+  Minix) echo "This is Minix" ;;
+  Linux) echo "This is Linux" ;;
+  *) echo "Failed to identify this OS" ;;
+esac
+```
+
+上面的例子判断当前是什么操作系统。
+
+`case`的匹配模式可以使用各种通配符，下面是一些例子。
+
+- `a)`：匹配`a`。
+- `a|b)`：匹配`a`或`b`。
+- `[[:alpha:]])`：匹配单个字母。
+- `???)`：匹配3个字符的单词。
+- `*.txt)`：匹配`.txt`结尾。
+- `*)`：匹配任意输入，通常作为`case`结构的最后一个模式。
+
+```
+#!/bin/bash
+
+echo -n "输入一个字母或数字 > "
+read character
+case $character in
+  [[:lower:]] | [[:upper:]] ) echo "输入了字母 $character"
+                              ;;
+  [0-9] )                     echo "输入了数字 $character"
+                              ;;
+  * )                         echo "输入不符合要求"
+esac
+```
+
+上面例子中，使用通配符`[[:lower:]] | [[:upper:]]`匹配字母，`[0-9]`匹配数字。
+
+Bash 4.0之前，`case`结构只能匹配一个条件，然后就会退出`case`结构。Bash 4.0之后，允许匹配多个条件，这时可以用`;;&`终止每个条件块。
+
+```
+#!/bin/bash
+# test.sh
+
+read -n 1 -p "Type a character > "
+echo
+case $REPLY in
+  [[:upper:]])    echo "'$REPLY' is upper case." ;;&
+  [[:lower:]])    echo "'$REPLY' is lower case." ;;&
+  [[:alpha:]])    echo "'$REPLY' is alphabetic." ;;&
+  [[:digit:]])    echo "'$REPLY' is a digit." ;;&
+  [[:graph:]])    echo "'$REPLY' is a visible character." ;;&
+  [[:punct:]])    echo "'$REPLY' is a punctuation symbol." ;;&
+  [[:space:]])    echo "'$REPLY' is a whitespace character." ;;&
+  [[:xdigit:]])   echo "'$REPLY' is a hexadecimal digit." ;;&
+esac
+```
+
+执行上面的脚本，会得到下面的结果。
+
+```
+$ test.sh
+Type a character > a
+'a' is lower case.
+'a' is alphabetic.
+'a' is a visible character.
+'a' is a hexadecimal digit.
+```
+
+可以看到条件语句结尾添加了`;;&`以后，在匹配一个条件之后，并没有退出`case`结构，而是继续判断下一个条件。
+
+# 9. 循环 
+
+## 9.1 `while`循环
+
+`while`循环有一个判断条件，只要符合条件，就不断循环执行指定的语句。
+
+```
+while condition; do
+  commands
+done
+```
+
+上面代码中，只要满足条件`condition`，就会执行命令`commands`。然后，再次判断是否满足条件`condition`，只要满足，就会一直执行下去。只有不满足条件，才会退出循环。
+
+循环条件`condition`可以使用`test`命令，跟`if`结构的判断条件写法一致。
+
+```
+#!/bin/bash
+
+number=0
+while [ "$number" -lt 10 ]; do
+  echo "Number = $number"
+  number=$((number + 1))
+done
+```
+
+上面例子中，只要变量`$number`小于10，就会不断加1，直到`$number`等于10，然后退出循环。
+
+关键字`do`可以跟`while`不在同一行，这时两者之间不需要使用分号分隔。
+
+```
+while true
+do
+  echo 'Hi, while looping ...';
+done
+```
+
+上面的例子会无限循环，可以按下 Ctrl + c 停止。
+
+`while`循环写成一行，也是可以的。
+
+```
+$ while true; do echo 'Hi, while looping ...'; done
+```
+
+`while`的条件部分也可以是执行一个命令。
+
+```
+$ while echo 'ECHO'; do echo 'Hi, while looping ...'; done
+```
+
+上面例子中，判断条件是`echo 'ECHO'`。由于这个命令总是执行成功，所以上面命令会产生无限循环。
+
+`while`的条件部分可以执行任意数量的命令，但是执行结果的真伪只看最后一个命令的执行结果。
+
+```
+$ while true; false; do echo 'Hi, looping ...'; done
+```
+
+上面代码运行后，不会有任何输出，因为`while`的最后一个命令是`false`。
+
+## 9.2 `until`循环
+
+`until`循环与`while`循环恰好相反，只要不符合判断条件（判断条件失败），就不断循环执行指定的语句。一旦符合判断条件，就退出循环。
+
+```
+until condition; do
+  commands
+done
+```
+
+关键字`do`可以与`until`不写在同一行，这时两者之间不需要分号分隔。
+
+```
+until condition
+do
+  commands
+done
+```
+
+下面是一个例子。
+
+```
+$ until false; do echo 'Hi, until looping ...'; done
+Hi, until looping ...
+Hi, until looping ...
+Hi, until looping ...
+^C
+```
+
+上面代码中，`until`的部分一直为`false`，导致命令无限运行，必须按下 Ctrl + c 终止。
+
+```
+#!/bin/bash
+
+number=0
+until [ "$number" -ge 10 ]; do
+  echo "Number = $number"
+  number=$((number + 1))
+done
+```
+
+上面例子中，只要变量`number`小于10，就会不断加1，直到`number`大于等于10，就退出循环。
+
+`until`的条件部分也可以是一个命令，表示在这个命令执行成功之前，不断重复尝试。
+
+```
+until cp $1 $2; do
+  echo 'Attempt to copy failed. waiting...'
+  sleep 5
+done
+```
+
+上面例子表示，只要`cp $1 $2`这个命令执行不成功，就5秒钟后再尝试一次，直到成功为止。
+
+`until`循环都可以转为`while`循环，只要把条件设为否定即可。上面这个例子可以改写如下。
+
+```
+while ! cp $1 $2; do
+  echo 'Attempt to copy failed. waiting...'
+  sleep 5
+done
+```
+
+一般来说，`until`用得比较少，完全可以统一都使用`while`。
+
+## 9.3 `for...in`循环
+
+`for...in`循环用于遍历列表的每一项。
+
+```
+for variable in list
+do
+  commands
+done
+```
+
+上面语法中，`for`循环会依次从`list`列表中取出一项，作为变量`variable`，然后在循环体中进行处理。
+
+关键词`do`可以跟`for`写在同一行，两者使用分号分隔。
+
+```
+for variable in list; do
+  commands
+done
+```
+
+下面是一个例子。
+
+```
+#!/bin/bash
+
+for i in word1 word2 word3; do
+  echo $i
+done
+```
+
+上面例子中，`word1 word2 word3`是一个包含三个单词的列表，变量`i`依次等于`word1`、`word2`、`word3`，命令`echo $i`则会相应地执行三次。
+
+列表可以由通配符产生。
+
+```
+for i in *.png; do
+  ls -l $i
+done
+```
+
+上面例子中，`*.png`会替换成当前目录中所有 PNG 图片文件，变量`i`会依次等于每一个文件。
+
+列表也可以通过子命令产生。
+
+```
+#!/bin/bash
+
+count=0
+for i in $(cat ~/.bash_profile); do
+  count=$((count + 1))
+  echo "Word $count ($i) contains $(echo -n $i | wc -c) characters"
+done
+```
+
+上面例子中，`cat ~/.bash_profile`命令会输出`~/.bash_profile`文件的内容，然后通过遍历每一个词，计算该文件一共包含多少个词，以及每个词有多少个字符。
+
+`in list`的部分可以省略，这时`list`默认等于脚本的所有参数`$@`。但是，为了可读性，最好还是不要省略，参考下面的例子。
+
+```
+for filename; do
+  echo "$filename"
+done
+
+# 等同于
+
+for filename in "$@" ; do
+  echo "$filename"
+done
+```
+
+在函数体中也是一样的，`for...in`循环省略`in list`的部分，则`list`默认等于函数的所有参数。
+
+## 9.4 `for`循环
+
+`for`循环还支持 C 语言的循环语法。
+
+```
+for (( expression1; expression2; expression3 )); do
+  commands
+done
+```
+
+上面代码中，`expression1`用来初始化循环条件，`expression2`用来决定循环结束的条件，`expression3`在每次循环迭代的末尾执行，用于更新值。
+
+注意，循环条件放在双重圆括号之中。另外，圆括号之中使用变量，不必加上美元符号`$`。
+
+它等同于下面的`while`循环。
+
+```
+(( expression1 ))
+while (( expression2 )); do
+  commands
+  (( expression3 ))
+done
+```
+
+下面是一个例子。
+
+```
+for (( i=0; i<5; i=i+1 )); do
+  echo $i
+done
+```
+
+上面代码中，初始化变量`i`的值为0，循环执行的条件是`i`小于5。每次循环迭代结束时，`i`的值加1。
+
+`for`条件部分的三个语句，都可以省略。
+
+```
+for ((;;))
+do
+  read var
+  if [ "$var" = "." ]; then
+    break
+  fi
+done
+```
+
+上面脚本会反复读取命令行输入，直到用户输入了一个点（`.`）为止，才会跳出循环。
+
+## 9.5 `break,continue`
+
+Bash 提供了两个内部命令`break`和`continue`，用来在循环内部跳出循环。
+
+`break`命令立即终止循环，程序继续执行循环块之后的语句，即不再执行剩下的循环。
+
+```
+#!/bin/bash
+
+for number in 1 2 3 4 5 6
+do
+  echo "number is $number"
+  if [ "$number" = "3" ]; then
+    break
+  fi
+done
+```
+
+上面例子只会打印3行结果。一旦变量`$number`等于3，就会跳出循环，不再继续执行。
+
+`continue`命令立即终止本轮循环，开始执行下一轮循环。
+
+```
+#!/bin/bash
+
+while read -p "What file do you want to test?" filename
+do
+  if [ ! -e "$filename" ]; then
+    echo "The file does not exist."
+    continue
+  fi
+
+  echo "You entered a valid file.."
+done
+```
+
+上面例子中，只要用户输入的文件不存在，`continue`命令就会生效，直接进入下一轮循环（让用户重新输入文件名），不再执行后面的打印语句。
+
+## 9.6 `select`结构
+
+`select`结构主要用来生成简单的菜单。它的语法与`for...in`循环基本一致。
+
+```
+select name
+[in list]
+do
+  commands
+done
+```
+
+Bash 会对`select`依次进行下面的处理。
+
+1. `select`生成一个菜单，内容是列表`list`的每一项，并且每一项前面还有一个数字编号。
+2. Bash 提示用户选择一项，输入它的编号。
+3. 用户输入以后，Bash 会将该项的内容存在变量`name`，该项的编号存入环境变量`REPLY`。如果用户没有输入，就按回车键，Bash 会重新输出菜单，让用户选择。
+4. 执行命令体`commands`。
+5. 执行结束后，回到第一步，重复这个过程。
+
+下面是一个例子。
+
+```
+#!/bin/bash
+# select.sh
+
+select brand in Samsung Sony iphone symphony Walton
+do
+  echo "You have chosen $brand"
+done
+```
+
+执行上面的脚本，Bash 会输出一个品牌的列表，让用户选择。
+
+```
+$ ./select.sh
+1) Samsung
+2) Sony
+3) iphone
+4) symphony
+5) Walton
+#?
+```
+
+如果用户没有输入编号，直接按回车键。Bash 就会重新输出一遍这个菜单，直到用户按下`Ctrl + c`，退出执行。
+
+`select`可以与`case`结合，针对不同项，执行不同的命令。
+
+```
+#!/bin/bash
+
+echo "Which Operating System do you like?"
+
+select os in Ubuntu LinuxMint Windows8 Windows10 WindowsXP
+do
+  case $os in
+    "Ubuntu"|"LinuxMint")
+      echo "I also use $os."
+    ;;
+    "Windows8" | "Windows10" | "WindowsXP")
+      echo "Why don't you try Linux?"
+    ;;
+    *)
+      echo "Invalid entry."
+      break
+    ;;
+  esac
+done
+```
+
+上面例子中，`case`针对用户选择的不同项，执行不同的命令。
+
+# 10. 函数
+
+函数（function）是可以重复使用的代码片段，有利于代码的复用。它与别名（alias）的区别是，别名只适合封装简单的单个命令，函数则可以封装复杂的多行命令。
+
+函数总是在当前 Shell 执行，这是跟脚本的一个重大区别，Bash 会新建一个子 Shell 执行脚本。如果函数与脚本同名，函数会优先执行。但是，函数的优先级不如别名，即如果函数与别名同名，那么别名优先执行。
+
+## 10.1 定义函数
+
+Bash 函数定义的语法有两种。
+
+```
+# 第一种
+fn() {
+  # codes
+}
+
+# 第二种
+function fn() {
+  # codes
+}
+```
+
+上面代码中，`fn`是自定义的函数名，函数代码就写在大括号之中。这两种写法是等价的。
+
+示例：定义函数
+```
+hello() {
+  echo "Hello $1"
+}
+```
+## 10.2 调用函数
+
+下面是一个简单函数的例子。
+
+```
+hello() {
+  echo "Hello $1"
+}
+```
+
+上面代码中，函数体里面的`$1`表示函数调用时的第一个参数。
+
+调用时，就直接写函数名，参数跟在函数名后面。
+
+```
+$ hello world
+Hello world
+```
+
+## 10.3 操作函数
+
+删除函数
+```
+unset FunctionName
+```
+ 
+ 查看当前shell所有函数
+```
+declare -f
+```
+
+查看当前shell所有函数名称
+```
+declare -F
+```
+
+查看当前shell指定函数的定义
+```
+declare -f FunctionName
+```
+
+## 10.4 参数变量
+
+函数体内可以使用参数变量，获取函数参数。函数的参数变量，与脚本参数变量是一致的。
+
+- `$1`~`$9`：函数的第一个到第9个的参数。
+- `$0`：函数所在的脚本名。
+- `$#`：函数的参数总数。
+- `$@`：函数的全部参数，参数之间使用空格分隔。
+- `$*`：函数的全部参数，参数之间使用变量`$IFS`值的第一个字符分隔，默认为空格，但是可以自定义。
+
+如果函数的参数多于9个，那么第10个参数可以用`${10}`的形式引用，以此类推。
+
+下面是一个示例脚本`test.sh`。
+
+```
+#!/bin/bash
+# test.sh
+
+function alice {
+  echo "alice: $@"
+  echo "$0: $1 $2 $3 $4"
+  echo "$# arguments"
+
+}
+
+alice in wonderland
+```
+
+运行该脚本，结果如下。
+
+```
+$ bash test.sh
+alice: in wonderland
+test.sh: in wonderland
+2 arguments
+```
+
+上面例子中，由于函数`alice`只有第一个和第二个参数，所以第三个和第四个参数为空。
+
+下面是一个日志函数的例子。
+
+```
+function log_msg {
+  echo "[`date '+ %F %T'` ]: $@"
+}
+```
+
+使用方法如下。
+
+```
+$ log_msg "This is sample log message"
+[ 2018-08-16 19:56:34 ]: This is sample log message
+```
+
+## 10.5 `return`命令
+
+bash shell使用`return`命令来退出函数并返回特定的退出状态码。`return`命令允许指定一个整数值来定义函数的退出状态码，从而提供了一种简单的途径来编程设定函数退出状态码。
+
+`return`命令用于从函数返回一个值。函数执行到这条命令，就不再往下执行了，直接返回了。
+
+```
+function func_return_value {
+  return 10
+}
+```
+
+函数将返回值返回给调用者。如果命令行直接执行函数，下一个命令可以用`$?`拿到返回值。
+
+```
+$ func_return_value
+$ echo "Value returned by function is: $?"
+Value returned by function is: 10
+```
+
+`return`后面不跟参数，只用于返回也是可以的。
+
+```
+function name {
+  commands
+  return
+}
+```
+
+>[!NOTE]
+>如果在用`$?`变量提取函数返回值之前执行了其他命令，函数的返回值就会丢失。记住，`$?`变量会返回执行的最后一条命令的退出状态码。
+>退出状态码必须是0~255。
+## 10.6 使用函数输出
+
+示例：
+```
+#!/bin/bash
+function dbl {
+	read -p "Enter a value: " value
+	echo $[ $value * 2 ]
+}
+result=$(dbl)
+echo "The new value is $result"
+```
+
+新函数会用echo语句来显示计算的结果。该脚本会获取dbl函数的输出，而不是查看退出状态码。
+这个例子中演示了一个不易察觉的技巧。你会注意到dbl函数实际上输出了两条消息。read命令输出了一条简短的消息来向用户询问输入值。bash shell脚本非常聪明，并不将其作为STDOUT输出的一部分，并且忽略掉它。如果你用echo语句生成这条消息来向用户查询，那么它会与输出值一起被读进shell变量中。
+## 10.7 函数中使用变量
+
+### 10.7.1 向函数传入参数
+
+函数可以使用标准的参数环境变量来表示命令行上传给函数的参数。例如，函数名会在$0变量中定义，函数命令行上的任何参数都会通过$1、$2等定义。也可以用特殊变量$#来判断传给函数的参数数目。
+
+示例：
+```
+#!/bin/bash
+function dbl {
+	read -p "Enter a value: " value
+	echo $[ $value * 2 ]
+}
+
+dbl $value 10
+```
+
+运行结果
+```
+$dbl $value
+Enter a value: 10
+20
+```
+### 10.7.2 函数中处理变量
+
+Bash 函数体内直接声明的变量，属于全局变量，整个脚本都可以读取。这一点需要特别小心。
+
+```
+# 脚本 test.sh
+fn () {
+  foo=1
+  echo "fn: foo = $foo"
+}
+
+fn
+echo "global: foo = $foo"
+```
+
+上面脚本的运行结果如下。
+
+```
+$ bash test.sh
+fn: foo = 1
+global: foo = 1
+```
+
+上面例子中，变量`$foo`是在函数`fn`内部声明的，函数体外也可以读取。
+
+函数体内不仅可以声明全局变量，还可以修改全局变量。
+
+```
+#! /bin/bash
+foo=1
+
+fn () {
+  foo=2
+}
+
+fn
+
+echo $foo
+```
+
+上面代码执行后，输出的变量`$foo`值为2。
+
+函数里面可以用`local`命令声明局部变量。
+
+```
+#! /bin/bash
+# 脚本 test.sh
+fn () {
+  local foo
+  foo=1
+  echo "fn: foo = $foo"
+}
+
+fn
+echo "global: foo = $foo"
+```
+
+上面脚本的运行结果如下。
+
+```
+$ bash test.sh
+fn: foo = 1
+global: foo =
+```
+
+上面例子中，`local`命令声明的`$foo`变量，只在函数体内有效，函数体外没有定义。
+
+# 11. 数组
+
+## 11.1 创建数组
+
+数组可以采用逐个赋值的方法创建。
+
+```
+ARRAY[INDEX]=value
+```
+
+上面语法中，`ARRAY`是数组的名字，可以是任意合法的变量名。`INDEX`是一个大于或等于零的整数，也可以是算术表达式。注意数组第一个元素的下标是0， 而不是1。
+
+下面创建一个三个成员的数组。
+
+```
+$ array[0]=val
+$ array[1]=val
+$ array[2]=val
+```
+
+数组也可以采用一次性赋值的方式创建。
+
+```
+ARRAY=(value1 value2 ... valueN)
+
+# 等同于
+
+ARRAY=(
+  value1
+  value2
+  value3
+)
+```
+
+采用上面方式创建数组时，可以按照默认顺序赋值，也可以在每个值前面指定位置。
+
+```
+$ array=(a b c)
+$ array=([2]=c [0]=a [1]=b)
+
+$ days=(Sun Mon Tue Wed Thu Fri Sat)
+$ days=([0]=Sun [1]=Mon [2]=Tue [3]=Wed [4]=Thu [5]=Fri [6]=Sat)
+```
+
+只为某些值指定位置，也是可以的。
+
+```
+names=(hatter [5]=duchess alice)
+```
+
+上面例子中，`hatter`是数组的0号位置，`duchess`是5号位置，`alice`是6号位置。
+
+没有赋值的数组元素的默认值是空字符串。
+
+定义数组的时候，可以使用通配符。
+
+```
+$ mp3s=( *.mp3 )
+```
+
+上面例子中，将当前目录的所有 MP3 文件，放进一个数组。
+
+先用`declare -a`命令声明一个数组，也是可以的。
+
+```
+$ declare -a ARRAYNAME
+```
+
+`read -a`命令则是将用户的命令行输入，存入一个数组。
+
+```
+$ read -a dice
+```
+
+上面命令将用户的命令行输入，存入数组`dice`。
+
+## 11.2 读取数组
+
+### 11.2.1 读取单个元素
+
+读取数组指定位置的成员，要使用下面的语法。
+
+```
+$ echo ${array[i]}     # i 是索引
+```
+
+上面语法里面的大括号是必不可少的，否则 Bash 会把索引部分`[i]`按照原样输出。
+
+```
+$ array[0]=a
+
+$ echo ${array[0]}
+a
+
+$ echo $array[0]
+a[0]
+```
+
+上面例子中，数组的第一个元素是`a`。如果不加大括号，Bash 会直接读取`$array`首成员的值，然后将`[0]`按照原样输出。
+
+### 11.2.2 读取所有成员
+
+`@`和`*`是数组的特殊索引，表示返回数组的所有成员。
+
+```
+$ foo=(a b c d e f)
+$ echo ${foo[@]}
+a b c d e f
+```
+
+这两个特殊索引配合`for`循环，就可以用来遍历数组。
+
+```
+for i in "${names[@]}"; do
+  echo $i
+done
+```
+
+`@`和`*`放不放在双引号之中，是有差别的。
+
+```
+$ activities=( swimming "water skiing" canoeing "white-water rafting" surfing )
+$ for act in ${activities[@]}; \
+do \
+echo "Activity: $act"; \
+done
+
+Activity: swimming
+Activity: water
+Activity: skiing
+Activity: canoeing
+Activity: white-water
+Activity: rafting
+Activity: surfing
+```
+
+上面的例子中，数组`activities`实际包含5个成员，但是`for...in`循环直接遍历`${activities[@]}`，导致返回7个结果。为了避免这种情况，一般把`${activities[@]}`放在双引号之中。
+
+```
+$ for act in "${activities[@]}"; \
+do \
+echo "Activity: $act"; \
+done
+
+Activity: swimming
+Activity: water skiing
+Activity: canoeing
+Activity: white-water rafting
+Activity: surfing
+```
+
+上面例子中，`${activities[@]}`放在双引号之中，遍历就会返回正确的结果。
+
+`${activities[*]}`不放在双引号之中，跟`${activities[@]}`不放在双引号之中是一样的。
+
+```
+$ for act in ${activities[*]}; \
+do \
+echo "Activity: $act"; \
+done
+
+Activity: swimming
+Activity: water
+Activity: skiing
+Activity: canoeing
+Activity: white-water
+Activity: rafting
+Activity: surfing
+```
+
+`${activities[*]}`放在双引号之中，所有成员就会变成单个字符串返回。
+
+```
+$ for act in "${activities[*]}"; \
+do \
+echo "Activity: $act"; \
+done
+
+Activity: swimming water skiing canoeing white-water rafting surfing
+```
+
+所以，拷贝一个数组的最方便方法，就是写成下面这样。
+
+```
+$ hobbies=( "${activities[@]}" )
+```
+
+上面例子中，数组`activities`被拷贝给了另一个数组`hobbies`。
+
+这种写法也可以用来为新数组添加成员。
+
+```
+$ hobbies=( "${activities[@]}" diving )
+```
+
+上面例子中，新数组`hobbies`在数组`activities`的所有成员之后，又添加了一个成员。
+
+### 11.2.3 默认位置
+
+如果读取数组成员时，没有读取指定哪一个位置的成员，默认使用`0`号位置。
+
+```
+$ declare -a foo
+$ foo=A
+$ echo ${foo[0]}
+A
+```
+
+上面例子中，`foo`是一个数组，赋值的时候不指定位置，实际上是给`foo[0]`赋值。
+
+引用一个不带下标的数组变量，则引用的是`0`号位置的数组元素。
+
+```
+$ foo=(a b c d e f)
+$ echo ${foo}
+a
+$ echo $foo
+a
+```
+
+上面例子中，引用数组元素的时候，没有指定位置，结果返回的是`0`号位置。
+
+## 11.3 数组的长度
+
+要想知道数组的长度（即一共包含多少成员），可以使用下面两种语法。
+
+```
+${#array[*]}
+${#array[@]}
+```
+
+下面是一个例子。
+
+```
+$ a[100]=foo
+
+$ echo ${#a[*]}
+1
+
+$ echo ${#a[@]}
+1
+```
+
+上面例子中，把字符串赋值给`100`位置的数组元素，这时的数组只有一个元素。
+
+注意，如果用这种语法去读取具体的数组成员，就会返回该成员的字符串长度。这一点必须小心。
+
+```
+$ a[100]=foo
+$ echo ${#a[100]}
+3
+```
+
+上面例子中，`${#a[100]}`实际上是返回数组第100号成员`a[100]`的值（`foo`）的字符串长度。
+
+## 11.4 提取数组序号
+
+`${!array[@]}`或`${!array[*]}`，可以返回数组的成员序号，即哪些位置是有值的。
+
+```
+$ arr=([5]=a [9]=b [23]=c)
+$ echo ${!arr[@]}
+5 9 23
+$ echo ${!arr[*]}
+5 9 23
+```
+
+上面例子中，数组的5、9、23号位置有值。
+
+利用这个语法，也可以通过`for`循环遍历数组。
+
+```
+arr=(a b c d)
+
+for i in ${!arr[@]};do
+  echo ${arr[i]}
+done
+```
+
+## 11.5 提取数组成员
+
+`${array[@]:position:length}`的语法可以提取数组成员。
+
+```
+$ food=( apples bananas cucumbers dates eggs fajitas grapes )
+$ echo ${food[@]:1:1}
+bananas
+$ echo ${food[@]:1:3}
+bananas cucumbers dates
+```
+
+上面例子中，`${food[@]:1:1}`返回从数组1号位置开始的1个成员，`${food[@]:1:3}`返回从1号位置开始的3个成员。
+
+如果省略长度参数`length`，则返回从指定位置开始的所有成员。
+
+```
+$ echo ${food[@]:4}
+eggs fajitas grapes
+```
+
+上面例子返回从4号位置开始到结束的所有成员。
+
+## 11.6 追加数组成员
+
+数组末尾追加成员，可以使用`+=`赋值运算符。它能够自动地把值追加到数组末尾。否则，就需要知道数组的最大序号，比较麻烦。
+
+```
+$ foo=(a b c)
+$ echo ${foo[@]}
+a b c
+
+$ foo+=(d e f)
+$ echo ${foo[@]}
+a b c d e f
+```
+
+## 11.7 删除数组
+
+删除一个数组成员，使用`unset`命令。
+
+```
+$ foo=(a b c d e f)
+$ echo ${foo[@]}
+a b c d e f
+
+$ unset foo[2]
+$ echo ${foo[@]}
+a b d e f
+```
+
+上面例子中，删除了数组中的第三个元素，下标为2。
+
+将某个成员设为空值，可以从返回值中“隐藏”这个成员。
+
+```
+$ foo=(a b c d e f)
+$ foo[1]=''
+$ echo ${foo[@]}
+a c d e f
+```
+
+上面例子中，将数组的第二个成员设为空字符串，数组的返回值中，这个成员就“隐藏”了。
+
+注意，这里是“隐藏”，而不是删除，因为这个成员仍然存在，只是值变成了空值。
+
+```
+$ foo=(a b c d e f)
+$ foo[1]=''
+$ echo ${#foo[@]}
+6
+$ echo ${!foo[@]}
+0 1 2 3 4 5
+```
+
+上面代码中，第二个成员设为空值后，数组仍然包含6个成员。
+
+由于空值就是空字符串，所以下面这样写也有隐藏效果，但是不建议这种写法。
+
+```
+$ foo[1]=
+```
+
+上面的写法也相当于“隐藏”了数组的第二个成员。
+
+直接将数组变量赋值为空字符串，相当于“隐藏”数组的第一个成员。
+
+```
+$ foo=(a b c d e f)
+$ foo=''
+$ echo ${foo[@]}
+b c d e f
+```
+
+上面的写法相当于“隐藏”了数组的第一个成员。
+
+`unset ArrayName`可以清空整个数组。
+
+```
+$ unset ARRAY
+
+$ echo ${ARRAY[*]}
+<--no output-->
+```
+
+## 11.8 关联数组
+
+Bash 的新版本支持关联数组。关联数组使用字符串而不是整数作为数组索引。
+
+`declare -A`可以声明关联数组。
+
+```
+declare -A colors
+colors["red"]="#ff0000"
+colors["green"]="#00ff00"
+colors["blue"]="#0000ff"
+```
+
+关联数组必须用带有`-A`选项的`declare`命令声明创建。相比之下，整数索引的数组，可以直接使用变量名创建数组，关联数组就不行。
+
+访问关联数组成员的方式，几乎与整数索引数组相同。
+
+```
+echo ${colors["blue"]}
+```
+
+# 12. 常用命令
+
+## 12.1 `echo,printf`
+## 12.2 `cd,pwd,mkdir,rmdir`
+## 12.3 `ls`
+## 12.4 `touch,file,cp,mv,rm,ln,tar`
+## 12.5 `cat,head,taill,more,less`
+## 12.6 `ps,top,kill`
+## 12.7 `mount,df,du`
+## 12.8 `grep,egrep,sort`
+## 12.9 `whereis,find,which,type`
+
+# 13. 正则表达式
+
+
+
+# 14. 字符串处理工具
+
+## 14.1 `grep`
+
+## 14.2 `sed`
+
+```
+echo "This is a test" | sed 's/test/big test/'
+```
+
+```
+echo "The quick brown fox jumps over the lazy dog." | sed -e 's/brown/green/; s/dog/cat/'
+
+echo "The quick brown fox jumps over the lazy dog." | sed -e '
+s/brown/green/
+s/fox/elephant/
+s/dog/cat/'
+```
+
+## 14.3 `awk`
+`
+
+
+
+
+

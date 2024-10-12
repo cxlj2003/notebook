@@ -10,28 +10,44 @@ _EOF_
 ```
 #!/bin/bash
 menu_list() {
-
-menu_option_one() {
-  echo "Option One!"
-}
-
-menu_option_two() {
-  echo "Option two!"
-}
-
-press_enter() {
-  echo ""
-  echo -n "	Press Enter to continue "
-  read
-  clear
-}
-
+##选择错误重新选择
 incorrect_selection() {
   echo "Incorrect selection! Try again."
 }
 
-until [ "$selection" = "0" ]; do
+menu_option_one() {
+  if [[  ]]
+  then
+	  echo "Option One!"
+  else
+	  incorrect_selection
+  fi
+}
+
+menu_option_two() {
+  if [[  ]]
+  then
+	  echo "Option two!"
+  else
+	  incorrect_selection
+  fi
+}
+
+menu_option_three() {
+  if [[  ]]
+  then
+	  echo "Option three!"
+  else
+	  incorrect_selection
+  fi
+}
+
+press_anykey() {
+  read -n 1 -r -s -p "Press any key to continue..."
   clear
+}
+
+until [ "$selection" = "0" ]; do
     clear
     cat<<_EOF_
     ==============================
@@ -49,11 +65,11 @@ _EOF_
   read selection
   echo ""
   case $selection in
-    1 ) clear ; menu_option_one ; press_enter ;;
-    2 ) clear ; menu_option_two ; press_enter ;;
-    3 ) clear ; menu_option_three ; press_enter ;;
+    1 ) clear ; menu_option_one ; press_anykey ;;
+    2 ) clear ; menu_option_two ; press_anykey ;;
+    3 ) clear ; menu_option_three ; press_anykey ;;
     0 ) clear ; exit 0;;
-    * ) clear ; incorrect_selection ; press_enter ;;
+    * ) clear ; incorrect_selection ; press_anykey ;;
   esac
 done
 }
@@ -88,14 +104,14 @@ get_os_versionid
 
 ```
 get_netdev_names() {
-	lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs
+	lshw -C network -businfo  |awk '/(E|e)thernet (C|c)ontroller/{print $2}' |xargs
 }
 get_netdev_names
 ```
 
 ```
 get_active_netdev_names() {
-	All_NICs=$(lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs)
+	local All_NICs=$(lshw -C network -businfo  |awk '/(E|e)thernet (C|c)ontroller/{print $2}' |xargs)
 	for i in ${All_NICs}
 	do
 		if ip link show $i |grep LOWER_UP &> /dev/null
@@ -106,3 +122,17 @@ get_active_netdev_names() {
 }
 get_active_netdev_names |xargs
 ```
+
+# 5. 读取文件中的行
+
+```
+get_lines() {
+	local file=$1
+	cat $file | while read line
+		do
+			echo $line
+		done
+}
+```
+
+# 6. 

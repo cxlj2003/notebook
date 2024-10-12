@@ -66,7 +66,7 @@ do
 	fi
 done |xargs
 
-for i in `lshw -C network -businfo  |awk '/Ethernet (C|c)ontroller/{print $2}' |xargs`
+for i in `lshw -C network -businfo  |awk '/(E|e)thernet (C|c)ontroller/{print $2}' |xargs`
 do 
 	if ip link show $NIC |grep LOWER_UP &> /dev/null;then
 		echo $i

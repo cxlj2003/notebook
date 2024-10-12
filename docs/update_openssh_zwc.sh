@@ -397,52 +397,53 @@ systemctl enable ssh
 fi
 }
 
-menu_list() {
-menu_option_one() {
-  local SERVER_IP='100.201.3.111'
-  use_custom_mirrors $SERVER_IP $ID $VERSION 
+main() {
+	use_custom_mirrors $SERVER_IP $ID $VERSION 
   env_installer $ID $VERSION  
   file_download $SERVER_IP $ZLIB_RELEASE $OPENSSL_RELEASE $OPENSSH_RELEASE
   zlib_installer $ZLIB_RELEASE
   ssl_installer $ID $OPENSSL_RELEASE
   ssh_installer $ID $OPENSSH_RELEASE  
-  echo "信创升级openssh！完成"
+}
+
+menu_list() {
+incorrect_selection() {
+  echo "选择有误，请重新选择！"
+}
+
+menu_option_one() {
+  local SERVER_IP='100.201.3.111'
+  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
+  then
+  	main
+  else
+  	incorrect_selection
+  fi  
 }
 
 menu_option_two() {
   local SERVER_IP='192.168.10.239'
-  use_custom_mirrors $SERVER_IP $ID $VERSION 
-  env_installer $ID $VERSION  
-  file_download $SERVER_IP $ZLIB_RELEASE $OPENSSL_RELEASE $OPENSSH_RELEASE
-  zlib_installer $ZLIB_RELEASE
-  ssl_installer $ID $OPENSSL_RELEASE
-  ssh_installer $ID $OPENSSH_RELEASE 
-  echo "X86(政务外)升级openssh完成！"
+  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
+  then
+  	main
+  else
+  	incorrect_selection
+  fi  
 }
 
 menu_option_three() {
   local SERVER_IP='100.0.0.239'
-  use_custom_mirrors $SERVER_IP $ID $VERSION 
-  env_installer $ID $VERSION  
-  file_download $SERVER_IP $ZLIB_RELEASE $OPENSSL_RELEASE $OPENSSH_RELEASE
-  zlib_installer $ZLIB_RELEASE
-  ssl_installer $ID $OPENSSL_RELEASE
-  ssh_installer $ID $OPENSSH_RELEASE 
-  echo "X86(行政服务域)升级openssh完成！"
+  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
+  then
+  	main
+  else
+  	incorrect_selection
+  fi  
 }
-
-press_enter() {
-  echo ""
-  echo -n "	Press Enter to continue !"
-  read
+press_anykey() {
+  read -n 1 -r -s -p "Press any key to continue..."
   clear
 }
-
-incorrect_selection() {
-  echo "Incorrect selection! Try again."
-}
-
-
 until [ "$selection" = "0" ]; do
   clear
     cat<<_EOF_
@@ -472,11 +473,11 @@ _EOF_
   read selection
   echo ""
   case $selection in
-    1 ) clear ; menu_option_one ; press_enter ;;
-    2 ) clear ; menu_option_two ; press_enter ;;
-    3 ) clear ; menu_option_three ; press_enter ;;
+    1 ) clear ; menu_option_one ; press_anykey ;;
+    2 ) clear ; menu_option_two ; press_anykey ;;
+    3 ) clear ; menu_option_three ; press_anykey ;;
     0 ) clear ; exit 0;;
-    * ) clear ; incorrect_selection ; press_enter ;;
+    * ) clear ; incorrect_selection ; press_anykey ;;
   esac
 done
 }
