@@ -11,7 +11,7 @@ else
 fi
 
 use_custom_mirrors() {
-set -ex
+set -e
 local SERVER_IP=$1
 local ID=$2
 local VERSION=$3
