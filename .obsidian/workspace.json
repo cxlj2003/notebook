@@ -154,7 +154,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "b1eaeb491d9ee8e3",
@@ -219,7 +220,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 342.5
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -231,7 +232,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "32862f93e4bdaa33",
+  "active": "bf3079af4b97ddfe",
   "lastOpenFiles": [
     "docs/交换机配置脚本.md",
     "docs/python3/python3编程语法.md",
