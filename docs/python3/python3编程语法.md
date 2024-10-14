@@ -307,6 +307,8 @@ print(type(a), type(b), type(c), type(d))
 
 ### 2.2.1  Number（数字）
 
+#### 1)操作数字
+
 Python3 支持 **int、float、bool、complex（复数）**。
 
 在Python 3里，只有一种整数类型 int，表示为长整型，没有 python2 中的 Long。
@@ -330,7 +332,7 @@ del var_a, var_b
 
 ```
  
- 数字运算
+ #### 2)数字运算
 
 表达式的语法很直白： +, -, * 和 /, 和其它语言（如Pascal或C）里一样。例如：
 
@@ -343,7 +345,7 @@ del var_a, var_b
 **   #乘方
 ```
 
-随机数函数
+#### 3)随机数函数
 
 ```
 choice(seq)                          #从序列的元素中随机挑选一个元素，比如random.choice(range(10))，从0到9中随机挑选一个整数。
@@ -354,15 +356,877 @@ shuffle(lst)                         #将序列的所有元素随机排序
 uniform(x, y)                        #随机生成下一个实数，它在[x,y]范围内。
 ```
 
+#### 4)数学常量
+
+```
+pi    #数学常量 pi（圆周率，一般以π来表示）
+e     #数学常量 e，e即自然常数（自然常数）。
+```
 
 ### 2.2.2 字符串
 
+字符串是 Python 中最常用的数据类型。我们可以使用引号( ' 或 " )来创建字符串。
 
+#### 1)操作字符串
+创建字符串很简单，只要为变量分配一个值即可。例如：
 
+```
+var1 = 'Hello World!'
+var2 = "Runoob"
+```
+
+Python 访问子字符串，可以使用方括号 [] 来截取字符串，字符串的截取的语法格式如下：
+
+```
+变量[头下标:尾下标]
+```
+
+你可以截取字符串的一部分并与其他字段拼接，如下实例：
+
+```
+#!/usr/bin/python3  
+var1 = 'Hello World!'  
+print('字符串的内容是: '+var1)  
+print('第一个字符是: '+var1[0])  
+print('最后一个字符是: '+var1[-1])  
+print('第7个字符是: '+var1[6])  
+print("第7个字符之前的内容是: ",var1[:6])   #不包含第7个字符,前6个字符  
+print('第7个字符之后的内容是: ' ,var1[6:])  #包含第7个字符
+```
+运行结果:
+```
+字符串的内容是: Hello World!
+第一个字符是: H
+最后一个字符是: !
+第7个字符是: W
+第7个字符之前的内容是:  Hello 
+第7个字符之后的内容是:  World!
+```
+
+#### 2)转义字符
+
+在需要在字符中使用特殊字符时，python 用反斜杠 \ 转义字符。如下表：
+
+|转义字符|描述|实例|
+|---|---|---|
+|\(在行尾时)|续行符|>>> print("line1 \<br>... line2 \<br>... line3")<br>line1 line2 line3<br>>>>|
+|\\|反斜杠符号|>>> print("\\")<br>\|
+|\'|单引号|>>> print('\'')<br>'|
+|\"|双引号|>>> print("\"")<br>"|
+|\a|响铃|>>> print("\a")<br><br>执行后电脑有响声。|
+|\b|退格(Backspace)|>>> print("Hello \b World!")<br>Hello World!|
+|\000|空|>>> print("\000")<br><br>>>>|
+|\n|换行|>>> print("\n")<br><br>>>>|
+|\v|纵向制表符|>>> print("Hello \v World!")<br>Hello <br>       World!<br>>>>|
+|\t|横向制表符|>>> print("Hello \t World!")<br>Hello      World!<br>>>>|
+|\r|回车，将 \r 后面的内容移到字符串开头，并逐一替换开头部分的字符，直至将 \r 后面的内容完全替换完成。|>>> print("Hello\rWorld!")<br>World!<br>>>> print('google runoob taobao\r123456')<br>123456 runoob taobao|
+|\f|换页|>>> print("Hello \f World!")<br>Hello <br>       World!<br>>>>|
+|\yyy|八进制数，y 代表 0~7 的字符，例如：\012 代表换行。|>>> print("\110\145\154\154\157\40\127\157\162\154\144\41")<br>Hello World!|
+|\xyy|十六进制数，以 \x 开头，y 代表的字符，例如：\x0a 代表换行|>>> print("\x48\x65\x6c\x6c\x6f\x20\x57\x6f\x72\x6c\x64\x21")<br>Hello World!|
+|\other|其它的字符以普通格式输出|
+使用 `\r` 实现百分比进度：
+```
+import time
+
+for i in range(101):
+    print("\r{:3}%".format(i),end=' ')
+    time.sleep(0.05)
+```
+#### 3)字符串格式化
+
+示例:
+```
+#!/usr/bin/python3
+ 
+print ("我叫 %s 今年 %d 岁!" % ('小明', 10))
+```
+
+python字符串格式化符号:
+
+|符   号|描述|
+|---|---|
+|%c|格式化字符及其ASCII码|
+|%s|格式化字符串|
+|%d|格式化整数|
+|%u|格式化无符号整型|
+|%o|格式化无符号八进制数|
+|%x|格式化无符号十六进制数|
+|%X|格式化无符号十六进制数（大写）|
+|%f|格式化浮点数字，可指定小数点后的精度|
+|%e|用科学计数法格式化浮点数|
+|%E|作用同%e，用科学计数法格式化浮点数|
+|%g|%f和%e的简写|
+|%G|%f 和 %E 的简写|
+|%p|用十六进制数格式化变量的地址|
+
+格式化操作符辅助指令:
+
+|符号|功能|
+|---|---|
+|*|定义宽度或者小数点精度|
+|-|用做左对齐|
+|+|在正数前面显示加号( + )|
+|<sp>|在正数前面显示空格|
+|#|在八进制数前面显示零('0')，在十六进制前面显示'0x'或者'0X'(取决于用的是'x'还是'X')|
+|0|显示的数字前面填充'0'而不是默认的空格|
+|%|'%%'输出一个单一的'%'|
+|(var)|映射变量(字典参数)|
+|m.n.|m 是显示的最小总宽度,n 是小数点后的位数(如果可用的话)|
+
+>[!NOTE]
+>函数 `str.format()`，它增强了字符串格式化的功能.
+
+#### 4)Python 的字符串内建函数
+
+Python 的字符串常用内建函数如下：
+
+|序号|方法及描述|
+|---|---|
+|1|[capitalize()](https://www.runoob.com/python3/python3-string-capitalize.html)  <br>将字符串的第一个字符转换为大写|
+|2|[center(width, fillchar)](https://www.runoob.com/python3/python3-string-center.html)<br><br>返回一个指定的宽度 width 居中的字符串，fillchar 为填充的字符，默认为空格。|
+|3|[count(str, beg= 0,end=len(string))](https://www.runoob.com/python3/python3-string-count.html)<br><br>  <br>返回 str 在 string 里面出现的次数，如果 beg 或者 end 指定则返回指定范围内 str 出现的次数|
+|4|[bytes.decode(encoding="utf-8", errors="strict")](https://www.runoob.com/python3/python3-string-decode.html)<br><br>  <br>Python3 中没有 decode 方法，但我们可以使用 bytes 对象的 decode() 方法来解码给定的 bytes 对象，这个 bytes 对象可以由 str.encode() 来编码返回。|
+|5|[encode(encoding='UTF-8',errors='strict')](https://www.runoob.com/python3/python3-string-encode.html)<br><br>  <br>以 encoding 指定的编码格式编码字符串，如果出错默认报一个ValueError 的异常，除非 errors 指定的是'ignore'或者'replace'|
+|6|[endswith(suffix, beg=0, end=len(string))](https://www.runoob.com/python3/python3-string-endswith.html)  <br>检查字符串是否以 suffix 结束，如果 beg 或者 end 指定则检查指定的范围内是否以 suffix 结束，如果是，返回 True,否则返回 False。|
+|7|[expandtabs(tabsize=8)](https://www.runoob.com/python3/python3-string-expandtabs.html)<br><br>  <br>把字符串 string 中的 tab 符号转为空格，tab 符号默认的空格数是 8 。|
+|8|[find(str, beg=0, end=len(string))](https://www.runoob.com/python3/python3-string-find.html)<br><br>  <br>检测 str 是否包含在字符串中，如果指定范围 beg 和 end ，则检查是否包含在指定范围内，如果包含返回开始的索引值，否则返回-1|
+|9|[index(str, beg=0, end=len(string))](https://www.runoob.com/python3/python3-string-index.html)<br><br>  <br>跟find()方法一样，只不过如果str不在字符串中会报一个异常。|
+|10|[isalnum()](https://www.runoob.com/python3/python3-string-isalnum.html)<br><br>  <br>检查字符串是否由字母和数字组成，即字符串中的所有字符都是字母或数字。如果字符串至少有一个字符，并且所有字符都是字母或数字，则返回 True；否则返回 False。|
+|11|[isalpha()](https://www.runoob.com/python3/python3-string-isalpha.html)<br><br>  <br>如果字符串至少有一个字符并且所有字符都是字母或中文字则返回 True, 否则返回 False|
+|12|[isdigit()](https://www.runoob.com/python3/python3-string-isdigit.html)<br><br>  <br>如果字符串只包含数字则返回 True 否则返回 False..|
+|13|[islower()](https://www.runoob.com/python3/python3-string-islower.html)<br><br>  <br>如果字符串中包含至少一个区分大小写的字符，并且所有这些(区分大小写的)字符都是小写，则返回 True，否则返回 False|
+|14|[isnumeric()](https://www.runoob.com/python3/python3-string-isnumeric.html)<br><br>  <br>如果字符串中只包含数字字符，则返回 True，否则返回 False|
+|15|[isspace()](https://www.runoob.com/python3/python3-string-isspace.html)<br><br>  <br>如果字符串中只包含空白，则返回 True，否则返回 False.|
+|16|[istitle()](https://www.runoob.com/python3/python3-string-istitle.html)<br><br>  <br>如果字符串是标题化的(见 title())则返回 True，否则返回 False|
+|17|[isupper()](https://www.runoob.com/python3/python3-string-isupper.html)<br><br>  <br>如果字符串中包含至少一个区分大小写的字符，并且所有这些(区分大小写的)字符都是大写，则返回 True，否则返回 False|
+|18|[join(seq)](https://www.runoob.com/python3/python3-string-join.html)<br><br>  <br>以指定字符串作为分隔符，将 seq 中所有的元素(的字符串表示)合并为一个新的字符串|
+|19|[len(string)](https://www.runoob.com/python3/python3-string-len.html)<br><br>  <br>返回字符串长度|
+|20|[ljust(width[, fillchar])](https://www.runoob.com/python3/python3-string-ljust.html)<br><br>  <br>返回一个原字符串左对齐,并使用 fillchar 填充至长度 width 的新字符串，fillchar 默认为空格。|
+|21|[lower()](https://www.runoob.com/python3/python3-string-lower.html)<br><br>  <br>转换字符串中所有大写字符为小写.|
+|22|[lstrip()](https://www.runoob.com/python3/python3-string-lstrip.html)<br><br>  <br>截掉字符串左边的空格或指定字符。|
+|23|[maketrans()](https://www.runoob.com/python3/python3-string-maketrans.html)<br><br>  <br>创建字符映射的转换表，对于接受两个参数的最简单的调用方式，第一个参数是字符串，表示需要转换的字符，第二个参数也是字符串表示转换的目标。|
+|24|[max(str)](https://www.runoob.com/python3/python3-string-max.html)<br><br>  <br>返回字符串 str 中最大的字母。|
+|25|[min(str)](https://www.runoob.com/python3/python3-string-min.html)<br><br>  <br>返回字符串 str 中最小的字母。|
+|26|[replace(old, new [, max])](https://www.runoob.com/python3/python3-string-replace.html)<br><br>  <br>把 将字符串中的 old 替换成 new,如果 max 指定，则替换不超过 max 次。|
+|27|[rfind(str, beg=0,end=len(string))](https://www.runoob.com/python3/python3-string-rfind.html)<br><br>  <br>类似于 find()函数，不过是从右边开始查找.|
+|28|[rindex( str, beg=0, end=len(string))](https://www.runoob.com/python3/python3-string-rindex.html)<br><br>  <br>类似于 index()，不过是从右边开始.|
+|29|[rjust(width,[, fillchar])](https://www.runoob.com/python3/python3-string-rjust.html)<br><br>  <br>返回一个原字符串右对齐,并使用fillchar(默认空格）填充至长度 width 的新字符串|
+|30|[rstrip()](https://www.runoob.com/python3/python3-string-rstrip.html)<br><br>  <br>删除字符串末尾的空格或指定字符。|
+|31|[split(str="", num=string.count(str))](https://www.runoob.com/python3/python3-string-split.html)<br><br>  <br>以 str 为分隔符截取字符串，如果 num 有指定值，则仅截取 num+1 个子字符串|
+|32|[splitlines([keepends])](https://www.runoob.com/python3/python3-string-splitlines.html)<br><br>  <br>按照行('\r', '\r\n', \n')分隔，返回一个包含各行作为元素的列表，如果参数 keepends 为 False，不包含换行符，如果为 True，则保留换行符。|
+|33|[startswith(substr, beg=0,end=len(string))](https://www.runoob.com/python3/python3-string-startswith.html)<br><br>  <br>检查字符串是否是以指定子字符串 substr 开头，是则返回 True，否则返回 False。如果beg 和 end 指定值，则在指定范围内检查。|
+|34|[strip([chars])](https://www.runoob.com/python3/python3-string-strip.html)<br><br>  <br>在字符串上执行 lstrip()和 rstrip()|
+|35|[swapcase()](https://www.runoob.com/python3/python3-string-swapcase.html)<br><br>  <br>将字符串中大写转换为小写，小写转换为大写|
+|36|[title()](https://www.runoob.com/python3/python3-string-title.html)<br><br>  <br>返回"标题化"的字符串,就是说所有单词都是以大写开始，其余字母均为小写(见 istitle())|
+|37|[translate(table, deletechars="")](https://www.runoob.com/python3/python3-string-translate.html)<br><br>  <br>根据 table 给出的表(包含 256 个字符)转换 string 的字符, 要过滤掉的字符放到 deletechars 参数中|
+|38|[upper()](https://www.runoob.com/python3/python3-string-upper.html)<br><br>  <br>转换字符串中的小写字母为大写|
+|39|[zfill (width)](https://www.runoob.com/python3/python3-string-zfill.html)<br><br>  <br>返回长度为 width 的字符串，原字符串右对齐，前面填充0|
+|40|[isdecimal()](https://www.runoob.com/python3/python3-string-isdecimal.html)<br><br>  <br>检查字符串是否只包含十进制字符，如果是返回 true，否则返回 false。|
 ### 2.2.3 列表
+
+序列是 Python 中最基本的数据结构。
+
+序列中的每个值都有对应的位置值，称之为索引，第一个索引是 0，第二个索引是 1，依此类推。
+
+Python 有 6 个序列的内置类型，但最常见的是列表和元组。
+
+列表都可以进行的操作包括索引，切片，加，乘，检查成员。
+
+此外，Python 已经内置确定序列的长度以及确定最大和最小的元素的方法。
+
+列表是最常用的 Python 数据类型，它可以作为一个方括号内的逗号分隔值出现。
+
+列表的数据项不需要具有相同的类型
+
+#### 1)创建列表
+创建一个列表，只要把逗号分隔的不同的数据项使用方括号括起来即可。如下所示
+```
+list1 = ['Google', 'Runoob', 1997, 2000]
+list2 = [1, 2, 3, 4, 5 ]
+list3 = ["a", "b", "c", "d"]
+list4 = ['red', 'green', 'blue', 'yellow', 'white', 'black']
+```
+
+#### 2)访问列表中的值
+与字符串的索引一样，列表索引从 0 开始，第二个索引是 1，依此类推。
+
+通过索引列表可以进行截取、组合等操作。
+```
+#!/usr/bin/python3  
+  
+list = ['red', 'green', 'blue', 'yellow', 'white', 'black']  
+print( list[0] )  
+print( list[1] )  
+print( list[2] )  
+print( list[-1] )  
+print( list[-2] )  
+print( list[-3] )  
+print( list[0:4] )  
+print( list[1:-1])
+```
+
+#### 3)更新列表
+你可以对列表的数据项进行修改或更新，你也可以使用 `append()` 方法来添加列表项，如下所示：
+```
+#!/usr/bin/python3
+list = ['red', 'green', 'blue', 'yellow', 'white', 'black']
+print(list[-1])
+list.append('orange')
+print(list)
+print(list[-1])
+```
+
+#### 4)删除列表元素
+可以使用 `del`语句来删除列表中的元素，如下实例：
+```
+#!/usr/bin/python3  
+list = ['red', 'green', 'blue', 'yellow', 'white', 'black']  
+print(list[-1])  
+del list[-1]  
+print(list)  
+print(list[-1])
+```
+
+使用`remove()`方法删除列表中的元素,如下
+```
+#!/usr/bin/python3  
+list = ['red', 'green', 'blue', 'yellow', 'white', 'black']  
+print(list[-1])  
+list.remove(list[-1])  
+print(list)  
+print(list[-1])
+```
+#### 5)列表脚本操作符
+
+列表对 + 和 * 的操作符与字符串相似。+ 号用于组合列表，* 号用于重复列表。
+
+如下所示：
+
+| Python 表达式                            | 结果                           | 描述         |
+| ------------------------------------- | ---------------------------- | ---------- |
+| len([1, 2, 3])                        | 3                            | 长度         |
+| [1, 2, 3] + [4, 5, 6]                 | [1, 2, 3, 4, 5, 6]           | 组合         |
+| ['Hi!'] * 4                           | ['Hi!', 'Hi!', 'Hi!', 'Hi!'] | 重复         |
+| 3 in [1, 2, 3]                        | True                         | 元素是否存在于列表中 |
+| for x in [1, 2, 3]: print(x, end=" ") | 1 2 3                        | 迭代         |
+
+#### 6)列表截取与拼接
+
+示例:
+```
+#!/usr/bin/python3 
+list = ['red', 'orange' ,'green', 'blue', 'yellow', 'white', 'black']  
+print('列表的内容是: ',list)  
+print('第1个元素是:',list[0])  #第1个元素  
+print('最后第1个元素是:',list[-1]) #倒数第一个元素  
+print('第6个元素是:',list[5])  
+print('第6个以后的元素:',list[5:]) #第6个以后的  
+print('第6个之前的元素:',list[:5]) #第6个以前的元素,前五个元素  
+print('倒数第5个元素是:',list[-5])  
+print('倒数第5个元素之后的元素是:',list[-5:]) #倒数5个元素  
+print('倒数第5个元素之前的元素是:',list[:-5]) #倒数5个元素之前的元素
+```
+运行结果:
+```
+列表的内容是:  ['red', 'orange', 'green', 'blue', 'yellow', 'white', 'black']
+第1个元素是: red
+最后第1个元素是: black
+第6个元素是: white
+第6个以后的元素: ['white', 'black']
+第6个之前的元素: ['red', 'orange', 'green', 'blue', 'yellow']
+倒数第5个元素是: green
+倒数第5个元素之后的元素是: ['green', 'blue', 'yellow', 'white', 'black']
+倒数第5个元素之前的元素是: ['red', 'orange']
+```
+
+列表还支持拼接操作：
+
+示例:
+```
+#!/usr/bin/python3
+squares = [1, 4, 9, 16, 25]  
+squares += [36, 49, 64, 81, 100]  
+print(squares)
+```
+运行结果:
+```
+[1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+```
+#### 7)嵌套列表
+
+使用嵌套列表即在列表里创建其它列表，例如：
+```
+#!/usr/bin/python3  
+a=['a','b','c']  
+n=[1,2,3]  
+x=[a,n]  
+print(x)  
+print(x[0])  
+print(x[0][1])
+```
+运行结果:
+```
+[['a', 'b', 'c'], [1, 2, 3]]
+['a', 'b', 'c']
+b
+```
+#### 8)列表函数&方法
+
+Python包含以下函数:
+
+|序号|函数|
+|---|---|
+|1|[len(list)](https://www.runoob.com/python3/python3-att-list-len.html)  <br>列表元素个数|
+|2|[max(list)](https://www.runoob.com/python3/python3-att-list-max.html)  <br>返回列表元素最大值|
+|3|[min(list)](https://www.runoob.com/python3/python3-att-list-min.html)  <br>返回列表元素最小值|
+|4|[list(seq)](https://www.runoob.com/python3/python3-att-list-list.html)  <br>将元组转换为列表|
+
+Python包含以下方法:
+
+| 序号  | 方法                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | [list.append(obj)](https://www.runoob.com/python3/python3-att-list-append.html)  <br>在列表末尾添加新的对象                       |
+| 2   | [list.count(obj)](https://www.runoob.com/python3/python3-att-list-count.html)  <br>统计某个元素在列表中出现的次数                     |
+| 3   | [list.extend(seq)](https://www.runoob.com/python3/python3-att-list-extend.html)  <br>在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表） |
+| 4   | [list.index(obj)](https://www.runoob.com/python3/python3-att-list-index.html)  <br>从列表中找出某个值第一个匹配项的索引位置                |
+| 5   | [list.insert(index, obj)](https://www.runoob.com/python3/python3-att-list-insert.html)  <br>将对象插入列表                    |
+| 6   | [list.pop([index=-1])](https://www.runoob.com/python3/python3-att-list-pop.html)  <br>移除列表中的一个元素（默认最后一个元素），并且返回该元素的值   |
+| 7   | [list.remove(obj)](https://www.runoob.com/python3/python3-att-list-remove.html)  <br>移除列表中某个值的第一个匹配项                   |
+| 8   | [list.reverse()](https://www.runoob.com/python3/python3-att-list-reverse.html)  <br>反向列表中元素                            |
+| 9   | [list.sort( key=None, reverse=False)](https://www.runoob.com/python3/python3-att-list-sort.html)  <br>对原列表进行排序         |
+| 10  | [list.clear()](https://www.runoob.com/python3/python3-att-list-clear.html)  <br>清空列表                                   |
+| 11  | [list.copy()](https://www.runoob.com/python3/python3-att-list-copy.html)  <br>复制列表                                     |
+
 ### 2.2.4 元组
+
+Python 的元组与列表类似，不同之处在于元组的元素不能修改。
+
+元组使用小括号 ( )，列表使用方括号 [ ]。
+
+#### 1)创建元组
+
+元组创建很简单，只需要在括号中添加元素，并使用逗号隔开即可。
+
+```
+>>> tup1 = ('Google', 'Runoob', 1997, 2000)
+>>> tup2 = (1, 2, 3, 4, 5 )
+>>> tup3 = "a", "b", "c", "d"   #  不需要括号也可以
+>>> type(tup3)
+<class 'tuple'>
+```
+
+创建空元组
+
+```
+tup1 = ()
+```
+
+>[!IMPORTANT]
+>元组中只包含一个元素时，需要在元素后面添加逗号 , ，否则括号会被当作运算符使用：
+
+```
+#!/usr/bin/python3
+tup1 = (50)  
+print(type(tup1))  
+tup1 = (50,)  
+print(type(tup1))
+```
+运行结果
+```
+<class 'int'>
+<class 'tuple'>
+```
+
+#### 2)修改元组
+
+元组中的元素值是不允许修改的，但我们可以对元组进行连接组合，如下实例:
+
+```
+#!/usr/bin/python3  
+tup1 = (12, 34.56)  
+tup2 = ('abc', 'xyz')  
+# 以下修改元组元素操作是非法的。  
+#tup1[0] = 100  
+#TypeError: 'tuple' object does not support item assignment  
+# 创建一个新的元组  
+tup3 = tup1 + tup2  
+print(tup3)
+```
+
+运行结果:
+```
+(12, 34.56, 'abc', 'xyz')
+```
+
+#### 3)删除元组
+
+元组中的元素值是不允许删除的，但我们可以使用del语句来删除整个元组，如下实例:
+```
+#!/usr/bin/python3  
+tup = ('Google', 'Runoob', 1997, 2000)  
+print(tup)  
+del tup  
+print("删除后的元组 tup : ")  
+print(tup)
+```
+
+运行结果:
+```
+    print(tup)
+NameError: name 'tup' is not defined
+('Google', 'Runoob', 1997, 2000)
+删除后的元组 tup : 
+
+进程已结束，退出代码为 1
+```
+
+#### 4)元组运算符
+
+与字符串一样，元组之间可以使用 +、+=和 * 号进行运算。这就意味着他们可以组合和复制，运算后会生成一个新的元组。
+
+|Python 表达式|结果|描述|
+|---|---|---|
+|len((1, 2, 3))|3|计算元素个数|
+|>>> a = (1, 2, 3)<br>>>> b = (4, 5, 6)<br>>>> c = a+b<br>>>> c<br>(1, 2, 3, 4, 5, 6)|(1, 2, 3, 4, 5, 6)|连接，c 就是一个新的元组，它包含了 a 和 b 中的所有元素。|
+|>>> a = (1, 2, 3)<br>>>> b = (4, 5, 6)<br>>>> a += b<br>>>> a<br>(1, 2, 3, 4, 5, 6)|(1, 2, 3, 4, 5, 6)|连接，a 就变成了一个新的元组，它包含了 a 和 b 中的所有元素。|
+|('Hi!',) * 4|('Hi!', 'Hi!', 'Hi!', 'Hi!')|复制|
+|3 in (1, 2, 3)|True|元素是否存在|
+|for x in (1, 2, 3): <br>    print (x, end=" ")|1 2 3|迭代|
+
+#### 5)元组索引,截取
+
+因为元组也是一个序列，所以我们可以访问元组中的指定位置的元素，也可以截取索引中的一段元素，如下所示：
+
+```
+#!/usr/bin/python3  
+tup = ('Google', 'Runoob', 'Taobao', 'Wiki', 'Weibo','Weixin')  
+print('元组内容:',tup)  
+print('第1个元素:',tup[0])  
+print('最后1个元素:',tup[-1])  
+print('第3个元素:',tup[2])  
+print('第3个以后元素:',tup[2:])  
+print('第3个以前元素:',tup[:2])
+```
+运行结果:
+```
+元组内容: ('Google', 'Runoob', 'Taobao', 'Wiki', 'Weibo', 'Weixin')
+第1个元素: Google
+最后1个元素: Weixin
+第3个元素: Taobao
+第3个以后元素: ('Taobao', 'Wiki', 'Weibo', 'Weixin')
+第3个以前元素: ('Google', 'Runoob')
+```
+
+示例:
+```
+#!/usr/bin/python3  
+tup1 = ('Google', 'Runoob', 'Taobao', 'Wiki', 'Weibo','Weixin')  
+tup2 = ('one', 'two', 'three', 'four')  
+tup3 = (tup1,tup2)  
+print(tup3)  
+print(tup3[0])  
+print(tup3[0][-1])
+```
+运行结果:
+```
+(('Google', 'Runoob', 'Taobao', 'Wiki', 'Weibo', 'Weixin'), ('one', 'two', 'three', 'four'))
+('Google', 'Runoob', 'Taobao', 'Wiki', 'Weibo', 'Weixin')
+Weixin
+```
+#### 6)元组内置函数
+
+Python元组包含了以下内置函数
+
+|序号|方法及描述|实例|
+|---|---|---|
+|1|len(tuple)  <br>计算元组元素个数。|>>> tuple1 = ('Google', 'Runoob', 'Taobao')<br>>>> len(tuple1)<br>3<br>>>>|
+|2|max(tuple)  <br>返回元组中元素最大值。|>>> tuple2 = ('5', '4', '8')<br>>>> max(tuple2)<br>'8'<br>>>>|
+|3|min(tuple)  <br>返回元组中元素最小值。|>>> tuple2 = ('5', '4', '8')<br>>>> min(tuple2)<br>'4'<br>>>>|
+|4|tuple(iterable)  <br>将可迭代系列转换为元组。|>>> list1= ['Google', 'Taobao', 'Runoob', 'Baidu']<br>>>> tuple1=tuple(list1)<br>>>> tuple1<br>('Google', 'Taobao', 'Runoob', 'Baidu')|
 ### 2.2.5 字典
+
+字典是另一种可变容器模型，且可存储任意类型对象。
+
+字典的每个键值 `key=>value` 对用冒号 `: `分割，每个对之间用逗号(**`,`**)分割，整个字典包括在花括号 `{}` 中 ,格式如下所示：
+
+```
+d = {key1 : value1, key2 : value2, key3 : value3 }
+```
+
+>[!NOTE]
+>1.`dict` 作为 Python 的关键字和内置函数，变量名不建议命名为 **`dict`**。
+>2.键必须是唯一的，但值则不必。
+>3.值可以取任何数据类型，但键必须是不可变的，如字符串，数字。
+
+#### 1)创建字典
+示例:
+```
+tinydict = {'name': 'runoob', 'likes': 123, 'url': 'www.runoob.com'}  
+tinydict1 = { 'abc': 456 }  
+tinydict2 = { 'abc': 123,98.6:37 }  
+tinydict3 = { 'abc': 123, 98.6: 37 }
+
+```
+
+示例:创建空字典
+```
+# 使用大括号 {} 来创建空字典
+emptyDict = {}
+ 
+# 打印字典
+print(emptyDict)
+ 
+# 查看字典的数量
+print("Length:", len(emptyDict))
+ 
+# 查看类型
+print(type(emptyDict))
+```
+运行结果:
+```
+{}
+Length: 0
+<class 'dict'>
+```
+示例:使用内建函数`dict()`创建字典
+```
+emptyDict = dict()
+ 
+# 打印字典
+print(emptyDict)
+ 
+# 查看字典的数量
+print("Length:",len(emptyDict))
+ 
+# 查看类型
+print(type(emptyDict))
+```
+运行结果:
+```
+{}
+Length: 0
+<class 'dict'>
+```
+
+#### 2)访问字典里的值
+
+示例:
+```
+#!/usr/bin/python3
+ 
+tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}
+ 
+print ("tinydict['Name']: ", tinydict['Name'])
+print ("tinydict['Age']: ", tinydict['Age'])
+```
+运行结果:
+```
+tinydict['Name']:  Runoob
+tinydict['Age']:  7
+```
+
+#### 3)修改字典
+
+示例:
+```
+#!/usr/bin/python3  
+tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}  
+tinydict['Age'] = 8  # 更新 Agetinydict['School'] = "中科大"  # 添加信息  
+print("tinydict['Age']: ", tinydict['Age'])  
+print("tinydict['School']: ", tinydict['School'])
+```
+运行结果:
+```
+tinydict['Age']:  8
+tinydict['School']:  中科大
+```
+
+#### 4)删除字典元素
+
+示例:
+```
+#!/usr/bin/python3  
+tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}  
+del tinydict['Name']  # 删除键 'Name'tinydict.clear()  # 清空字典  
+del tinydict  # 删除字典  
+print("tinydict['Age']: ", tinydict['Age'])  
+print("tinydict['School']: ", tinydict['School'])
+```
+运行结果:
+```
+Traceback (most recent call last):
+  File "E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py", line 6, in <module>
+    print("tinydict['Age']: ", tinydict['Age'])
+NameError: name 'tinydict' is not defined
+
+进程已结束，退出代码为 1
+```
+
+>[!IMPORTANT]
+>#### 字典键的特性
+>1.不允许同一个键出现两次;创建时如果同一个键被赋值两次，后一个值会被记住
+>2.键必须不可变，所以可以用数字，字符串或元组充当，而用列表就不行
+
+#### 5)字典的嵌套
+
+示例:
+```
+cities={  
+    '北京':{  
+        '朝阳':{'国贸','CBD','天阶','我爱我家','链接地产'},  
+        '海淀':{'圆明园','苏州街','中关村','北京大学'},  
+        '昌平':{'沙河','南口','小汤山',},  
+        '怀柔':{'桃花','梅花','大山'},  
+        '密云':{'密云A','密云B','密云C'}  
+    },  
+    '河北':{  
+        '石家庄':{'石家庄A','石家庄B','石家庄C','石家庄D','石家庄E'},  
+        '张家口':{'张家口A','张家口B','张家口C'},  
+        '承德':{'承德A','承德B','承德C','承德D'}  
+    }  
+}
+for i in cities['北京']:  
+    print(i)
+```
+运行结果:
+```
+朝阳
+海淀
+昌平
+怀柔
+密云
+```
+
+#### 6)字典内置函数及方法
+
+Python字典包含了以下内置函数：
+
+|序号|函数及描述|实例|
+|---|---|---|
+|1|len(dict)  <br>计算字典元素个数，即键的总数。|>>> tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}<br>>>> len(tinydict)<br>3|
+|2|str(dict)  <br>输出字典，可以打印的字符串表示。|>>> tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}<br>>>> str(tinydict)<br>"{'Name': 'Runoob', 'Class': 'First', 'Age': 7}"|
+|3|type(variable)  <br>返回输入的变量类型，如果变量是字典就返回字典类型。|>>> tinydict = {'Name': 'Runoob', 'Age': 7, 'Class': 'First'}<br>>>> type(tinydict)<br><class 'dict'>|
+
+Python字典包含了以下内置方法：
+
+|序号|函数及描述|
+|---|---|
+|1|[dict.clear()](https://www.runoob.com/python3/python3-att-dictionary-clear.html)  <br>删除字典内所有元素|
+|2|[dict.copy()](https://www.runoob.com/python3/python3-att-dictionary-copy.html)  <br>返回一个字典的浅复制|
+|3|[dict.fromkeys()](https://www.runoob.com/python3/python3-att-dictionary-fromkeys.html)  <br>创建一个新字典，以序列seq中元素做字典的键，val为字典所有键对应的初始值|
+|4|[dict.get(key, default=None)](https://www.runoob.com/python3/python3-att-dictionary-get.html)  <br>返回指定键的值，如果键不在字典中返回 default 设置的默认值|
+|5|[key in dict](https://www.runoob.com/python3/python3-att-dictionary-in.html)  <br>如果键在字典dict里返回true，否则返回false|
+|6|[dict.items()](https://www.runoob.com/python3/python3-att-dictionary-items.html)  <br>以列表返回一个视图对象|
+|7|[dict.keys()](https://www.runoob.com/python3/python3-att-dictionary-keys.html)  <br>返回一个视图对象|
+|8|[dict.setdefault(key, default=None)](https://www.runoob.com/python3/python3-att-dictionary-setdefault.html)  <br>和get()类似, 但如果键不存在于字典中，将会添加键并将值设为default|
+|9|[dict.update(dict2)](https://www.runoob.com/python3/python3-att-dictionary-update.html)  <br>把字典dict2的键/值对更新到dict里|
+|10|[dict.values()](https://www.runoob.com/python3/python3-att-dictionary-values.html)  <br>返回一个视图对象|
+|11|[pop(key[,default])](https://www.runoob.com/python3/python3-att-dictionary-pop.html)  <br>删除字典 key（键）所对应的值，返回被删除的值。|
+|12|[popitem()](https://www.runoob.com/python3/python3-att-dictionary-popitem.html)  <br>返回并删除字典中的最后一对键和值。|
+
 ### 2.2.6 集合
+
+集合（set）是一个无序的不重复元素序列。
+
+集合中的元素不会重复，并且可以进行交集、并集、差集等常见的集合操作。
+
+可以使用大括号 { } 创建集合，元素之间用逗号 , 分隔， 或者也可以使用 set() 函数创建集合。
+#### 1)创建集合
+
+格式:
+```
+parame = {value01,value02,...}
+或者
+set(value)
+
+```
+
+示例:
+```
+set1 = {1, 2, 3, 4}            # 直接使用大括号创建集合
+set2 = set([4, 5, 6, 7])      # 使用 set() 函数从列表创建集合
+```
+
+示例:创建空集合
+```
+emptyset = set( )  
+print(emptyset)  
+print('Length:',len(emptyset))  
+print(type(emptyset))
+```
+运行结果
+```
+set()
+Length: 0
+<class 'set'>
+```
+
+>[!NOTE]
+>#### 创建空集合
+>创建一个空集合必须用 `set( )`而不是` { }`，因为`{ }` 是用来创建一个空字典。
+
+示例
+```
+basket={'apple','orange','apple','pear','orange','banana'}  
+print(basket)#这里演示的是去重功能  
+print('orange' in basket)  
+print('crabgrass' in basket)
+```
+运行结果
+```
+{'orange', 'pear', 'apple', 'banana'}
+True
+False
+```
+
+示例:集合的运算
+```
+a=set('abcdefghabc')  
+b = set('cdefghijklmcdfg')  
+print('集合a:',a)  
+print('集合b:',b)  
+print('a相对于b的差集a-b:',a-b)  
+print('b相对于a的差集b-a:',b-a)  
+print('并集a|b:',a|b)  
+print('交集a&b:',a&b)  
+print('对称差集(交集取反)a^b:',a^b)
+```
+运行结果:
+```
+集合a: {'b', 'e', 'c', 'h', 'f', 'd', 'a', 'g'}
+集合b: {'e', 'c', 'h', 'k', 'i', 'f', 'l', 'd', 'm', 'j', 'g'}
+a相对于b的差集a-b: {'b', 'a'}
+b相对于a的差集b-a: {'k', 'i', 'l', 'm', 'j'}
+并集a|b: {'e', 'c', 'h', 'k', 'f', 'd', 'b', 'l', 'i', 'm', 'j', 'a', 'g'}
+交集a&b: {'e', 'c', 'h', 'f', 'd', 'g'}
+对称差集(交集取反)a^b: {'b', 'k', 'i', 'l', 'm', 'j', 'a'}
+```
+
+#### 2)添加元素
+
+语法如下:
+```
+s.add(x)
+```
+将元素 x 添加到集合 s 中，如果元素已存在，则不进行任何操作。
+还有一个方法，也可以添加元素，且参数可以是列表，元组，字典等，语法格式如下：
+```
+s.update( x )
+```
+
+示例:
+```
+thisset = set(("Google", "Runoob", "Taobao"))  
+print(thisset)  
+thisset.add("Facebook")  
+print(thisset)  
+thisset.update(("QQ",))  
+print(thisset)  
+thisset.update(("ICQ","Youtube"))  
+print(thisset)
+```
+运行结果
+```
+{'Google', 'Runoob', 'Taobao'}
+{'Google', 'Facebook', 'Runoob', 'Taobao'}
+{'Facebook', 'Taobao', 'Runoob', 'Google', 'QQ'}
+{'Facebook', 'Taobao', 'ICQ', 'Runoob', 'Youtube', 'Google', 'QQ'}
+```
+
+#### 3)移除元素
+
+语法:
+```
+s.remove()
+```
+将元素 x 从集合 s 中移除，如果元素不存在，则会发生错误。
+
+示例:
+```
+thisset = set(("Google", "Runoob", "Taobao","QQ","ICQ","Youtube"))  
+print(thisset)  
+thisset.remove("QQ")  
+print(thisset)  
+thisset.remove("qq")  
+print(thisset)
+```
+运行结果:
+```
+E:\ProgramData\PycharmProjects\Learning\.venv\Scripts\python.exe E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py 
+{'QQ', 'ICQ', 'Youtube', 'Runoob', 'Taobao', 'Google'}
+{'ICQ', 'Youtube', 'Runoob', 'Taobao', 'Google'}
+Traceback (most recent call last):
+  File "E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py", line 5, in <module>
+    thisset.remove("qq")
+KeyError: 'qq'
+
+进程已结束，退出代码为 1
+```
+
+此外还有一个方法也是移除集合中的元素，且如果元素不存在，不会发生错误。格式如下所示：
+```
+s.discard( x )
+```
+示例:
+```
+thisset = set(("Google", "Runoob", "Taobao","QQ","ICQ","Youtube"))  
+print(thisset)  
+thisset.discard("QQ")  
+print(thisset)  
+thisset.discard("qq")  
+print(thisset)
+```
+运行结果:
+```
+{'ICQ', 'Runoob', 'QQ', 'Youtube', 'Google', 'Taobao'}
+{'ICQ', 'Runoob', 'Youtube', 'Google', 'Taobao'}
+{'ICQ', 'Runoob', 'Youtube', 'Google', 'Taobao'}
+```
+
+随机删除1个元素,set 集合的 pop 方法会对集合进行无序的排列，然后将这个无序排列集合的左面第一个元素进行删除。
+
+```
+s.pop()
+```
+
+示例:
+```
+thisset = set(("Google", "Runoob", "Taobao","QQ","ICQ","Youtube"))  
+print(thisset)  
+print(thisset.pop())
+```
+运行结果
+```
+{'Youtube', 'Google', 'Taobao', 'ICQ', 'QQ', 'Runoob'}
+Youtube
+
+{'QQ', 'Youtube', 'ICQ', 'Google', 'Taobao', 'Runoob'}
+QQ
+```
+
+#### 4) 集合内置方法完整列表
+
+|方法|描述|
+|---|---|
+|[add()](https://www.runoob.com/python3/ref-set-add.html)|为集合添加元素|
+|[clear()](https://www.runoob.com/python3/ref-set-clear.html)|移除集合中的所有元素|
+|[copy()](https://www.runoob.com/python3/ref-set-copy.html)|拷贝一个集合|
+|[difference()](https://www.runoob.com/python3/ref-set-difference.html)|返回多个集合的差集|
+|[difference_update()](https://www.runoob.com/python3/ref-set-difference_update.html)|移除集合中的元素，该元素在指定的集合也存在。|
+|[discard()](https://www.runoob.com/python3/ref-set-discard.html)|删除集合中指定的元素|
+|[intersection()](https://www.runoob.com/python3/ref-set-intersection.html)|返回集合的交集|
+|[intersection_update()](https://www.runoob.com/python3/ref-set-intersection_update.html)|返回集合的交集。|
+|[isdisjoint()](https://www.runoob.com/python3/ref-set-isdisjoint.html)|判断两个集合是否包含相同的元素，如果没有返回 True，否则返回 False。|
+|[issubset()](https://www.runoob.com/python3/ref-set-issubset.html)|判断指定集合是否为该方法参数集合的子集。|
+|[issuperset()](https://www.runoob.com/python3/ref-set-issuperset.html)|判断该方法的参数集合是否为指定集合的子集|
+|[pop()](https://www.runoob.com/python3/ref-set-pop.html)|随机移除元素|
+|[remove()](https://www.runoob.com/python3/ref-set-remove.html)|移除指定元素|
+|[symmetric_difference()](https://www.runoob.com/python3/ref-set-symmetric_difference.html)|返回两个集合中不重复的元素集合。|
+|[symmetric_difference_update()](https://www.runoob.com/python3/ref-set-symmetric_difference_update.html)|移除当前集合中在另外一个指定集合相同的元素，并将另外一个指定集合中不同的元素插入到当前集合中。|
+|[union()](https://www.runoob.com/python3/ref-set-union.html)|返回两个集合的并集|
+|[update()](https://www.runoob.com/python3/ref-set-update.html)|给集合添加元素|
+|[len()](https://www.runoob.com/python3/python3-string-len.html)|计算集合元素个数|
+
 ### 2.2.7 数据类型转换
 
 有时候，我们需要对数据内置的类型进行转换，数据类型的转换，一般情况下你只需要将数据类型作为函数名即可。
@@ -379,5 +1243,10 @@ Python 数据类型转换可以分为两种：
 - `complex(x, y)` 将 x 和 y 转换到一个复数，实数部分为 x，虚数部分为 y。x 和 y 是数字表达式。
 - `str()`强制转换为字符串类型
 
-# 3. 条件控制
-# 4. 循环语句
+# 3. 运算符
+# 4. 条件控制
+# 5. 循环语句
+# 6.推导式
+# 7.迭代器和生成器
+# 8.函数
+
