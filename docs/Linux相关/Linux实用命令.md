@@ -66,3 +66,18 @@ bash -n script.sh
 bash -ex script.sh
 ```
 
+# 6.`iproute2`
+
+# 7.`nmcli`
+
+```
+nmcli conn sh #查看网络连接 
+nmcli conn add con-name ens32 if-name ens32 type ethernet #新增网卡连接配置
+nmcli conn mod ens32 ipv4.add 198.19.201.130/24 #配置IPV4地址
+nmcli conn mod ens32 ipv4.gate 198.19.201.254 #配置默认网关
+nmcli conn mod ens32 ipv4.dns 8.8.8.8,114.114.114.114 #配置DNS
+nmcli conn mod ens32 ipv4.meth man #手动配置IP
+nmcli conn mod ens32 autoconnect yes #配置开机自动连接网络
+nmcli down ens32 && nmcli up ens32 #重启网卡
+```
+
