@@ -82,12 +82,27 @@ source /etc/os-release
 echo $ID
 }
 case $(get_os_type) in
-	
+	anolis|kylin|openEuler )
+		yum install sshpass -y 
+		;;
 	debian|ubuntu )
 		apt update
 		export DEBIAN_FRONTEND=noninteractive
-		apt install sshpass
+		apt install sshpass -y 
 		;;
+esac
+if [ ! -e ~/.ssh/id_rsa ];then
+	ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ''
+fi
+os_password='passowrd'
+os_hostname='
+192.168.1.1
+192.168.1.2
+192.168.1.10
+'
+for i in ${os_hostname};do
+	sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@${i}
+done
 ```
 # 4. 时间同步
 

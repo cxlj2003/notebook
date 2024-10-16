@@ -4,7 +4,7 @@ OPENSSL_RELEASE=openssl-3.3.2
 OPENSSH_RELEASE=openssh-9.9p1
 
 if [ ! -e /etc/os-release ];then
- echo '*** Cannot detect Linux distribution! Aborting.'
+ echo 'Cannot detect Linux distribution! Aborting.'
  exit 1
 fi
 
