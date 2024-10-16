@@ -74,7 +74,20 @@ netplan apply
 # 3. ssh对等
 
 ```
-
+get_os_type() {
+if [ ! -e /etc/os-release ];then
+  echo 'Unable get linux distribution !'
+fi
+source /etc/os-release
+echo $ID
+}
+case $(get_os_type) in
+	
+	debian|ubuntu )
+		apt update
+		export DEBIAN_FRONTEND=noninteractive
+		apt install sshpass
+		;;
 ```
 # 4. 时间同步
 
