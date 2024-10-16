@@ -1699,9 +1699,1065 @@ else:
 >[!NOTE]
 >`elif`和`else`语句不是必选项
 
+## 4.2 `if`嵌套
+
+在嵌套 if 语句中，可以把 if...elif...else 结构放在另外一个 if...elif...else 结构中。
+
+格式
+```
+if 表达式1:
+    语句
+    if 表达式2:
+        语句
+    elif 表达式3:
+        语句
+    else:
+        语句
+elif 表达式4:
+    语句
+else:
+    语句
+```
+
+## 4.3 `match...case`
+
+Python 3.10 增加了 `match...case` 的条件判断，不需要再使用一连串的 `if-else` 来判断了。
+
+`match` 后的对象会依次与 `case` 后的内容进行匹配，如果匹配成功，则执行匹配到的表达式，否则直接跳过，`_` 可以匹配一切。
+
+语法格式:
+```
+match subject:
+    case <pattern_1>:
+        <action_1>
+    case <pattern_2>:
+        <action_2>
+    case <pattern_3>:
+        <action_3>
+    case _:
+        <action_wildcard>
+```
+
+示例:
+```
+def http_error(status):  
+    match status:  
+        case 400:  
+            return "Bad request"  
+        case 404:  
+            return "Not found"  
+        case 418:  
+            return "I'm a teapot"  
+        case 401 | 403 | 404:  
+            return "Not allowed"  
+        case _:  
+            return "Something's wrong with the internet"  
+print(http_error(400))  
+print(http_error(404))
+```
+运行结果:
+```
+Bad request
+Not found
+```
 
 # 5. 循环语句
+
+## 5.1 `while`循环
+
+格式:
+```
+while 判断条件(condition)：
+    执行语句(statements)
+```
+
+示例:
+```
+#!/usr/bin/env python3  
+n = 100  
+sum = 0  
+counter = 1  
+while counter <= n:  
+    sum += counter  
+    counter += 1  
+print("1 到 %d 之和为: %d" % (n, sum))
+```
+运行结果:
+```
+1 到 100 之和为: 5050
+```
+
+## 5.2 `while...else`
+
+格式
+```
+while <expr>:
+    <statement(s)>
+else:
+    <additional_statement(s)>
+```
+
+示例:
+```
+#!/usr/bin/python3  
+count = 0  
+while count < 5:  
+    print(count, " 小于 5")  
+    count += 1  
+else:  
+    print(count, " 大于或等于 5")
+```
+运行结果:
+```
+0  小于 5
+1  小于 5
+2  小于 5
+3  小于 5
+4  小于 5
+5  大于或等于 5
+```
+
+## 5.3 `for`语句
+
+格式:
+```
+for <variable> in <sequence>:
+    <statements>
+else:
+    <statements>
+```
+
+示例:
+```
+#!/usr/bin/python3  
+sites = ["Baidu", "Google", "Runoob", "Taobao"]  
+for site in sites:  
+    print(site)
+```
+运行结果:
+```
+Baidu
+Google
+Runoob
+Taobao
+```
+
+示例:
+```
+#!/usr/bin/python3  
+word = 'Google'  
+for letter in word:  
+    print(letter)
+```
+运行结果:
+```
+G
+o
+o
+g
+l
+e
+```
+
+## 5.4 `for...else`
+
+语法格式如下：
+```
+for item in iterable:
+    # 循环主体
+else:
+    # 循环结束后执行的代码
+```
+
+示例
+```
+for x in range(6):
+  print(x)
+else:
+  print("Finally finished!")
+```
+运行结果
+```
+0
+1
+2
+3
+4
+5
+Finally finished!
+```
+
+## 5.5 `range()`函数
+
+如果你需要遍历**数字序列**，可以使用内置 `range()` 函数。它会生成数列
+
+示例:
+```
+for x in range(6):  
+  print(x)  
+print('---------------')  
+for x in range(2,5):  
+    print(x)  
+print('---------------')  
+for x in range(1,10,2):  
+    print(x)  
+print('---------------')  
+for x in range(-1,-10,-2):  
+    print(x)  
+print('---------------')  
+a = ['Google', 'Baidu', 'Runoob', 'Taobao', 'QQ']  
+for i in range(len(a)):  
+    print(i,a[i])
+```
+运行结果:
+```
+0
+1
+2
+3
+4
+5
+---------------
+2
+3
+4
+---------------
+1
+3
+5
+7
+9
+---------------
+-1
+-3
+-5
+-7
+-9
+---------------
+0 Google
+1 Baidu
+2 Runoob
+3 Taobao
+4 QQ
+```
+
+## 5.6 `break`和`continue`
+
+**`break`** 语句可以跳出 `for` 和 `while` 的循环体。如果你从 `for` 或 `while` 循环中终止，任何对应的循环 `else`块将不执行。
+
+**`continue`** 语句被用来告诉 Python 跳过当前循环块中的剩余语句，然后继续进行下一轮循环。
+
+示例:`break`
+```
+n = 5  
+while n > 0:  
+    n -= 1  
+    if n == 2:  
+        break  
+    print(n)  
+print('循环结束。')
+```
+运行结果:
+```
+4
+3
+循环结束。
+```
+
+示例:`continue`
+```
+n = 5  
+while n > 0:  
+    n -= 1  
+    if n == 2:  
+        continue  
+    print(n)  
+print('循环结束。')
+```
+运行结果
+```
+4
+3
+1
+0
+循环结束。
+```
+
+## 5.7 `pass`语句
+
+Python pass是空语句，是为了保持程序结构的完整性。
+
+pass 不做任何事情，一般用做占位语句
+
+示例:
+```
+class MyEmptyClass:  
+    pass
+```
+
 # 6.推导式
+
+Python 推导式是一种独特的数据处理方式，可以从一个数据序列构建另一个新的数据序列的结构体。
+
+Python 推导式是一种强大且简洁的语法，适用于生成列表、字典、集合和生成器。
+
+在使用推导式时，需要注意可读性，尽量保持表达式简洁，以免影响代码的可读性和可维护性。
+
+Python 支持各种数据结构的推导式：
+
+- 列表(list)推导式
+- 字典(dict)推导式
+- 集合(set)推导式
+- 元组(tuple)推导式
+## 6.1 列表推导式
+
+格式1:
+```
+[表达式 for 变量 in 列表] 
+[out_exp_res for out_exp in input_list]
+```
+格式2:
+```
+[表达式 for 变量 in 列表 if 条件]
+[out_exp_res for out_exp in input_list if condition]
+```
+
+示例:过滤掉长度小于或等于3的字符串列表，并将剩下的转换成大写字母
+```
+names = ['Bob','Tom','alice','Jerry','Wendy','Smith']  
+new_names = [name.upper()for name in names if len(name)>3]  
+print(new_names)
+```
+运行结果:
+```
+['ALICE', 'JERRY', 'WENDY', 'SMITH']
+```
+
+示例:计算 30 以内可以被 3 整除的整数
+```
+multiples = [i for i in range(30) if i % 3 == 0]  
+print(multiples)
+```
+运行结果:
+```
+[0, 3, 6, 9, 12, 15, 18, 21, 24, 27]
+```
+
+## 6.2 字典推导式
+
+格式1:
+```
+{ key_expr: value_expr for value in collection }
+```
+
+格式2:
+```
+{ key_expr: value_expr for value in collection if condition }
+```
+
+示例:
+```
+listdemo = ['Google','Runoob', 'Taobao']  
+newdict = {key:len(key) for key in listdemo}  
+print(newdict)
+```
+运行结果:
+```
+{'Google': 6, 'Runoob': 6, 'Taobao': 6}
+```
+
+## 6.3 集合推导式
+
+格式1:
+```
+{ expression for item in Sequence }
+```
+
+格式2:
+```
+{ expression for item in Sequence if conditional }
+```
+
+示例:
+```
+setnew = {i**2 for i in (1,2,3)}  
+print(setnew)
+```
+运行结果:
+```
+{1, 4, 9}
+```
+
+## 6.4 元组推导式
+
+格式1:
+```
+(expression for item in Sequence )
+```
+
+格式2:
+```
+(expression for item in Sequence if conditional )
+```
+
+示例:
+```
+a = (x for x in range(1,10))  
+print(a)  
+print(tuple(a))
+```
+运行结果:
+```
+<generator object <genexpr> at 0x0000027516DCA3B0>
+(1, 2, 3, 4, 5, 6, 7, 8, 9)
+```
+
 # 7.迭代器和生成器
+
+## 7.1 迭代器
+
+迭代是 Python 最强大的功能之一，是访问集合元素的一种方式。
+
+迭代器是一个可以记住遍历的位置的对象。
+
+迭代器对象从集合的第一个元素开始访问，直到所有的元素被访问完结束。迭代器只能往前不会后退。
+
+迭代器有两个基本的方法：**`iter()`** 和 **`next()`**。
+
+字符串，列表或元组对象都可用于创建迭代器：
+
+示例:
+```
+list=[1,2,3,4]  
+it = iter(list)  
+print (next(it))  
+print (next(it))
+```
+运行结果:
+```
+1
+2
+```
+
+示例:
+```
+#!/usr/bin/python3  
+list = [1, 2, 3, 4]  
+it = iter(list)  
+for x in it:  
+    print(x, end=" ")
+```
+运行结果:
+```
+1 2 3 4 
+```
+
+示例:
+```
+#!/usr/bin/python3  
+import sys  
+list = [1, 2, 3, 4]  
+it = iter(list)  
+while True:  
+    try:  
+        print(next(it),end=' ')  
+    except StopIteration:  
+        sys.exit()
+```
+运行结果:
+```
+1 2 3 4 
+```
+
+示例:
+```
+class MyNumbers:  
+    def __iter__(self):  
+        self.a = 1  
+        return self  
+  
+    def __next__(self):  
+        x = self.a  
+        self.a += 1  
+        return x  
+myclass = MyNumbers()  
+myiter = iter(myclass)  
+print(next(myiter))  
+print(next(myiter))  
+print(next(myiter))  
+print(next(myiter))  
+print(next(myiter))  
+print(next(myiter))
+```
+运行结果:
+```
+1
+2
+3
+4
+5
+6
+```
+
+示例:
+```
+class MyNumbers:  
+    def __iter__(self):  
+        self.a = 1  
+        return self  
+    def __next__(self):  
+        if self.a <= 20:  
+            x = self.a  
+            self.a += 1  
+            return x  
+        else:  
+            raise StopIteration  
+myclass = MyNumbers()  
+myiter = iter(myclass)  
+for x in myiter:  
+    print(x)
+```
+运行结果
+```
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+```
+
+## 7.2 生成器
+
+在 Python 中，使用了 **`yield`** 的函数被称为生成器（generator）。
+
+**`yield`** 是一个关键字，用于定义生成器函数，生成器函数是一种特殊的函数，可以在迭代过程中逐步产生值，而不是一次性返回所有结果。
+
+跟普通函数不同的是，生成器是一个返回迭代器的函数，只能用于迭代操作，更简单点理解生成器就是一个迭代器。
+
+当在生成器函数中使用 **`yield`** 语句时，函数的执行将会暂停，并将 **`yield`** 后面的表达式作为当前迭代的值返回。
+
+然后，每次调用生成器的 **`next()`** 方法或使用 **`for`** 循环进行迭代时，函数会从上次暂停的地方继续执行，直到再次遇到 **`yield`** 语句。这样，生成器函数可以逐步产生值，而不需要一次性计算并返回所有结果。
+
+调用一个生成器函数，返回的是一个迭代器对象。
+
+示例:
+```
+def countdown(n):  
+    while n > 0:  
+        yield n  
+        n -= 1  
+# 创建生成器对象  
+generator = countdown(5)  
+# 通过迭代生成器获取值  
+print(next(generator))  # 输出: 5  
+print(next(generator))  # 输出: 4  
+print(next(generator))  # 输出: 3  
+# 使用 for 循环迭代生成器  
+for value in generator:  
+    print(value)  # 输出: 2 1
+```
+运行结果
+```
+5
+4
+3
+2
+1
+```
+
+实例:使用 yield 实现斐波那契数列
+```
+#!/usr/bin/python3  
+import sys  
+def fibonacci(n):  # 生成器函数 - 斐波那契  
+    a, b, counter = 0, 1, 0  
+    while True:  
+        if (counter > n):  
+            return  
+        yield a  
+        a, b = b, a + b  
+        counter += 1  
+f = fibonacci(10)  # f 是一个迭代器，由生成器返回生成  
+while True:  
+    try:  
+        print(next(f), end=" ")  
+    except StopIteration:  
+        sys.exit()
+```
+运行结果:
+```
+0 1 1 2 3 5 8 13 21 34 55 
+```
+
 # 8.函数
+
+函数是组织好的，可重复使用的，用来实现单一，或相关联功能的代码段。
+
+函数能提高应用的模块性，和代码的重复利用率。你已经知道Python提供了许多内建函数，比如print()。但你也可以自己创建函数，这被叫做用户自定义函数。
+
+## 8.1 定义函数
+
+你可以定义一个由自己想要功能的函数，以下是简单的规则：
+
+- 函数代码块以 **`def`** 关键词开头，后接函数标识符名称和圆括号 **`()`**。
+- 任何传入参数和自变量必须放在圆括号中间，圆括号之间可以用于定义参数。
+- 函数的第一行语句可以选择性地使用文档字符串—用于存放函数说明。
+- 函数内容以冒号 : 起始，并且缩进。
+- **`return [表达式]`** 结束函数，选择性地返回一个值给调用方，不带表达式的 `return` 相当于返回 None。
+
+格式:
+```
+def 函数名（参数列表）:
+    函数体
+```
+
+示例:
+```
+#!/usr/bin/python3  
+def hello() :  
+    print("Hello World!")  
+hello()
+```
+运行结果:
+```
+Hello World!
+```
+
+示例:
+```
+#!/usr/bin/python3  
+def max(a, b):  
+    if a > b:  
+        return a  
+    else:  
+        return b  
+a = 4  
+b = 5  
+print(max(a, b))
+```
+运行结果:
+```
+5
+```
+
+## 8.2 调用函数
+
+定义一个函数：给了函数一个名称，指定了函数里包含的参数，和代码块结构。
+
+这个函数的基本结构完成以后，你可以通过另一个函数调用执行，也可以直接从 Python 命令提示符执行。
+
+示例:
+```
+#!/usr/bin/python3  
+# 定义函数  
+def printme(str):  
+    # 打印任何传入的字符串  
+    print(str)  
+    return  
+# 调用函数  
+printme("我要调用用户自定义函数!")  
+printme("再次调用同一函数")
+```
+运行结果:
+```
+我要调用用户自定义函数!
+再次调用同一函数
+```
+
+## 8.3 参数传递
+
+在 python 中，类型属于对象，对象有不同类型的区分，变量是没有类型的：它仅仅是一个对象的引用（一个指针），可以是指向 `List` 类型对象，也可以是指向 `String` 类型对象。
+
+示例:
+```
+a=[1,2,3]  
+print(type(a))  
+a="Runoob"  
+print(type(a))
+```
+运行结果:
+```
+<class 'list'>
+<class 'str'>
+```
+### 8.3.1 传不可变对象示例
+
+**不可变数据（3 个）**：**Number（数字）、String（字符串）、Tuple（元组）**
+
+示例:
+```
+def change(a):  
+    print(id(a))  # 指向的是同一个对象  
+    a = 10  
+    print(id(a))  # 一个新对象  
+a = 1  
+print(id(a))  
+change(a)
+```
+运行结果:
+```
+2259897811184
+2259897811184
+2259897811472
+```
+
+### 8.3.2 传可变对象示例
+
+**可变数据（3 个）**：**List（列表）、Dictionary（字典）、Set（集合）**。
+
+示例;
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def changeme(mylist):  
+    "修改传入的列表"  
+    mylist.append([1, 2, 3, 4])  
+    print("函数内取值: ", mylist)  
+    return  
+# 调用changeme函数  
+mylist = [10, 20, 30]  
+changeme(mylist)  
+print("函数外取值: ", mylist)
+```
+运行结果:
+```
+函数内取值:  [10, 20, 30, [1, 2, 3, 4]]
+函数外取值:  [10, 20, 30, [1, 2, 3, 4]]
+```
+
+## 8.4 参数
+
+以下是调用函数时可使用的正式参数类型：
+
+- 必需参数
+- 关键字参数
+- 默认参数
+- 不定长参数
+### 8.4.1 必需参数
+
+必需参数须以正确的顺序传入函数。调用时的数量必须和声明时的一样。
+
+调用 `printme() `函数，你必须传入一个参数，不然会出现语法错误：
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printme(str):  
+    "打印任何传入的字符串"  
+    print(str)  
+    return  
+# 调用 printme 函数，不加参数会报错  
+printme()
+```
+运行结果:
+```
+Traceback (most recent call last):
+  File "E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py", line 9, in <module>
+    printme()
+```
+
+### 8.4.2 关键字参数
+
+关键字参数和函数调用关系紧密，函数调用使用关键字参数来确定传入的参数值。
+
+使用关键字参数允许函数调用时参数的顺序与声明时不一致，因为 Python 解释器能够用参数名匹配参数值。
+
+以下实例在函数 `printme()` 调用时使用参数名：
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printme(str):  
+    "打印任何传入的字符串"  
+    print(str)  
+    return  
+# 调用 printme 函数，不加参数会报错  
+printme(str='Baidu.com')
+```
+运行结果:
+```
+Baidu.com
+```
+
+### 8.4.3 默认参数
+
+调用函数时，如果没有传递参数，则会使用默认参数。
+
+示例:如果没有传入 age 参数，则使用默认值35：
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printinfo(name, age=35):  
+    "打印任何传入的字符串"  
+    print("名字: ", name)  
+    print("年龄: ", age)  
+    return  
+# 调用printinfo函数  
+printinfo(age=50, name="runoob")  
+print("------------------------")  
+printinfo(name="runoob")
+```
+运行结果
+```
+名字:  runoob
+年龄:  50
+------------------------
+名字:  runoob
+年龄:  35
+```
+
+### 8.4.4 不定长参数
+
+你可能需要一个函数能处理比当初声明时更多的参数。这些参数叫做不定长参数，和上述 2 种参数不同，声明时不会命名。
+
+#### 1)语法1：
+```
+def functionname([formal_args,] *var_args_tuple ):  
+   "函数_文档字符串"  
+   function_suite  
+   return [expression]
+```
+
+加了星号 `*`的参数会以元组(tuple)的形式导入，存放所有未命名的变量参数。
+
+示例:
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printinfo(arg1, *vartuple):  
+    "打印任何传入的参数"  
+    print("输出: ")  
+    print(arg1)  
+    print(vartuple)  
+# 调用printinfo 函数  
+printinfo(70, 60, 50)
+```
+运行结果:
+```
+输出: 
+70
+(60, 50)
+```
+
+示例:
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printinfo(arg1, *vartuple):  
+    "打印任何传入的参数"  
+    print("输出: ")  
+    print(arg1)  
+    for var in vartuple:  
+        print(var)  
+    return  
+# 调用printinfo 函数  
+printinfo(10)  
+printinfo(70, 60, 50)
+```
+运行结果:
+```
+输出: 
+10
+输出: 
+70
+60
+50
+```
+
+#### 2)语法2:
+
+```
+def functionname([formal_args,] **var_args_dict ):
+   "函数_文档字符串"
+   function_suite
+   return [expression]
+```
+
+示例:
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def printinfo(arg1, **vardict):  
+    "打印任何传入的参数"  
+    print("输出: ")  
+    print(arg1)  
+    print(vardict)  
+# 调用printinfo 函数  
+printinfo(1, a=2, b=3)
+```
+运行结果:
+```
+输出: 
+1
+{'a': 2, 'b': 3}
+```
+
+示例:
+```
+def f(a,b,*,c):  
+    return a+b+c  
+print(f(1, 2, c=3))
+```
+运行结果:
+```
+6
+```
+
+### 8.4.5 强制位置参数
+
+默认情况下，参数可以按位置或显式关键字传递给 Python 函数。为了让代码易读、高效，最好限制参数的传递方式，这样，开发者只需查看函数定义，即可确定参数项是仅按位置、按位置或关键字，还是仅按关键字传递。
+
+函数定义如下：
+```
+def f(pos1, pos2, /, pos_or_kwd, *, kwd1, kwd2):
+      -----------    ----------     ----------
+        |             |                  |
+        |        Positional or keyword   |
+        |                                - Keyword only
+         -- Positional only
+```
+
+>[!NOTE]
+>函数定义中未使用 `/` 和 `*` 时，参数可以按位置或关键字传递给函数。
+
+示例:
+```
+def f(a, b, /, c, d, *, e, f):  
+    print(a, b, c, d, e, f)  
+  
+f(10, 20, c=30, d=40, e=50, f=60)  
+f(10, 20, 30, d=40, e=50, f=60)  
+f(10, 20, 30, 40, e=50, f=60)  
+f(10, 20, c=30, d=40, e=50, f=60)
+```
+运行结果:
+```
+10 20 30 40 50 60
+10 20 30 40 50 60
+10 20 30 40 50 60
+10 20 30 40 50 60
+```
+
+错误的方法:
+```
+def f(a, b, /, c, d, *, e, f):  
+    print(a, b, c, d, e, f)  
+f(10, b=20, c=30, d=40, e=50, f=60)  
+f(10, 20, 30, 40, 50, f=60)
+```
+运行结果:
+```
+Traceback (most recent call last):
+  File "E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py", line 3, in <module>
+    f(10, b=20, c=30, d=40, e=50, f=60)
+TypeError: f() got some positional-only arguments passed as keyword arguments: 'b'
+
+```
+
+### 8.4.6 匿名参数
+
+Python 使用 `lambda` 来创建匿名函数。
+
+所谓匿名，意即不再使用 **def** 语句这样标准的形式定义一个函数。
+
+- `lambda`只是一个表达式，函数体比 **`def`** 简单很多。
+- `lambda`的主体是一个表达式，而不是一个代码块。仅仅能在 `lambda`表达式中封装有限的逻辑进去。
+- `lambda`函数拥有自己的命名空间，且不能访问自己参数列表之外或全局命名空间里的参数。
+- 虽然 `lambda` 函数看起来只能写一行，却不等同于 C 或 C++ 的内联函数，内联函数的目的是调用小函数时不占用栈内存从而减少函数调用的开销，提高代码的执行速度。
+
+
+`lambda`函数的语法只包含一个语句，如下：
+
+```
+lambda [arg1 [,arg2,.....argn]]:expression
+```
+
+示例:
+```
+x = lambda a : a + 10  
+print(x(5))
+```
+运行结果:
+```
+15
+```
+
+示例:
+```
+def myfunc(n):  
+    return lambda a: a * n  
+mydoubler = myfunc(2)  
+mytripler = myfunc(3)  
+print(mydoubler(11))  
+print(mytripler(11))
+```
+运行结果:
+```
+22
+33
+```
+
+## 8.5 `return`语句
+
+**`return [表达式]`** 语句用于退出函数，选择性地向调用方返回一个表达式。不带参数值的 return 语句返回 None。
+
+示例:
+```
+#!/usr/bin/python3  
+# 可写函数说明  
+def sum(arg1, arg2):  
+    # 返回2个参数的和."  
+    total = arg1 + arg2  
+    print("函数内 : ", total)  
+    return total  
+# 调用sum函数  
+total = sum(10, 20)  
+print("函数外 : ", total)
+```
+运行结果:
+```
+函数内 :  30
+函数外 :  30
+```
+
+# 9.模块
+
+模块是一个包含所有你定义的函数和变量的文件，其后缀名是.py。模块可以被别的程序引入，以使用该模块中的函数等功能。这也是使用 python 标准库的方法。
+
+示例:
+```
+#!/usr/bin/python3  
+# 文件名: using_sys.py  
+import sys  
+print('命令行参数如下:')  
+for i in sys.argv:  
+    print(i)  
+print('\n\nPython 路径为：', sys.path, '\n')
+```
+运行结果:
+```
+命令行参数如下:
+E:\ProgramData\PycharmProjects\Learning\.venv\mytest.py
+
+
+Python 路径为： ['E:\\ProgramData\\PycharmProjects\\Learning\\.venv', 'E:\\ProgramData\\PycharmProjects\\Learning', 'D:\\Program Files\\Python310\\python310.zip', 'D:\\Program Files\\Python310\\DLLs', 'D:\\Program Files\\Python310\\lib', 'D:\\Program Files\\Python310', 'E:\\ProgramData\\PycharmProjects\\Learning\\.venv', 'E:\\ProgramData\\PycharmProjects\\Learning\\.venv\\lib\\site-packages'] 
+
+```
+
+# 10.错误和异常
+
+# 11.面向对象
 
