@@ -1,3 +1,7 @@
 /.obsidian
 /.obsidian/
 /.obsidian/*.json
+.obsidian/workspace.json
+.obsidian
+.obsidian/
+.obsidian/*.json
