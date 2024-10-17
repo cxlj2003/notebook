@@ -114,3 +114,31 @@ done
 ```
 
 ```
+
+# 6.openEuler Upgrade
+
+```
+src_version='openEuler-20.03-LTS-SP4'
+dst_version='openEuler-24.03-LTS'
+cp /etc/yum.repos.d/openEuler.repo /etc/yum.repos.d/openEuler.repo.bak
+sed -i -e '/metalink/d' -e '/metadata_expire/d' /etc/yum.repos.d/openEuler.repo
+sed -i "s/${src_version}/${dst_version}/g" /etc/yum.repos.d/openEuler.repo
+yum clean all
+yum update --allowerasing -y
+yum autoremove -y
+yum reinstall systemd -y
+
+```
+
+```
+src_version='openEuler-22.03-LTS-SP4'
+dst_version='openEuler-24.03-LTS'
+cp /etc/yum.repos.d/openEuler.repo /etc/yum.repos.d/openEuler.repo.bak
+sed -i -e '/metalink/d' -e '/metadata_expire/d' /etc/yum.repos.d/openEuler.repo
+sed -i "s/${src_version}/${dst_version}/g" /etc/yum.repos.d/openEuler.repo
+yum clean all 
+yum update --allowerasing -y
+yum autoremove -y
+yum reinstall systemd -y
+
+```

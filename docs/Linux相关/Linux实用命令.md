@@ -28,6 +28,7 @@ tzselect
 ## 2.3 链接/etc/localtime
 
 ```
+rm -rf /etc/localtime
 ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 ```
 # 3. date 格式显示
@@ -67,6 +68,12 @@ bash -ex script.sh
 ```
 
 # 6.`iproute2`
+
+```
+ip add add 198.19.201.130/24 dev ens32
+ip link set ens32 up
+ip route add default via 198.19.201.254
+```
 
 # 7.`nmcli`
 
