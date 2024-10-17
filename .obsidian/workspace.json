@@ -104,7 +104,7 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -171,7 +171,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/Linux相关/Linux实用软件.md",
+                "file": "docs/Linux相关/Bash实用函数.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -188,7 +188,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/Linux相关/Linux实用软件.md",
+                "file": "docs/Linux相关/Bash实用函数.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -211,7 +211,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/Linux相关/Linux实用软件.md"
+                "file": "docs/Linux相关/Bash实用函数.md"
               }
             }
           }
@@ -232,13 +232,13 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "88b665356717eb16",
+  "active": "5489c5e682527b60",
   "lastOpenFiles": [
     "docs/Linux相关/Linux实用命令.md",
+    "docs/Linux相关/Linux实用软件.md",
     "docs/Linux相关/Bash实用函数.md",
     "docs/Linux相关/Bash实用脚本.md",
     "docs/Linux相关/Bash编程语法.md",
-    "docs/Linux相关/Linux实用软件.md",
     "docs/python3/python3编程语法.md",
     "docs/交换机配置脚本.md",
     "docs/Linux相关/获取Linux配置信息.md",
