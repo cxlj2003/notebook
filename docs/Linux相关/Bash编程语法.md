@@ -2510,9 +2510,30 @@ s/dog/cat/'
 ```
 
 ## 14.3 `awk`
-`
+## 14.4 `cut`
+
+```
+# -d 指定分割符
+# -f 指定打印的列
+cat /etc/passwd | head -n 5 | cut -d : -f 1,3-5
+```
+运行结果
+```
+root:0:0:root
+daemon:1:1:daemon
+bin:2:2:bin
+sys:3:3:sys
+sync:4:65534:sync
+```
 
 
+```
+curl -s https://www.debian.org/releases/stable/index.html |awk -F \;  '/Release Information <\/title>/{print $(NF-1)}' |cut -d \& -f 1
+```
+运行结果
+```
+bookworm
+```
 
 
 

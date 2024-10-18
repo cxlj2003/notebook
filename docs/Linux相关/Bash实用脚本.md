@@ -271,3 +271,42 @@ if [ $? -eq 0 ]; then
     exit 0
 fi;
 ```
+
+```
+#!/bin/bash -e
+source /etc/os-release
+
+__get_stable_release(){
+  if which curl ;then
+    stable_release=$(curl -s https://www.debian.org/releases/stable/index.html |awk -F \;  '/Release Information <\/title>/{print $(NF-1)}' |cut -d \& -f 1)
+  elif which wget ; then
+  	rm -f /tmp/index.html
+  	wget -q -P /tmp/ https://www.debian.org/releases/stable/index.html
+    stable_release=$(cat /tmp/index.html | awk -F \;  '/Release Information <\/title>/{print $(NF-1)}' |cut -d \& -f 1)
+    rm -f /tmp/index.html
+  fi
+  }
+
+__do_apt_update(){
+    apt update
+    if [ $? -ne 0 ];then
+      exit 1
+    fi
+  }
+  
+__do_apt_upgrade(){
+  __do_apt_update
+  apt upgrade -y
+  apt dis-upgrade -y
+  apt full-upgrade -y
+  }
+
+__do_release_upgrade(){
+  __get_stable_release
+  __do_apt_upgrade
+  sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list
+  sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list.d/*.list
+  __do_apt_upgrade
+  }
+
+__do_release_upgrade
