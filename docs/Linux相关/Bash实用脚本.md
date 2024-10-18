@@ -2,74 +2,74 @@
 ## 1.1 `sources.list`格式
 ```
 #!/bin/bash
-SERVER_IP='mirrors.ustc.edu.cn'
+mirrors_server='mirrors.ustc.edu.cn'
 source /etc/os-release
 rm -rf /etc/apt/sources.list.d/*.sources
 
-if [ $ID = ubuntu ];then
+if [ ${ID} = ubuntu ];then
 cat << EOF > /etc/apt/sources.list
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
 
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
 
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
 
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
 
-# deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
-# deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
 EOF
-elif [ $ID = debian ];then
+elif [ ${ID} = debian ];then
 cat << EOF > /etc/apt/sources.list
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
 
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
 
-deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
-deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
 
-deb http://${SERVER_IP}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
-deb-src http://${SERVER_IP}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
+deb-src http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
 EOF
 fi
 ```
 
-## 1.2DEB822格式
+## 1.2`DEB822`格式
 ```
 #!/bin/bash
-SERVER_IP='mirrors.ustc.edu.cn'
+mirrors_server='mirrors.ustc.edu.cn'
 source /etc/os-release
 echo "# ${ID} sources have moved to /etc/apt/sources.list.d/${ID}.sources" > /etc/apt/sources.list
-if [ $ID = ubuntu ];then
+if [ ${ID} = ubuntu ];then
 cat << EOF > /etc/apt/sources.list.d/${ID}.sources
 Types: deb
-URIs: http://${SERVER_IP}/${ID}
+URIs: http://${mirrors_server}/${ID}
 Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates ${VERSION_CODENAME}-backports
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 
 Types: deb
-URIs: http://${SERVER_IP}/${ID}
+URIs: http://${mirrors_server}/${ID}
 Suites: ${VERSION_CODENAME}-security
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 EOF
-elif [ $ID = debian ];then
+elif [ ${ID} = debian ];then
 cat << EOF > /etc/apt/sources.list.d/${ID}.sources
 Types: deb
-URIs: http://${SERVER_IP}/${ID}
+URIs: http://${mirrors_server}/${ID}
 Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates
 Components: main contrib non-free
 Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 
 Types: deb
-URIs: http://${SERVER_IP}/${ID}-security
+URIs: http://${mirrors_server}/${ID}-security
 Suites: ${VERSION_CODENAME}-security
 Components: main contrib non-free
 Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
