@@ -25,22 +25,22 @@ deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restr
 EOF
 elif [ ${ID} = debian ];then
 cat << EOF > /etc/apt/sources.list
-deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
-deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main contrib
 
-deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
-deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main contrib 
 
-deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
-deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
+#deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib
+#deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main contrib 
 
-deb http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
-deb-src http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
+deb http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib
+deb-src http://${mirrors_server}/${ID}-security/ ${VERSION_CODENAME}-security main contrib 
 EOF
 fi
 ```
 
-## 1.2`DEB822`格式
+## 1.2 `DEB822`格式
 ```
 #!/bin/bash
 mirrors_server='mirrors.ustc.edu.cn'
@@ -293,15 +293,17 @@ __do_apt_update(){
 	    sed -i '/deb cdrom/d' /etc/apt/sources.list.d/*.list
 	  fi
     apt update
+    export DEBIAN_FRONTEND=noninteractive
     if [ $? -ne 0 ];then
-      exit 1
+      #exit 1
+      echo 1
     fi
   }
   
 __do_apt_upgrade(){
   __do_apt_update
   apt upgrade -y
-  apt dis-upgrade -y
+  apt dist-upgrade -y
   apt full-upgrade -y
   }
 
@@ -309,8 +311,10 @@ __do_release_upgrade(){
   __get_stable_release
   __do_apt_upgrade
   sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list
+  sed -i 's#/updates#-updates#g' /etc/apt/sources.list
   if [ $(ls /etc/apt/sources.list.d |wc -l) -gt 0 ];then
 	  sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list.d/*.list
+	  sed -i 's#/updates#-updates#g' /etc/apt/sources.list.d/*.list
   fi
   __do_apt_upgrade
   }
