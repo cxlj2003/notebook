@@ -1,5 +1,46 @@
 # 1. 修改apt源
+## 1.1 `sources.list`格式
+```
+#!/bin/bash
+SERVER_IP='mirrors.ustc.edu.cn'
+source /etc/os-release
+rm -rf /etc/apt/sources.list.d/*.sources
 
+if [ $ID = ubuntu ];then
+cat << EOF > /etc/apt/sources.list
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+
+# deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+EOF
+elif [ $ID = debian ];then
+cat << EOF > /etc/apt/sources.list
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME} main contrib non-free  non-free-firmware
+
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-updates main contrib non-free  non-free-firmware
+
+deb http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
+deb-src http://${SERVER_IP}/${ID}/ ${VERSION_CODENAME}-backports main contrib non-free  non-free-firmware
+
+deb http://${SERVER_IP}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
+deb-src http://${SERVER_IP}/${ID}-security/ ${VERSION_CODENAME}-security main contrib non-free  non-free-firmware
+EOF
+fi
+```
+
+## 1.2DEB822格式
 ```
 #!/bin/bash
 SERVER_IP='mirrors.ustc.edu.cn'
@@ -35,6 +76,7 @@ Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 EOF
 fi
 ```
+
 # 2. IP地址配置
 
 ```
