@@ -288,6 +288,10 @@ __get_stable_release(){
   }
 
 __do_apt_update(){
+    sed -i '/deb cdrom/d' /etc/apt/sources.list
+    if [ $(ls /etc/apt/sources.list.d |wc -l) -gt 0 ];then
+	    sed -i '/deb cdrom/d' /etc/apt/sources.list.d/*.list
+	  fi
     apt update
     if [ $? -ne 0 ];then
       exit 1
@@ -305,8 +309,11 @@ __do_release_upgrade(){
   __get_stable_release
   __do_apt_upgrade
   sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list
-  sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list.d/*.list
+  if [ $(ls /etc/apt/sources.list.d |wc -l) -gt 0 ];then
+	  sed -i "s/${VERSION_CODENAME}/${stable_release}/g" /etc/apt/sources.list.d/*.list
+  fi
   __do_apt_upgrade
   }
 
 __do_release_upgrade
+```
