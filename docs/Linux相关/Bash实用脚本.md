@@ -2,20 +2,38 @@
 
 ```
 #!/bin/bash
-echo '# Ubuntu sources have moved to /etc/apt/sources.list.d/ubuntu.sources' > /etc/apt/sources.list
-cat << EOF > /etc/apt/sources.list.d/ubuntu.sources
+SERVER_IP='mirrors.ustc.edu.cn'
+source /etc/os-release
+echo "# ${ID} sources have moved to /etc/apt/sources.list.d/${ID}.sources" > /etc/apt/sources.list
+if [ $ID = ubuntu ];then
+cat << EOF > /etc/apt/sources.list.d/${ID}.sources
 Types: deb
-URIs: http://${SERVER_IP}/ubuntu
+URIs: http://${SERVER_IP}/${ID}
 Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates ${VERSION_CODENAME}-backports
 Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 
 Types: deb
-URIs: http://${SERVER_IP}/ubuntu
+URIs: http://${SERVER_IP}/${ID}
 Suites: ${VERSION_CODENAME}-security
 Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
 EOF
+elif [ $ID = debian ];then
+cat << EOF > /etc/apt/sources.list.d/${ID}.sources
+Types: deb
+URIs: http://${SERVER_IP}/${ID}
+Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates
+Components: main contrib non-free
+Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
+
+Types: deb
+URIs: http://${SERVER_IP}/${ID}-security
+Suites: ${VERSION_CODENAME}-security
+Components: main contrib non-free
+Signed-By: /usr/share/keyrings/${ID}-archive-keyring.gpg
+EOF
+fi
 ```
 # 2. IP地址配置
 
@@ -115,7 +133,7 @@ done
 
 ```
 
-# 6.openEuler Upgrade
+# 6.openEuler跨版本升级
 
 ```
 src_version='openEuler-20.03-LTS-SP4'
@@ -141,4 +159,73 @@ yum update --allowerasing -y
 yum autoremove -y
 yum reinstall systemd -y
 
+```
+
+# 7. Debian跨版本升级
+
+```
+#!/bin/bash
+RELEASE=$(cat /etc/issue)
+
+__do_apt_update(){
+    apt update
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi;
+}
+
+__do_apt_upgrade(){
+    __do_apt_update
+    apt upgrade -y
+    apt dist-upgrade -y
+    apt full-upgrade -y
+}
+
+__do_debian10_upgrade(){
+    echo "[INFO] Doing debian 10 upgrade..."
+    __do_apt_upgrade
+    sed -i 's/stretch/buster/g' /etc/apt/sources.list
+    sed -i 's/stretch/buster/g' /etc/apt/sources.list.d/*.list
+    __do_apt_upgrade
+    echo "[INFO] Please reboot"
+}
+
+__do_debian11_upgrade(){
+    echo "[INFO] Doing debian 11 upgrade..."
+    __do_apt_upgrade
+    sed -i 's/buster/bullseye/g' /etc/apt/sources.list
+    sed -i 's/buster/bullseye/g' /etc/apt/sources.list.d/*.list
+    sed -i 's/bullseye\/updates/bullseye-security/g' /etc/apt/sources.list
+    __do_apt_upgrade
+    echo "[INFO] Please reboot"
+}
+
+__do_debian12_upgrade(){
+    echo "[INFO] Doing debian 12 upgrade..."
+    __do_apt_upgrade
+    sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
+    sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list.d/*.list
+    sed -i 's/bullseye-security/bullseye-bookworm/g' /etc/apt/sources.list
+    __do_apt_upgrade
+    echo "[INFO] Please reboot"
+}
+
+
+echo $RELEASE | grep ' 9 '
+if [ $? -eq 0 ]; then
+    __do_debian10_upgrade
+    exit 0
+fi;
+
+echo $RELEASE | grep ' 10 '
+if [ $? -eq 0 ]; then
+    __do_debian11_upgrade
+    exit 0
+fi;
+
+echo $RELEASE | grep ' 11 '
+if [ $? -eq 0 ]; then
+    __do_debian12_upgrade
+    exit 0
+fi;
 ```
