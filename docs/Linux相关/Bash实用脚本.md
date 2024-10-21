@@ -172,6 +172,19 @@ done
 # 5. 远程运行脚本
 
 ```
+HOSTS='
+198.19.201.130
+'
+for HOST in ${HOSTS};do
+	 ssh root@${HOST} cat <<'EEOOFF' > /tmp/r.sh
+#!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
+apt -y install chrony
+systemctl enable --now chronyd
+ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+EEOOFF
+ ssh root@${HOST} 'bash ' /tmp/r.sh
+done
 
 ```
 
@@ -272,6 +285,7 @@ if [ $? -eq 0 ]; then
 fi;
 ```
 
+用于oldrelease升级至release
 ```
 #!/bin/bash -e
 source /etc/os-release
@@ -321,3 +335,9 @@ __do_release_upgrade(){
 
 __do_release_upgrade
 ```
+
+>[!IMPORTANT]
+>升级不可跨越版本
+
+
+
