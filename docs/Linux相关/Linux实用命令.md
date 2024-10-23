@@ -123,19 +123,48 @@ useradd -u 1314 -g orclgrp orcl
 
 ## 9.1`yum/dnf`
 ```
-
+yum list installed #查看已安装的软件包
+yum list |egrep '^http' #查找已http开头的软件包
+yum info [packagename] |grep Version |uniq #查找软件的版本
 ```
 示例
 ```
-
+yum info ceph |grep Version |uniq
+```
+运行结果
+```
+Version      : 18.2.2
 ```
 
 ## 9.2`apt`
 ```
-
+apt list --installed #查看已安装的软件包
+apt list |egrep '^http' #查找已http开头的软件包
+apt show [packagename] |grep Version |uniq #查找软件的版本
 ```
 示例
 ```
+apt show ceph |grep Version |uniq
+```
+运行结果
+```
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
 
+Version: 19.2.0-0ubuntu0.24.04.1
+```
+
+## 9.3编译环境安装
+
+```
+yum groupinstall 'Development Tools' -y
+```
+
+```
+apt install bulid-essential -y
+```
+
+# 10.PAM
+
+```
 ```
 
