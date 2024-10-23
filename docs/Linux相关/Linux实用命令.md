@@ -86,5 +86,56 @@ nmcli conn mod ens32 ipv4.dns 8.8.8.8,114.114.114.114 #配置DNS
 nmcli conn mod ens32 ipv4.meth man #手动配置IP
 nmcli conn mod ens32 autoconnect yes #配置开机自动连接网络
 nmcli down ens32 && nmcli up ens32 #重启网卡
+
+
+nmcli con add type bond con-name bond1 ifname bond1 mode 802.3ad #创建lacp-bond
+nmcli con mod bond1 autoconnect y #开机自动连接
+nmcli con add type bond-slave ifname p4p2 master bond1 #添加物理接口1
+nmcli con add type bond-slave ifname p6p2 master bond1 #添加物理接口2
+nmcli con mod bond1 ipv4.add 100.120.0.1/24 #配置IP
+
+
+nmcli conn modify bond1 +ipv4.routes "100.201.3.117/32 100.120.0.254" #添加静态路由
+nmcli conn down bond1 && nmcli conn up bond1 #重启网卡
+
+```
+
+# 8.用户和组
+
+```
+# /etc/passwd
+# /etc/group
+#查看所有用户组信息
+cat /etc/passwd | cut -d: -f1 |xargs id 
+groupadd -g [gid] [groupname] #创建指定gid的组
+useradd -u [uid] -g [groupname] [username] #创建指定uid的用户并添加至相应的组(已存在)
+userdel [username] #删除用户
+userdel -r [username] #删除用户及主目录
+```
+
+示例
+```
+groupadd -g 1314 orclgrp
+useradd -u 1314 -g orclgrp orcl
+```
+
+# 9.软件包管理
+
+## 9.1`yum/dnf`
+```
+
+```
+示例
+```
+
+```
+
+## 9.2`apt`
+```
+
+```
+示例
+```
+
 ```
 
