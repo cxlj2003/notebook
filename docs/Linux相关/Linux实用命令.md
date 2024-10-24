@@ -77,6 +77,8 @@ ip route add default via 198.19.201.254
 
 # 7.`nmcli`
 
+类Debian系统使用`apt install cockpit-networkmanager`命令安装
+
 ```
 nmcli conn sh #查看网络连接 
 nmcli conn add con-name ens32 if-name ens32 type ethernet #新增网卡连接配置
@@ -97,6 +99,15 @@ nmcli con mod bond1 ipv4.add 100.120.0.1/24 #配置IP
 
 nmcli conn modify bond1 +ipv4.routes "100.201.3.117/32 100.120.0.254" #添加静态路由
 nmcli conn down bond1 && nmcli conn up bond1 #重启网卡
+
+nmcli conn edit # 交互式
+
+nmtui # 图形化
+
+# 无线网络
+nmcli radio wifi on
+nmcli dev wifi list
+
 
 ```
 
