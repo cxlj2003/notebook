@@ -149,6 +149,8 @@ Version      : 18.2.2
 
 ## 9.2`apt`
 ```
+echo 'DEBIAN_FRONTEND=noninteractive' >> /etc/profile
+source /etc/profile
 apt list --installed #查看已安装的软件包
 apt list |egrep '^http' #查找已http开头的软件包
 apt show [packagename] |grep Version |uniq #查找软件的版本
@@ -182,11 +184,176 @@ apt install bulid-essential -y
 
 ```
 
-# 11.FC多路径
+# 11.磁盘操作
+
+## 11.1基础操作
+### 1)扫描磁盘
+```
+for x in `ls /sys/class/scsi_host`; do echo "- - -" > /sys/class/scsi_host/$x/scan; done
+```
+### 2)查看磁盘
+```
+lsblk
+```
+## 11.2逻辑卷`lvm2`
+### 1)安装lvm2
+```
+yum install lvm2 -y #
+apt install lvm2 -y
+```
+
+## 11.3FC多路径
+
+### 1)查看HBA WWN
+方法1:
+```
+cat /sys/class/fc_host/host*/port_name
+```
+方法2:
+```
+for x in `ls /sys/class/fc_host`; do more /sys/class/fc_host/$x/port_name; done
+```
+结果:
+```
+0x100000109b6040c4
+0x100000109b6046c
+```
+
+### 2)查看WWID
+
+```
+cat /etc/multipath/wwids
+```
+结果:
+```
+# Multipath wwids, Version : 1.0
+# NOTE: This file is automatically maintained by multipath and multipathd.
+# You should not need to edit this file in normal circumstances.
+#
+# Valid WWIDs:
+/3600000e00d2a0000002a07b600100000/
+/3600000e00d2a0000002a07b600030000/
+/3600000e00d2a0000002a07b600040000/
+```
+
+### 3)扫描FC磁盘
 
 ```
 
+for x in `ls /sys/class/fc_host`; do echo "- - -" > /sys/class/scsi_host/$x/scan; done
 ```
+
+### 4)修改多路径配置文件 
+
+示例:
+```
+defaults {
+        user_friendly_names yes
+        find_multipaths yes
+}
+blacklist {
+      devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+      devnode "^(s|v|h)d[a-z]"
+}
+
+multipaths {
+       multipath {
+               wwid                    3600000e00d2a0000002a07b600100000
+               alias                   lun0
+               path_grouping_policy    multibus
+               path_selector           "round-robin 0"
+               failback                manual
+               rr_weight               priorities
+               no_path_retry           5
+       }
+       multipath {
+               wwid                    3600000e00d2a0000002a07b600030000
+               alias                   lun1
+               path_grouping_policy    multibus
+               path_selector           "round-robin 0"
+               failback                manual
+               rr_weight               priorities
+               no_path_retry           5
+       }
+       
+       multipath {
+               wwid                    3600000e00d2a0000002a07b600040000
+               alias                   lun2
+               path_grouping_policy    multibus
+               path_selector           "round-robin 0"
+               failback                manual
+               rr_weight               priorities
+               no_path_retry           5
+       }
+       
+}
+devices {
+       device {
+               vendor                  "FUJITSU"
+               product                 "AS5600"
+               path_grouping_policy    multibus
+               path_checker            readsector0
+               path_selector           "round-robin 0"
+               hardware_handler        "0"
+               failback                15
+               rr_weight               priorities
+               no_path_retry           queue
+       
+}
+
+```
+
+### 5)重启服务并验证
+```
+systemctl restart multipathd
+multipath -ll
+```
+结果:
+```
+lun2 (3600000e00d2a0000002a07b600040000) dm-6 FUJITSU ,ETERNUS_DXM     
+size=800G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=30 status=active
+  |- 14:0:0:2 sdj 8:144 active ready running
+  |- 15:0:0:2 sdl 8:176 active ready running
+  |- 14:0:1:2 sdk 8:160 active ready running
+  `- 15:0:1:2 sdm 8:192 active ready running
+lun1 (3600000e00d2a0000002a07b600030000) dm-5 FUJITSU ,ETERNUS_DXM     
+size=200G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=30 status=active
+  |- 14:0:0:1 sdf 8:80  active ready running
+  |- 15:0:0:1 sdh 8:112 active ready running
+  |- 14:0:1:1 sdg 8:96  active ready running
+  `- 15:0:1:1 sdi 8:128 active ready running
+lun0 (3600000e00d2a0000002a07b600100000) dm-2 FUJITSU ,ETERNUS_DXM     
+size=1.0T features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=30 status=active
+  |- 14:0:0:0 sdb 8:16  active ready running
+  |- 15:0:0:0 sdd 8:48  active ready running
+  |- 14:0:1:0 sdc 8:32  active ready running
+  `- 15:0:1:0 sde 8:64  active ready running
+```
+
+## 11.4iscsi存储
+
+### 1)查看ISCSI IQN
+
+```
+cat /etc/iscsi/initiatorname.iscsi
+```
+结果:
+```
+## DO NOT EDIT OR REMOVE THIS FILE!
+## If you remove this file, the iSCSI daemon will not start.
+## If you change the InitiatorName, existing access control lists
+## may reject this initiator.  The InitiatorName must be unique
+## for each iSCSI initiator.  Do NOT duplicate iSCSI InitiatorNames.
+InitiatorName=iqn.2004-10.com.ubuntu:01:688cf580e02f
+```
+
+>[!NOTE]
+>IQN格式
+>iqn+.+年月+.+域名倒置+:+设备名称+:+接口名称
+>例如:`iqn.2024.10.com.inspur:server01:iscsi01`
 
 # 12.个性化配置
 
@@ -404,4 +571,12 @@ password_pbkdf2 root grub.pbkdf2.sha512.10000.5A45748D892672FDA02DD3B6F7AE390AC6
 
 /etc/ssh/sshd_config
 
+# 14.`iptalbes`和`nftables`
+
+开启路由转发
+```
+echo net.ipv4.ip_forward=1 >>/etc/sysctl.conf
+echo net.ipv6.conf.all.forwarding=1 >>/etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
+```
 
