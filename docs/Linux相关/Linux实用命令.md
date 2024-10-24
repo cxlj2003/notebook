@@ -198,10 +198,65 @@ lsblk
 ## 11.2逻辑卷`lvm2`
 ### 1)安装lvm2
 ```
-yum install lvm2 -y #
-apt install lvm2 -y
+yum install lvm2 -y # Fedora系列
+apt install lvm2 -y # Debian系列
+```
+### 2)物理卷
+```
+# 创建物理卷,物理卷可以是分区或整块磁盘
+pvcreate /dev/sdb1
+pvcreate /dev/sdb
+# 查看物理卷
+pvdisplay
+# 调整物理卷,用于物理磁盘扩容
+pvresize /dev/sdb
 ```
 
+### 3)卷组
+```
+# 使用指定物理卷创建卷组
+vgcreate vg0 /dev/sdb /dev/sdc
+# 使用新物理卷扩容卷组
+vgextend vg0 /dev/sdd
+```
+
+### 4)逻辑卷
+```
+# 创建逻辑卷
+lvcreate -n lv0 -L 10G vg0
+lvcreate -n lv0 -l +100%FREE vg0
+# 扩容逻辑卷
+lvextend -L 10G /dev/vg0/lv0
+lvextend -l +100%FREE /dev/vg0/lv0
+```
+
+### 5)使用逻辑卷
+#### 格式化
+```
+# 使用ext4格式化逻辑卷
+mkfs.ext4 /dev/vg0/lv0
+# 使用xfs格式化逻辑卷
+mkfs.xfs /dev/vg0/lv0
+```
+#### 扩容文件系统
+```
+# 扩容ext4文件系统
+resize2fs /dev/vg0/lv0
+# 扩容xfs文件系统
+xfs_growfs /dev/vg0/lv0
+```
+
+#### 挂载
+```
+# ext4格式
+mkdir -p /mnt/vg0/lv0
+echo /dev/vg0/lv0 /mnt/vg0/lv0 ext4 defaults 0 0 >> /etc/fstab
+mount -a
+# xfs格式
+mkdir -p /mnt/vg0/lv0
+echo /dev/vg0/lv0 /mnt/vg0/lv0 xfs defaults 0 0 >> /etc/fstab
+mount -a
+```
 ## 11.3FC多路径
 
 ### 1)查看HBA WWN
