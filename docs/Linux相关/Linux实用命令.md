@@ -165,6 +165,55 @@ apt install bulid-essential -y
 
 # 10.PAM
 
-```
+使用`authconfig`或`authselect`命令
 ```
 
+
+```
+
+# 11.FC多路径
+
+```
+
+```
+
+# 12.个性化配置
+
+## 12.1 motd
+
+openEluer
+```
+#动态配置文件 /etc/profile.d/
+#配置文件 /etc/pam.d/sshd → /etc/motd
+sed -i 's|session    optional     pam_motd.so|#session    optional     pam_motd.so|g' /etc/pam.d/sshd 
+#配置文件sshd_config → /etc/issue.net
+sed -i 's|Banner.*|#Banner None|g' /etc/ssh/sshd_config
+sed -i 's|PrintMotd.*|PrintMotd no|g' /etc/ssh/sshd_config
+sed -i '/PrintLastLog/d' /etc/ssh/sshd_config
+echo 'PrintLastLog no' >> /etc/ssh/sshd_config
+systemctl restart sshd
+```
+
+Debian
+```
+#动态配置文件/etc/update-motd.d/
+
+#重新生成动态文件
+rm -f /run/motd.dynamic && run-parts /etc/update-motd.d/
+#配置文件 /etc/motd
+```
+
+Ubuntu
+```
+#动态配置文件/etc/update-motd.d/
+
+#重新生成动态文件
+rm -f /run/motd.dynamic && run-parts /etc/update-motd.d/
+#配置文件 /etc/motd
+```
+
+Alpine
+```
+#配置文件 /etc/motd
+
+```
