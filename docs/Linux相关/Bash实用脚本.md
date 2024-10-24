@@ -166,9 +166,64 @@ done
 ```
 # 4. 时间同步
 
+服务器:
+```
+ntpserver1='time.windows.com'
+ntpserver2='pool.ntp.org'
+get_os_type() {
+if [ ! -e /etc/os-release ];then
+  echo 'Unable get linux distribution !'
+fi
+source /etc/os-release
+echo $ID
+}
+case $(get_os_type) in
+	anolis|kylin|openEuler )
+		yum install chrony -y
+		cat << EOF >> /etc/chrony.conf
+pool $ntpserver1 iburst
+pool $ntpserver2 iburst
+allow 0.0.0.0/0	
+EOF
+        systemctl enable --now chronyd 
+		;;
+	debian|ubuntu )
+		apt update
+		export DEBIAN_FRONTEND=noninteractive
+		apt install chrony -y
+		cat << EOF >> /etc/chrony/chrony.conf
+pool $ntpserver1 iburst
+pool $ntpserver2 iburst
+allow 0.0.0.0/0		
+EOF
+        systemctl restart chrony
+		;;
+esac
+chronyc sources
 ```
 
+客户端:
 ```
+ntpserver='192.168.0.1'
+get_os_type() {
+if [ ! -e /etc/os-release ];then
+  echo 'Unable get linux distribution !'
+fi
+source /etc/os-release
+echo $ID
+}
+case $(get_os_type) in
+	anolis|kylin|openEuler )
+		yum install chrony -y 
+		;;
+	debian|ubuntu )
+		apt update
+		export DEBIAN_FRONTEND=noninteractive
+		apt install chrony -y 
+		;;
+esac
+```
+
 # 5. 远程运行脚本
 
 ```
