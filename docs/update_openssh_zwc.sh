@@ -1,31 +1,32 @@
 #!/bin/bash
-ZLIB_RELEASE=zlib-1.3.1
-OPENSSL_RELEASE=openssl-3.3.2
-OPENSSH_RELEASE=openssh-9.9p1
+ZLIB_RELEASE='zlib-1.3.1'
+OPENSSL_RELEASE='openssl-3.3.2'
+OPENSSH_RELEASE='openssh-9.9p1'
 
 if [ ! -e /etc/os-release ];then
- echo '*** Cannot detect Linux distribution! Aborting.'
+ echo 'Cannot detect Linux distribution! Aborting.'
  exit 1
 else
  source /etc/os-release
 fi
 
-use_custom_mirrors() {
+use_custom_mirrors(){
 set -e
 local SERVER_IP=$1
 local ID=$2
 local VERSION=$3
-if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
+
+if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
  for repo in `ls /etc/yum.repos.d/ | egrep 'repo$'`;do 
   alias mv='mv' 
-  mv -f /etc/yum.repos.d/$repo /etc/yum.repos.d/$repo.bak
+  mv -f /etc/yum.repos.d/${repo} /etc/yum.repos.d/${repo}.bak
  done
-elif [[ $ID == 'debian' ]];then
+elif [[ ${ID} == 'debian' ]];then
  echo '# Debian sources have moved to /etc/apt/sources.list.d/debian.sources' > /etc/apt/sources.list
-elif [[ $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'ubuntu' ]];then
  echo '# Ubuntu sources have moved to /etc/apt/sources.list.d/ubuntu.sources' > /etc/apt/sources.list
 fi
-if [[ $ID == 'anolis' && `echo $VERSION |awk -F . '{print $1}'` -eq 7 ]];then 
+if [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 7 ]];then 
  cat << EOF > /etc/yum.repos.d/AnolisOS-os.repo
 [os]
 name=AnolisOS-${VERSION} - os
@@ -50,7 +51,7 @@ enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ $ID == 'anolis' && `echo $VERSION |awk -F . '{print $1}'` -eq 8 ]];then
+elif [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 8 ]];then
 cat << EOF > /etc/yum.repos.d/AnolisOS-AppStream.repo
 [AppStream]
 name=AnolisOS-\$releasever - AppStream
@@ -91,7 +92,7 @@ enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ $ID == 'anolis' && `echo $VERSION |awk -F . '{print $1}'` -eq 23 ]];then
+elif [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 23 ]];then
 cat << EOF > /etc/yum.repos.d/AnolisOS.repo 
 [os]
 name=AnolisOS-\$releasever - os
@@ -114,7 +115,7 @@ enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ $ID == 'kylin' ]];then
+elif [[ ${ID} == 'kylin' ]];then
 local REVERSION=`cat /etc/.kyinfo|grep dist_id |sed -e 's/-Release.*//' -e 's/^dist_id.*SP/SP/'`
 cat << EOF > /etc/yum.repos.d/KylinV10_${REVERSION}.repo
 ###Kylin Linux Advanced Server 10 - os repo###
@@ -140,8 +141,8 @@ gpgcheck = 1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 0
 EOF
-elif [[ $ID == 'openEuler' ]];then
-local REVERSION=echo $VERSION|sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'
+elif [[ ${ID} == 'openEuler' ]];then
+local REVERSION=echo ${VERSION}|sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'
 cat << EOF > /etc/yum.repos.d/openEuler.repo
 [OS]
 name=OS
@@ -206,7 +207,7 @@ enabled=1
 gpgcheck=0
 gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
 EOF
-elif [[ $ID == 'debian' ]];then
+elif [[ ${ID} == 'debian' ]];then
 cat << EOF > /etc/apt/sources.list.d/debian.sources
 Types: deb
 URIs: http://${SERVER_IP}/debian
@@ -220,7 +221,7 @@ Suites: ${VERSION_CODENAME}-security
 Components: main contrib non-free
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
-elif [[ $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'ubuntu' ]];then
 cat << EOF > /etc/apt/sources.list.d/ubuntu.sources
 Types: deb
 URIs: http://${SERVER_IP}/ubuntu
@@ -235,39 +236,39 @@ Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 EOF
 fi
-if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
+if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
  yum clean all 
  yum makecache
-elif [[ $ID == 'debian' || $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
 fi
 set +ex
 }
 
-env_installer() {
+env_installer(){
 set -ex
 local ID=$1
 local VERSION=$2
-if [[ $ID == 'anolis' && `echo $VERSION |awk -F . '{print $1}'` -eq 7 ]];then
+if [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 7 ]];then
  echo 'anolis7.x'
  yum -y install vim wget tar nano gcc make pam-devel perl perl-CPAN perl-IPC-Cmd 
  echo yes | cpan -i List::Util
-elif [[ $ID == 'anolis' ]];then
+elif [[ ${ID} == 'anolis' ]];then
  echo 'anolis>7.x'
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd 
-elif [[ $ID == 'kylin' ]];then
+elif [[ ${ID} == 'kylin' ]];then
  echo kylin
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd
-elif [[ $ID == 'openEuler' ]];then
+elif [[ ${ID} == 'openEuler' ]];then
  echo openEuler
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd 
-elif [[ $ID == 'debian' ]];then
+elif [[ ${ID} == 'debian' ]];then
  echo debian
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
  apt -y install vim wget tar nano gcc make libpam0g-dev
-elif [[ $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'ubuntu' ]];then
  echo ubuntu
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
@@ -276,7 +277,7 @@ fi
 set +ex
 }
 
-file_download() {
+file_download(){
 local SERVER_IP=$1
 local ZLIB_URL=http://${SERVER_IP}/soft
 local OPENSSL_URL=http://${SERVER_IP}/soft
@@ -290,7 +291,7 @@ wget -nc -P ${WORKDIR} ${OPENSSL_URL}/${OPENSSL_RELEASE}.tar.gz
 wget -nc -P ${WORKDIR} ${OPENSSH_URL}/${OPENSSH_RELEASE}.tar.gz
 }
 
-zlib_installer() {
+zlib_installer(){
 local ZLIB_RELEASE=$1
 tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 cd /usr/local/src/${ZLIB_RELEASE}
@@ -302,7 +303,7 @@ EOF
 ldconfig
 }
 
-ssl_installer() {
+ssl_installer(){
 local ID=$1
 local OPENSSL_RELEASE=$2
 tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
@@ -313,7 +314,7 @@ cd /usr/local/src/${OPENSSL_RELEASE}
 enable-md2 \
 shared
 make -j 8 && make install
-if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
+if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
  alias mv='mv'
  if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
@@ -327,7 +328,7 @@ if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
   rm -rf /usr/lib64/libcrypto.so.3*  
  fi
  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-elif [[ $ID == 'debian' || $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
  alias mv='mv'
  if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
@@ -348,10 +349,10 @@ EOF
 ldconfig
 }
 
-ssh_installer() {
+ssh_installer(){
 local ID=$1
 local OPENSSH_RELEASE=$2
-if [[ $ID == 'anolis' || $ID == 'kylin' || $ID == 'openEuler' ]];then
+if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
  yum -y remove openssh openssh-clients openssh-server 
  rm -rf /etc/ssh/*
  cd /usr/local/src/${OPENSSH_RELEASE}
@@ -374,7 +375,7 @@ PermitRootLogin yes
 PasswordAuthentication yes
 EOF
 systemctl restart sshd
-elif [[ $ID == 'debian' || $ID == 'ubuntu' ]];then
+elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
 apt -y remove ssh openssh-client openssh-server 
 rm -rf /etc/ssh/*
 OPENSSH_RELEASE=openssh-9.9p1
@@ -397,16 +398,16 @@ systemctl enable ssh
 fi
 }
 
-main() {
-	use_custom_mirrors $SERVER_IP $ID $VERSION 
-  env_installer $ID $VERSION  
-  file_download $SERVER_IP $ZLIB_RELEASE $OPENSSL_RELEASE $OPENSSH_RELEASE
-  zlib_installer $ZLIB_RELEASE
-  ssl_installer $ID $OPENSSL_RELEASE
-  ssh_installer $ID $OPENSSH_RELEASE  
+main(){
+	use_custom_mirrors ${SERVER_IP} ${ID} ${VERSION} 
+  env_installer ${ID} ${VERSION}  
+  file_download ${SERVER_IP} ${ZLIB_RELEASE} ${OPENSSL_RELEASE} ${OPENSSH_RELEASE}
+  zlib_installer ${ZLIB_RELEASE}
+  ssl_installer ${ID} ${OPENSSL_RELEASE}
+  ssh_installer ${ID} ${OPENSSH_RELEASE}  
 }
 
-menu_list() {
+menu_list(){
 incorrect_selection() {
   echo "选择有误，请重新选择！"
 }
@@ -444,7 +445,7 @@ press_anykey() {
   read -n 1 -r -s -p "Press any key to continue..."
   clear
 }
-until [ "$selection" = "0" ]; do
+until [ "${selection}" = "0" ]; do
   clear
     cat<<_EOF_
     =====================================================
@@ -472,7 +473,7 @@ _EOF_
   echo -n "  请输入相应的数字: "
   read selection
   echo ""
-  case $selection in
+  case ${selection} in
     1 ) clear ; menu_option_one ; press_anykey ;;
     2 ) clear ; menu_option_two ; press_anykey ;;
     3 ) clear ; menu_option_three ; press_anykey ;;
