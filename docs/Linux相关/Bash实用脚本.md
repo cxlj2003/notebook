@@ -45,6 +45,7 @@ fi
 #!/bin/bash
 mirrors_server='mirrors.ustc.edu.cn'
 source /etc/os-release
+rm -rf /etc/apt/sources.list.d/*.sources
 echo "# ${ID} sources have moved to /etc/apt/sources.list.d/${ID}.sources" > /etc/apt/sources.list
 if [ ${ID} = ubuntu ];then
 cat << EOF > /etc/apt/sources.list.d/${ID}.sources
@@ -180,17 +181,20 @@ echo $ID
 case $(get_os_type) in
 	anolis|kylin|openEuler )
 		yum install chrony -y
+		sed -i  '/pool/d' /etc/chrony.conf
 		cat << EOF >> /etc/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
 allow 0.0.0.0/0	
 EOF
-        systemctl enable --now chronyd 
+        systemctl enable --now chronyd
+        systemctl restart chronyd
 		;;
 	debian|ubuntu )
 		apt update
 		export DEBIAN_FRONTEND=noninteractive
 		apt install chrony -y
+		sed -i  '/pool/d' /etc/chrony/chrony.conf
 		cat << EOF >> /etc/chrony/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
@@ -204,7 +208,8 @@ chronyc sources
 
 客户端:
 ```
-ntpserver='192.168.0.1'
+ntpserver1='192.168.0.1'
+ntpserver2='192.168.0.2'
 get_os_type() {
 if [ ! -e /etc/os-release ];then
   echo 'Unable get linux distribution !'
@@ -214,12 +219,24 @@ echo $ID
 }
 case $(get_os_type) in
 	anolis|kylin|openEuler )
-		yum install chrony -y 
+		yum install chrony -y
+		cat << EOF >> /etc/chrony.conf
+pool $ntpserver1 iburst
+pool $ntpserver2 iburst
+EOF
+        systemctl enable --now chronyd
+        systemctl restart chronyd
 		;;
 	debian|ubuntu )
 		apt update
 		export DEBIAN_FRONTEND=noninteractive
-		apt install chrony -y 
+		apt install chrony -y
+		cat << EOF >> /etc/chrony/chrony.conf
+pool $ntpserver1 iburst
+pool $ntpserver2 iburst
+EOF
+        systemctl enable --now chrony
+        systemctl restart chrony
 		;;
 esac
 ```
