@@ -31,7 +31,7 @@ tzselect
 rm -rf /etc/localtime
 ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 ```
-# 3. date 格式显示
+## 2.4 date 格式显示
 
 ```
 date "+%Y-%m-%d"
@@ -44,6 +44,11 @@ date "+%m%d%y"
 #时 %H
 #分 %M
 #秒 %S
+```
+# 3.`curl`和`wget`
+
+```
+
 ```
 # 4. 内核模块
 

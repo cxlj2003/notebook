@@ -188,7 +188,7 @@ pool $ntpserver2 iburst
 allow 0.0.0.0/0	
 EOF
         systemctl enable --now chronyd
-        systemctl restart chronyd
+        systemctl restart chronyd
 		;;
 	debian|ubuntu )
 		apt update
