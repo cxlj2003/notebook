@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 ZLIB_RELEASE='zlib-1.3.1'
 OPENSSL_RELEASE='openssl-3.3.2'
 OPENSSH_RELEASE='openssh-9.9p1'
@@ -142,70 +143,70 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 0
 EOF
 elif [[ ${ID} == 'openEuler' ]];then
-local REVERSION=echo ${VERSION}|sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'
+local REVERSION=`cat /etc/os-release |awk -F \" '/VERSION=/{print $(NF-1)}' |sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'`
 cat << EOF > /etc/yum.repos.d/openEuler.repo
 [OS]
 name=OS
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/OS'&'arch=\$basearch
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/OS'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [everything]
 name=everything
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/everything/\$basearch/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/everything'&'arch=\$basearch
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/everything/\$basearch/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/everything'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/everything/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/everything/\$basearch/RPM-GPG-KEY-openEuler
 
 [EPOL]
 name=EPOL
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/EPOL/main/\$basearch/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/EPOL/main'&'arch=\$basearch
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/EPOL/main/\$basearch/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/EPOL/main'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [debuginfo]
 name=debuginfo
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/debuginfo/\$basearch/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/debuginfo'&'arch=\$basearch
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/debuginfo/\$basearch/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/debuginfo'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/debuginfo/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/debuginfo/\$basearch/RPM-GPG-KEY-openEuler
 
 [source]
 name=source
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/source/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever'&'arch=source
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever'&'arch=source
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
 
 [update]
 name=update
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/update/\$basearch/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/update'&'arch=\$basearch
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/update/\$basearch/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/update'&'arch=\$basearch
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [update-source]
 name=update-source
-baseurl=http://${SERVER_IP}/openEuler-${REVERSION}/update/source/
-metalink=http://${SERVER_IP}/metalink?repo=\$releasever/update'&'arch=source
+baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/update/source/
+metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/update'&'arch=source
 metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
+gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
 EOF
 elif [[ ${ID} == 'debian' ]];then
 cat << EOF > /etc/apt/sources.list.d/debian.sources
@@ -293,7 +294,7 @@ wget -nc -P ${WORKDIR} ${OPENSSH_URL}/${OPENSSH_RELEASE}.tar.gz
 
 zlib_installer(){
 local ZLIB_RELEASE=$1
-tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
+tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
 cd /usr/local/src/${ZLIB_RELEASE}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
@@ -352,6 +353,7 @@ ldconfig
 ssh_installer(){
 local ID=$1
 local OPENSSH_RELEASE=$2
+tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
 if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
  yum -y remove openssh openssh-clients openssh-server 
  rm -rf /etc/ssh/*
@@ -368,6 +370,7 @@ cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.init /etc/init.d/ss
 cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.pam /etc/pam.d/sshd
 chkconfig --add sshd
 chkconfig sshd on
+systemctl daemon-reload
 systemctl start sshd
 chmod 600 /etc/ssh/*_key
 cat << EOF >>/etc/ssh/sshd_config
@@ -399,7 +402,7 @@ fi
 }
 
 main(){
-	use_custom_mirrors ${SERVER_IP} ${ID} ${VERSION} 
+  use_custom_mirrors ${SERVER_IP} ${ID} ${VERSION} 
   env_installer ${ID} ${VERSION}  
   file_download ${SERVER_IP} ${ZLIB_RELEASE} ${OPENSSL_RELEASE} ${OPENSSH_RELEASE}
   zlib_installer ${ZLIB_RELEASE}
