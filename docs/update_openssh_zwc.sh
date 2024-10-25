@@ -12,7 +12,6 @@ else
 fi
 
 use_custom_mirrors(){
-set -e
 local SERVER_IP=$1
 local ID=$2
 local VERSION=$3
@@ -244,11 +243,10 @@ elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
 fi
-set +ex
+
 }
 
 env_installer(){
-set -ex
 local ID=$1
 local VERSION=$2
 if [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 7 ]];then
@@ -275,7 +273,7 @@ elif [[ ${ID} == 'ubuntu' ]];then
  apt -y update
  apt -y install vim wget tar nano gcc make libpam0g-dev
 fi
-set +ex
+
 }
 
 file_download(){
@@ -407,7 +405,8 @@ main(){
   file_download ${SERVER_IP} ${ZLIB_RELEASE} ${OPENSSL_RELEASE} ${OPENSSH_RELEASE}
   zlib_installer ${ZLIB_RELEASE}
   ssl_installer ${ID} ${OPENSSL_RELEASE}
-  ssh_installer ${ID} ${OPENSSH_RELEASE}  
+  ssh_installer ${ID} ${OPENSSH_RELEASE}
+  echo 'Update Complete!' 
 }
 
 menu_list(){
