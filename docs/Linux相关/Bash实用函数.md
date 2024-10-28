@@ -79,18 +79,18 @@ menu_list
 # 3.判断操作系统类型
 
 ```
-get_os_type() {
+get_os_id(){
 if [ ! -e /etc/os-release ];then
   echo 'Unable get linux distribution !'
 fi
 source /etc/os-release
 echo $ID
 }
-get_os_type
+get_os_id
 ```
 
 ```
-get_os_versionid() {
+get_os_versionid(){
 if [ ! -e /etc/os-release ];then
   echo 'Unable get linux distribution !'
 fi
