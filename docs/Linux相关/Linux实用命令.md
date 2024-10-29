@@ -191,37 +191,37 @@ yum repolist
 同步一个指定的仓库至本地目录。  
   
 ```
-reposync --repoid=your-repo-id --download_path=/path/to/local/dir 
+reposync --repoid=your-repo-id -p=/path/to/local/dir 
 ```
 实例2：同步最新的包  
 只下载最新版本的包。  
   
 ```
-reposync --newest-only --repoid=your-repo-id --download_path=/path/to/local/dir 
+reposync --newest-only --repoid=your-repo-id -p=/path/to/local/dir 
 ```` 
 实例3：同步指定架构的包  
 同步指定架构（如x86_64）的包。  
   
 ```
-reposync --arch=x86_64 --repoid=your-repo-id --download_path=/path/to/local/dir
+reposync --arch=x86_64 --repoid=your-repo-id -p=/path/to/local/dir
 ``` 
 实例4：删除本地不存在于远程的包  
 删除本地仓库中不存在于远程仓库的包。  
   
 ```
-reposync --delete --repoid=your-repo-id --download_path=/path/to/local/dir
+reposync --delete --repoid=your-repo-id -p=/path/to/local/dir
 ```  
 实例5：下载仓库元数据  
 同步包含元数据的完整仓库。  
   
 ```
-reposync --download-metadata --repoid=your-repo-id --download_path=/path/to/local/dir
+reposync --download-metadata --repoid=your-repo-id -p=/path/to/local/dir
 ```
 实例6：启用YUM插件  
 在同步时启用YUM插件。  
   
 ```
-reposync --plugins --repoid=your-repo-id --download_path=/path/to/local/dir
+reposync --plugins --repoid=your-repo-id -p=/path/to/local/dir
 ``` 
 实例7：输出下载URL而不实际下载  
 仅输出包的URL，不下载包。  
@@ -233,7 +233,7 @@ reposync --urls --repoid=your-repo-id
 在同步过程中进行GPG签名检查。  
   
 ```
-reposync --gpgcheck --repoid=your-repo-id --download_path=/path/to/local/dir
+reposync --gpgcheck --repoid=your-repo-id -p=/path/to/local/dir
 ``` 
 
 # 11.磁盘操作
@@ -687,3 +687,18 @@ echo net.ipv6.conf.all.forwarding=1 >>/etc/sysctl.conf
 sysctl -p /etc/sysctl.conf
 ```
 
+# 15. 下载工具
+
+## 15.1`axel`
+
+```
+wget https://github.com/axel-download-accelerator/axel/releases/download/v2.17.14/axel-2.17.14.tar.gz
+
+tar -zxvf axel-2.17.14.tar.gz
+cd axel-2.17.14
+./configure --without-ssl
+make && make install
+
+ln -svf /usr/local/bin/axel /usr/bin/axel
+
+```

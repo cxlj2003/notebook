@@ -135,4 +135,11 @@ get_lines() {
 }
 ```
 
+```
+file=/tmp/test
+for line in `cat $file`;do
+echo $line
+done
+```
+
 # 6. 

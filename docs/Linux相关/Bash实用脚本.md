@@ -413,3 +413,119 @@ __do_release_upgrade
 
 # 8.`reposync`创建yum镜像源
 
+```
+#!/bin/bash
+cat << EOF > /etc/yum.repos.d/kylinv10.repo
+###Kylin Linux Advanced Server 10 - os repo###
+
+[ks10_x86_64_sp2-adv-os]
+name = Kylin Linux Advanced Server 10 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/base/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_x86_64_sp2-adv-updates]
+name = Kylin Linux Advanced Server 10 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/updates/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_x86_64_sp2-adv-addons]
+name = Kylin Linux Advanced Server 10 - Addons
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/addons/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+
+
+[ks10_x86_64_sp3-adv-os]
+name = Kylin Linux Advanced Server 10 SP3 - Os 
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/base/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_x86_64_sp3-adv-updates]
+name = Kylin Linux Advanced Server 10 SP3 - Updates
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/updates/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_x86_64_sp3-adv-addons]
+name = Kylin Linux Advanced Server 10 SP3 - Addons
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/addons/x86_64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+
+###Kylin Linux Advanced Server 10 - os repo###
+
+[ks10_aarch64_sp2-adv-os]
+name = Kylin Linux Advanced Server 10 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/base/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_aarch64_sp2-adv-updates]
+name = Kylin Linux Advanced Server 10 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/updates/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_aarch64_sp2-adv-addons]
+name = Kylin Linux Advanced Server 10 - Addons
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/addons/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+
+
+[ks10_aarch64_sp3-adv-os]
+name = Kylin Linux Advanced Server 10 SP3 - Os 
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/base/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_aarch64_sp3-adv-updates]
+name = Kylin Linux Advanced Server 10 SP3 - Updates
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/updates/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10_aarch64_sp3-adv-addons]
+name = Kylin Linux Advanced Server 10 SP3 - Addons
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/addons/aarch64/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+EOF
+
+for repo in `yum repolist |awk '/ks10/{print $1}' |xargs`;do 
+  if [ ! -d /opt/mirrors/kylin/${repo} ];then
+    mkdir /opt/mirrors/kylin/${repo}
+  fi
+  reposync --urls --repoid ${repo} > /opt/mirrors/kylin/${repo}/${repo}.txt
+  file=/opt/mirrors/kylin/${repo}/${repo}.txt
+  cat $file | while read line;do
+    echo $line
+    axel -k -c -p -n 4 $line -o /opt/mirrors/kylin/${repo}/Packages/
+  done
+done
+
+for repo in `yum repolist |awk '/ks10/{print $1}' |xargs`;do
+   reposync --repoid ${repo} -p /opt/mirrors/kylin
+done 
+
+
+for repo in `yum repolist |awk '/ks10/{print $1}' |xargs`;do
+  reposync -g -m -np /opt/mirrors/kylin/${repo}
+  createrepo --update /opt/mirrors/kylin/${repo}
+done
+```

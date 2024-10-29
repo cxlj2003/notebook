@@ -1,8 +1,14 @@
 #!/bin/bash
 set -ex
-ZLIB_RELEASE='zlib-1.3.1'
-OPENSSL_RELEASE='openssl-3.3.2'
-OPENSSH_RELEASE='openssh-9.9p1'
+zlib_release='zlib-1.3.1'
+openssl_release='openssl-3.3.2'
+openssh_release='openssh-9.9p1'
+
+yum_server_list='
+100.201.3.111
+100.0.0.239
+192.168.10.239
+'
 
 if [ ! -e /etc/os-release ];then
  echo 'Cannot detect Linux distribution! Aborting.'
@@ -12,50 +18,55 @@ else
 fi
 
 use_custom_mirrors(){
-local SERVER_IP=$1
-local ID=$2
-local VERSION=$3
+local yum_server=$1
+local os_type=${ID}
+local os_version_id=${VERSION_ID}
 
-if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
+if [[ ${os_type} == 'anolis' || ${os_type} == 'kylin' || ${os_type} == 'openEuler' ]];then
  for repo in `ls /etc/yum.repos.d/ | egrep 'repo$'`;do 
   alias mv='mv' 
   mv -f /etc/yum.repos.d/${repo} /etc/yum.repos.d/${repo}.bak
  done
-elif [[ ${ID} == 'debian' ]];then
- echo '# Debian sources have moved to /etc/apt/sources.list.d/debian.sources' > /etc/apt/sources.list
-elif [[ ${ID} == 'ubuntu' ]];then
- echo '# Ubuntu sources have moved to /etc/apt/sources.list.d/ubuntu.sources' > /etc/apt/sources.list
+elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
+ for list in `ls /etc/apt/ |egrep 'list$'`;do
+ 	alias mv='mv'
+ 	mv -f /etc/apt/${list} /etc/apt/${list}.bak
+ done
+ for source in `ls /etc/apt/sources.list.d/ |egrep 'sources$'`;do
+ 	alias mv='mv'
+ 	mv -f /etc/apt/sources.list.d/${source} /etc/apt/sources.list.d/${source}.bak 	
+ done
 fi
-if [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 7 ]];then 
+if [[ ${os_type} == 'anolis' && `echo ${os_version_id} |awk -F . '{print $1}'` -eq 7 ]];then 
  cat << EOF > /etc/yum.repos.d/AnolisOS-os.repo
 [os]
-name=AnolisOS-${VERSION} - os
-baseurl=http://${SERVER_IP}/anolis/${VERSION}/os/\$basearch/os
+name=AnolisOS-\$releasever - os
+baseurl=http://${yum_server}/anolis/\$releasever/os/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-extras.repo
 [extras]
-name=AnolisOS-${VERSION} - extras
-baseurl=http://${SERVER_IP}/anolis/${VERSION}/extras/\$basearch/os
+name=AnolisOS-\$releasever - extras
+baseurl=http://${yum_server}/anolis/\$releasever/extras/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-updates.repo
 [updates]
-name=AnolisOS-${VERSION} - updates
-baseurl=http://${SERVER_IP}/anolis/${VERSION}/updates/\$basearch/os
+name=AnolisOS-\$releasever - updates
+baseurl=http://${yum_server}/anolis/\$releasever/updates/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 8 ]];then
+elif [[ ${os_type} == 'anolis' && `echo ${os_version_id} |awk -F . '{print $1}'` -eq 8 ]];then
 cat << EOF > /etc/yum.repos.d/AnolisOS-AppStream.repo
 [AppStream]
 name=AnolisOS-\$releasever - AppStream
-baseurl=http://${SERVER_IP}/anolis/\$releasever/AppStream/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/AppStream/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
@@ -63,7 +74,7 @@ EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-BaseOS.repo
 [BaseOS]
 name=AnolisOS-\$releasever - BaseOS
-baseurl=http://${SERVER_IP}/anolis/\$releasever/BaseOS/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/BaseOS/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
@@ -71,7 +82,7 @@ EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-Extras.repo
 [Extras]
 name=AnolisOS-\$releasever - Extras
-baseurl=http://${SERVER_IP}/anolis/\$releasever/Extras/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/Extras/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
@@ -79,7 +90,7 @@ EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-PowerTools.repo
 [PowerTools]
 name=AnolisOS-\$releasever - PowerTools
-baseurl=http://${SERVER_IP}/anolis/\$releasever/PowerTools/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/PowerTools/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
@@ -87,159 +98,206 @@ EOF
 cat << EOF > /etc/yum.repos.d/AnolisOS-kernel-5.10.repo
 [kernel-5.10]
 name=AnolisOS-\$releasever - Kernel 5.10
-baseurl=http://${SERVER_IP}/anolis/\$releasever/kernel-5.10/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/kernel-5.10/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 23 ]];then
+elif [[ ${os_type} == 'anolis' && `echo ${os_version_id} |awk -F . '{print $1}'` -eq 23 ]];then
 cat << EOF > /etc/yum.repos.d/AnolisOS.repo 
 [os]
 name=AnolisOS-\$releasever - os
-baseurl=http://${SERVER_IP}/anolis/\$releasever/os/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/os/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 
 [updates]
 name=AnolisOS-\$releasever - updates
-baseurl=http://${SERVER_IP}/anolis/\$releasever/updates/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/updates/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 
 [kernel-6]
 name=AnolisOS-\$releasever - kernel-6
-baseurl=http://${SERVER_IP}/anolis/\$releasever/kernel-6/\$basearch/os
+baseurl=http://${yum_server}/anolis/\$releasever/kernel-6/\$basearch/os
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ ${ID} == 'kylin' ]];then
-local REVERSION=`cat /etc/.kyinfo|grep dist_id |sed -e 's/-Release.*//' -e 's/^dist_id.*SP/SP/'`
-cat << EOF > /etc/yum.repos.d/KylinV10_${REVERSION}.repo
+elif [[ ${os_type} == 'kylin' ]];then
+local sub_version=`cat /etc/.kyinfo|grep dist_id |sed -e 's/-Release.*//' -e 's/^dist_id.*SP/SP/'`
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
 ###Kylin Linux Advanced Server 10 - os repo###
 
 [ks10-adv-os]
-name = Kylin Linux Advanced Server 10 - Os 
-baseurl = http://${SERVER_IP}/${ID}/NS/V10/V10${REVERSION}/os/adv/lic/base/\$basearch/
+name = Kylin Linux Advanced Server ${os_version_id} - Os 
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/base/\$basearch/
 gpgcheck = 0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 1
 
 [ks10-adv-updates]
-name = Kylin Linux Advanced Server 10 - Updates
-baseurl = http://${SERVER_IP}/${ID}/NS/V10/V10${REVERSION}/os/adv/lic/updates/\$basearch/
+name = Kylin Linux Advanced Server ${os_version_id} - Updates
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/updates/\$basearch/
 gpgcheck = 0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 1
 
 [ks10-adv-addons]
-name = Kylin Linux Advanced Server 10 - Addons
-baseurl = http://${SERVER_IP}/${ID}/NS/V10/V10${REVERSION}/os/adv/lic/addons/\$basearch/
+name = Kylin Linux Advanced Server ${os_version_id} - Addons
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/addons/\$basearch/
 gpgcheck = 1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 0
 EOF
-elif [[ ${ID} == 'openEuler' ]];then
-local REVERSION=`cat /etc/os-release |awk -F \" '/VERSION=/{print $(NF-1)}' |sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'`
+elif [[ ${os_type} == 'openEuler' ]];then
+local sub_version=`cat /etc/os-release |awk -F \" '/VERSION=/{print $(NF-1)}' |sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'`
 cat << EOF > /etc/yum.repos.d/openEuler.repo
 [OS]
 name=OS
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/OS'&'arch=\$basearch
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/OS/\$basearch/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/OS'&'arch=\$basearch
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [everything]
 name=everything
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/everything/\$basearch/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/everything'&'arch=\$basearch
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/everything/\$basearch/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/everything'&'arch=\$basearch
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/everything/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/everything/\$basearch/RPM-GPG-KEY-openEuler
 
 [EPOL]
 name=EPOL
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/EPOL/main/\$basearch/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/EPOL/main'&'arch=\$basearch
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/EPOL/main/\$basearch/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/EPOL/main'&'arch=\$basearch
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [debuginfo]
 name=debuginfo
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/debuginfo/\$basearch/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/debuginfo'&'arch=\$basearch
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/debuginfo/\$basearch/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/debuginfo'&'arch=\$basearch
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/debuginfo/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/debuginfo/\$basearch/RPM-GPG-KEY-openEuler
 
 [source]
 name=source
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever'&'arch=source
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/source/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever'&'arch=source
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/source/RPM-GPG-KEY-openEuler
 
 [update]
 name=update
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/update/\$basearch/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/update'&'arch=\$basearch
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/update/\$basearch/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/update'&'arch=\$basearch
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/OS/\$basearch/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/OS/\$basearch/RPM-GPG-KEY-openEuler
 
 [update-source]
 name=update-source
-baseurl=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/update/source/
-metalink=http://${SERVER_IP}/${ID}/metalink?repo=\$releasever/update'&'arch=source
-metadata_expire=1h
+baseurl=http://${yum_server}/${os_type}/openEuler-${sub_version}/update/source/
+#metalink=http://${yum_server}/${os_type}/metalink?repo=\$releasever/update'&'arch=source
+#metadata_expire=1h
 enabled=1
 gpgcheck=0
-gpgkey=http://${SERVER_IP}/${ID}/openEuler-${REVERSION}/source/RPM-GPG-KEY-openEuler
+gpgkey=http://${yum_server}/${os_type}/openEuler-${sub_version}/source/RPM-GPG-KEY-openEuler
 EOF
-elif [[ ${ID} == 'debian' ]];then
-cat << EOF > /etc/apt/sources.list.d/debian.sources
-Types: deb
-URIs: http://${SERVER_IP}/debian
-Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates
-Components: main contrib non-free
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+elif [[ ${os_type} == 'debian' && ${VERSION_CODENAME} == 'buster' ]];then
+cat << EOF > /etc/apt/sources.list
+deb http://${yum_server}/debian/ buster main contrib non-free
+deb-src http://${yum_server}/debian/ buster main contrib non-free
 
-Types: deb
-URIs: http://${SERVER_IP}/debian-security
-Suites: ${VERSION_CODENAME}-security
-Components: main contrib non-free
-Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+deb http://${yum_server}/debian/ buster-updates main contrib non-free
+deb-src http://${yum_server}/debian/ buster-updates main contrib non-free
+
+deb http://${yum_server}/debian/ buster-backports main contrib non-free
+deb-src http://${yum_server}/debian/ buster-backports main contrib non-free
+
+deb http://${yum_server}/debian-security/ buster/updates main contrib non-free
+deb-src http://${yum_server}/debian-security/ buster/updates main contrib non-free
 EOF
-elif [[ ${ID} == 'ubuntu' ]];then
+elif [[ ${os_type} == 'debian' && ${VERSION_CODENAME} == 'bullseye' ]];then
+cat << EOF > /etc/apt/sources.list
+deb http://${yum_server}/debian/ bullseye main contrib non-free
+deb-src http://${yum_server}/debian/ bullseye main contrib non-free
+
+deb http://${yum_server}/debian/ bullseye-updates main contrib non-free
+deb-src http://${yum_server}/debian/ bullseye-updates main contrib non-free
+
+deb http://${yum_server}/debian/ bullseye-backports main contrib non-free
+deb-src http://${yum_server}/debian/ bullseye-backports main contrib non-free
+
+deb http://${yum_server}/debian-security/ bullseye-security main contrib non-free
+deb-src http://${yum_server}/debian-security/ bullseye-security main contrib non-free
+EOF
+elif [[ ${os_type} == 'debian' && ${VERSION_CODENAME} == 'bookworm' ]];then
+cat << EOF > /etc/apt/sources.list
+deb http://${yum_server}/debian/ bookworm main contrib non-free non-free-firmware
+deb-src http://${yum_server}/debian/ bookworm main contrib non-free non-free-firmware
+
+deb http://${yum_server}/debian/ bookworm-updates main contrib non-free non-free-firmware
+deb-src http://${yum_server}/debian/ bookworm-updates main contrib non-free non-free-firmware
+
+deb http://${yum_server}/debian/ bookworm-backports main contrib non-free non-free-firmware
+deb-src http://${yum_server}/debian/ bookworm-backports main contrib non-free non-free-firmware
+
+deb http://${yum_server}/debian-security/ bookworm-security main contrib non-free non-free-firmware
+deb-src http://${yum_server}/debian-security/ bookworm-security main contrib non-free non-free-firmware
+EOF
+elif [[ ${os_type} == 'ubuntu' ]];then
+: '
+cat << EOF > /etc/apt/sources.list
+deb http://${yum_server}/ubuntu/ ${VERSION_CODENAME} main restricted universe multiverse
+deb-src http://${yum_server}/ubuntu/ ${VERSION_CODENAME} main restricted universe multiverse
+
+deb http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb-src http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-security main restricted universe multiverse
+
+deb http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb-src http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+
+deb http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb-src http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+
+## Not recommended
+# deb http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb-src http://${yum_server}/ubuntu/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+EOF
+'
 cat << EOF > /etc/apt/sources.list.d/ubuntu.sources
 Types: deb
-URIs: http://${SERVER_IP}/ubuntu
+URIs: http://${yum_server}/ubuntu
 Suites: ${VERSION_CODENAME} ${VERSION_CODENAME}-updates ${VERSION_CODENAME}-backports
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 
 Types: deb
-URIs: http://${SERVER_IP}/ubuntu
+URIs: http://${yum_server}/ubuntu
 Suites: ${VERSION_CODENAME}-security
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 EOF
 fi
-if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
+if [[ ${os_type} == 'anolis' || ${os_type} == 'kylin' || ${os_type} == 'openEuler' ]];then
  yum clean all 
  yum makecache
-elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
+elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
 fi
@@ -247,53 +305,52 @@ fi
 }
 
 env_installer(){
-local ID=$1
-local VERSION=$2
-if [[ ${ID} == 'anolis' && `echo ${VERSION} |awk -F . '{print $1}'` -eq 7 ]];then
+local os_type=${ID}
+local os_version_id=${VERSION_ID}
+if [[ ${os_type} == 'anolis' && `echo ${os_version_id} |awk -F . '{print $1}'` -eq 7 ]];then
  echo 'anolis7.x'
  yum -y install vim wget tar nano gcc make pam-devel perl perl-CPAN perl-IPC-Cmd 
  echo yes | cpan -i List::Util
-elif [[ ${ID} == 'anolis' ]];then
+elif [[ ${os_type} == 'anolis' ]];then
  echo 'anolis>7.x'
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd 
-elif [[ ${ID} == 'kylin' ]];then
+elif [[ ${os_type} == 'kylin' ]];then
  echo kylin
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd
-elif [[ ${ID} == 'openEuler' ]];then
+elif [[ ${os_type} == 'openEuler' ]];then
  echo openEuler
  yum -y install vim wget tar nano gcc make pam-devel perl perl-IPC-Cmd 
-elif [[ ${ID} == 'debian' ]];then
+elif [[ ${os_type} == 'debian' ]];then
  echo debian
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
  apt -y install vim wget tar nano gcc make libpam0g-dev
-elif [[ ${ID} == 'ubuntu' ]];then
+elif [[ ${os_type} == 'ubuntu' ]];then
  echo ubuntu
  export DEBIAN_FRONTEND=noninteractive
  apt -y update
  apt -y install vim wget tar nano gcc make libpam0g-dev
 fi
-
 }
 
 file_download(){
-local SERVER_IP=$1
-local ZLIB_URL=http://${SERVER_IP}/soft
-local OPENSSL_URL=http://${SERVER_IP}/soft
-local OPENSSH_URL=http://${SERVER_IP}/soft
-local WORKDIR=/usr/local/src
-local ZLIB_RELEASE=$2
-local OPENSSL_RELEASE=$3
-local OPENSSH_RELEASE=$4
-wget -nc -P ${WORKDIR} ${ZLIB_URL}/${ZLIB_RELEASE}.tar.gz 
-wget -nc -P ${WORKDIR} ${OPENSSL_URL}/${OPENSSL_RELEASE}.tar.gz
-wget -nc -P ${WORKDIR} ${OPENSSH_URL}/${OPENSSH_RELEASE}.tar.gz
+local file_server=$1
+local zlib_url=http://${file_server}/soft
+local openssl_url=http://${file_server}/soft
+local openssh_url=http://${file_server}/soft
+local workdir=/usr/local/src
+local zlib_release=$2
+local openssl_release=$3
+local openssh_release=$4
+wget -nc -P ${workdir} ${zlib_url}/${zlib_release}.tar.gz 
+wget -nc -P ${workdir} ${openssl_url}/${openssl_release}.tar.gz
+wget -nc -P ${workdir} ${openssh_url}/${openssh_release}.tar.gz
 }
 
 zlib_installer(){
-local ZLIB_RELEASE=$1
-tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/tar -zxvf /usr/local/src/${ZLIB_RELEASE}.tar.gz -C /usr/local/src/
-cd /usr/local/src/${ZLIB_RELEASE}
+local zlib_release=$1
+tar -zxvf /usr/local/src/${zlib_release}.tar.gz -C /usr/local/src/tar -zxvf /usr/local/src/${zlib_release}.tar.gz -C /usr/local/src/
+cd /usr/local/src/${zlib_release}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
 cat <<EOF > /etc/ld.so.conf.d/zlib.conf
@@ -303,17 +360,17 @@ ldconfig
 }
 
 ssl_installer(){
-local ID=$1
-local OPENSSL_RELEASE=$2
-tar -zxvf /usr/local/src/${OPENSSL_RELEASE}.tar.gz -C /usr/local/src/
-cd /usr/local/src/${OPENSSL_RELEASE}
+local os_type=${ID}
+local openssl_release=$1
+tar -zxvf /usr/local/src/${openssl_release}.tar.gz -C /usr/local/src/
+cd /usr/local/src/${openssl_release}
 ./config --prefix=/usr/local/openssl \
 --with-zlib-lib=/usr/local/zlib/lib \
 --with-zlib-include=/usr/local/zlib/include \
 enable-md2 \
 shared
 make -j 8 && make install
-if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
+if [[ ${os_type} == 'anolis' || ${os_type} == 'kylin' || ${os_type} == 'openEuler' ]];then
  alias mv='mv'
  if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
@@ -327,7 +384,7 @@ if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
   rm -rf /usr/lib64/libcrypto.so.3*  
  fi
  ln -s /usr/local/openssl/lib64/libcrypto.so.3 /usr/lib64/libcrypto.so.3
-elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
+elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
  alias mv='mv'
  if [ -e /usr/bin/openssl ];then
   mv -f /usr/bin/openssl /usr/bin/oldopenssl
@@ -349,13 +406,13 @@ ldconfig
 }
 
 ssh_installer(){
-local ID=$1
-local OPENSSH_RELEASE=$2
-tar -zxvf /usr/local/src/${OPENSSH_RELEASE}.tar.gz -C /usr/local/src/
-if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
+local os_type=${ID}
+local openssh_release=$1
+tar -zxvf /usr/local/src/${openssh_release}.tar.gz -C /usr/local/src/
+if [[ ${os_type} == 'anolis' || ${os_type} == 'kylin' || ${os_type} == 'openEuler' ]];then
  yum -y remove openssh openssh-clients openssh-server 
  rm -rf /etc/ssh/*
- cd /usr/local/src/${OPENSSH_RELEASE}
+ cd /usr/local/src/${openssh_release}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
@@ -364,8 +421,8 @@ if [[ ${ID} == 'anolis' || ${ID} == 'kylin' || ${ID} == 'openEuler' ]];then
 make -j 4 && make install
 rm -f /etc/init.d/sshd
 alias cp='cp'
-cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.init /etc/init.d/sshd
-cp -rf /usr/local/src/${OPENSSH_RELEASE}/contrib/redhat/sshd.pam /etc/pam.d/sshd
+cp -rf /usr/local/src/${openssh_release}/contrib/redhat/sshd.init /etc/init.d/sshd
+cp -rf /usr/local/src/${openssh_release}/contrib/redhat/sshd.pam /etc/pam.d/sshd
 chkconfig --add sshd
 chkconfig sshd on
 systemctl daemon-reload
@@ -376,11 +433,11 @@ PermitRootLogin yes
 PasswordAuthentication yes
 EOF
 systemctl restart sshd
-elif [[ ${ID} == 'debian' || ${ID} == 'ubuntu' ]];then
+elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
 apt -y remove ssh openssh-client openssh-server 
 rm -rf /etc/ssh/*
-OPENSSH_RELEASE=openssh-9.9p1
-cd /usr/local/src/${OPENSSH_RELEASE}
+openssh_release=openssh-9.9p1
+cd /usr/local/src/${openssh_release}
 ./configure --prefix=/usr \
 --sysconfdir=/etc/ssh \
 --with-pam \
@@ -400,89 +457,25 @@ fi
 }
 
 main(){
-  use_custom_mirrors ${SERVER_IP} ${ID} ${VERSION} 
-  env_installer ${ID} ${VERSION}  
-  file_download ${SERVER_IP} ${ZLIB_RELEASE} ${OPENSSL_RELEASE} ${OPENSSH_RELEASE}
-  zlib_installer ${ZLIB_RELEASE}
-  ssl_installer ${ID} ${OPENSSL_RELEASE}
-  ssh_installer ${ID} ${OPENSSH_RELEASE}
+	local yum_server=$1
+  local file_server=$2
+  use_custom_mirrors ${yum_server}
+  env_installer
+  file_download  ${file_server} ${zlib_release} ${openssl_release} ${openssh_release}
+  zlib_installer ${zlib_release}
+  ssl_installer  ${openssl_release}
+  ssh_installer  ${openssh_release}
   echo 'Update Complete!' 
 }
 
-menu_list(){
-incorrect_selection() {
-  echo "选择有误，请重新选择！"
-}
 
-menu_option_one() {
-  local SERVER_IP='100.201.3.111'
-  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
-  then
-  	main
-  else
-  	incorrect_selection
-  fi  
-}
-
-menu_option_two() {
-  local SERVER_IP='192.168.10.239'
-  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
-  then
-  	main
-  else
-  	incorrect_selection
-  fi  
-}
-
-menu_option_three() {
-  local SERVER_IP='100.0.0.239'
-  if curl --connect-timeout 2 ${SERVER_IP} &> /dev/null
-  then
-  	main
-  else
-  	incorrect_selection
-  fi  
-}
-press_anykey() {
-  read -n 1 -r -s -p "Press any key to continue..."
-  clear
-}
-until [ "${selection}" = "0" ]; do
-  clear
-    cat<<_EOF_
-    =====================================================
-    ## 烟台市电子政务云OpenSSH升级脚本 V1.0
-    ## zlib版本:      1.3.1
-    ## openssl版本:   3.3.2
-    ## openssh版本:   9.9p1
-    -----------------------------------------------------
-    ## 支持的操作系统
-    ## AnolisOS 7/8/23
-    ## KylinV10 SP2/SP3
-    ## openEuler 20.03/22.04/24.03 lts
-    ## Debian 11/12
-    ## Ubuntu 20.04/22.04/24.04 lts
-    -----------------------------------------------------
-    ## 请输入服务器的所在区域:
-    ## 
-    ## (1) 国产化信创区域(含互联网、公共域、行政域)
-    ## (2) X86 政务外网(公共服务域)
-    ## (3) X86 行政服务域
-    ##
-    ## (0) 退出脚本
-    -----------------------------------------------------
-_EOF_
-  echo -n "  请输入相应的数字: "
-  read selection
-  echo ""
-  case ${selection} in
-    1 ) clear ; menu_option_one ; press_anykey ;;
-    2 ) clear ; menu_option_two ; press_anykey ;;
-    3 ) clear ; menu_option_three ; press_anykey ;;
-    0 ) clear ; exit 0;;
-    * ) clear ; incorrect_selection ; press_anykey ;;
-  esac
+for yum_server in ${yum_server_list};do
+ if ! curl --connect-timeout 2 ${yum_server} &> /dev/null;then
+   echo "${yum_server}不可达!"
+   continue
+ else
+   main ${yum_server} ${yum_server}
+ fi 
 done
-}
 
-menu_list
+set +ex
