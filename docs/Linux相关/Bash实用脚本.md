@@ -411,5 +411,5 @@ __do_release_upgrade
 >[!IMPORTANT]
 >升级不可跨越版本
 
-
+# 8.`reposync`创建yum镜像源
 
