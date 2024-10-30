@@ -93,3 +93,12 @@ screen -r yourname -> 回到yourname这个session
 screen -d yourname -> 远程detach某个session
 screen -d -r yourname -> 结束当前session并回到yourname这个session
 ```
+
+# 3.qemu-img
+
+```
+
+qemu-img convert -f qcow2 ecs-inlinux23.12-x64-20240425.qcow2 -O raw ecs-inlinux23.12-x64-20240425.img
+qemu-img convert -f qcow2 ecs-inlinux23.12-x64-20240425.qcow2 -O vmdk ecs-inlinux23.12-x64-20240425.vmdk
+
+```

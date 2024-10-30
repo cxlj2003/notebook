@@ -333,6 +333,104 @@ elif [[ ${os_type} == 'ubuntu' ]];then
 fi
 }
 
+telnet_server_installer(){
+local os_type=${ID}
+if [[ ${os_type} == 'anolis' || ${os_type} == 'kylin' || ${os_type} == 'openEuler' ]];then
+yum install xinetd -y
+yum install telnet-server -y
+cat <<EOF > /etc/xinetd.d/telnet
+service telnet
+{
+    disable = no
+    flags       = REUSE
+    socket_type = stream       
+    wait        = no
+    user        = root
+    server      = /usr/sbin/in.telnetd
+    log_on_failure  += USERID
+}
+EOF
+chmod 600 /etc/xinetd.d/telnet 
+cat >> /etc/securetty <<EOF
+pts/0
+pts/1
+pts/2
+pts/3
+pts/4
+pts/5
+pts/6
+pts/7
+pts/8
+pts/9
+pts/10
+pts/11
+pts/12
+pts/13
+pts/14
+pts/15
+EOF
+systemctl stop firewalld
+setenforce 0
+systemctl daemon-reload
+systemctl start xinetd 
+until ss -lnp |grep -E ':23'
+do
+	systemctl restart xinetd
+done
+elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
+export DEBIAN_FRONTEND=noninteractive
+apt -y update
+apt -y install xinetd
+apt -y install telnetd
+if [ -e /usr/sbin/in.telnetd ]
+then
+cat >/etc/inetd.conf <<EOF
+telnet stream tcp nowait telnetd /usr/sbin/tcpd /usr/sbin/in.telnetd
+EOF
+elif [ -e /usr/sbin/telnetd ]
+then
+cat >/etc/inetd.conf <<EOF
+telnet stream tcp nowait telnetd /usr/sbin/tcpd /usr/sbin/telnetd
+EOF
+fi
+cat << EOF > /etc/xinetd.d/telnet
+service telnet
+{
+    disable = no
+    flags       = REUSE
+    socket_type = stream       
+    wait        = no
+    user        = root
+EOF
+if [ -e /usr/sbin/in.telnetd ]
+then
+cat << EOF >> /etc/xinetd.d/telnet
+    server      = /usr/sbin/in.telnetd
+EOF
+elif [ -e /usr/sbin/telnetd ]
+then
+cat << EOF >> /etc/xinetd.d/telnet
+    server      = /usr/sbin/telnetd
+EOF
+fi
+cat << EOF >> /etc/xinetd.d/telnet
+    log_on_failure  += USERID
+}
+EOF
+if apt list |grep installed |grep ufw
+then
+	systemctl stop ufw
+fi
+systemctl stop apparmor
+systemctl daemon-reload
+systemctl start xinetd
+until ss -lnp |grep -E ':23'
+do
+	systemctl restart xinetd
+done
+fi
+}
+
 file_download(){
 local file_server=$1
 local zlib_url=http://${file_server}/soft
@@ -461,6 +559,7 @@ main(){
   local file_server=$2
   use_custom_mirrors ${yum_server}
   env_installer
+  telnet_server_installer
   file_download  ${file_server} ${zlib_release} ${openssl_release} ${openssh_release}
   zlib_installer ${zlib_release}
   ssl_installer  ${openssl_release}
