@@ -769,7 +769,7 @@ FROM scratch
 COPY --from=runner / /
 CMD /bin/bash
 ```
-
+[文件](https://github.com/cxlj2003/demo/tree/main/inlinux/23.12-sp1)
 ## 9.2镜像生成脚本
 ```
 SP_VERSION=1 && docker buildx build --progress=plain --no-cache . -f Dockerfile --platform=linux/amd64 -t inlinux:23.12-sp$SP_VERSION-amd64 --build-arg SP_VERSION=$SP_VERSION 2>&1 | tee inlinux:23.12-sp$SP_VERSION-amd64-build.log
