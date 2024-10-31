@@ -574,6 +574,7 @@ for yum_server in ${yum_server_list};do
    continue
  else
    main ${yum_server} ${yum_server}
+   break
  fi 
 done
 

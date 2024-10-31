@@ -398,7 +398,8 @@ fi
 for yum_server in ${yum_server_list};do
  if curl --connect-timeout 2 ${yum_server} &> /dev/null ;then
  set_osrelease
- use_custom_mirrors ${yum_server} ${os_type} ${os_version_id}	
+ use_custom_mirrors ${yum_server} ${os_type} ${os_version_id}
+ break
  else
  continue
  fi 
