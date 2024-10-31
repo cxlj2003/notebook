@@ -561,9 +561,10 @@ EOF
 }
 
 init_downloader(){
+local reponame=$1
 local mirrors_root=/opt/mirrors
-local repo_root=${mirrors_root}/kylin
-local repo_list=`yum repolist |awk '/kylin/{print $1}' |xargs`
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
 
 for repo in ${repo_list};do 
   if [ ! -d ${repo_root}/${repo} ];then
@@ -582,17 +583,19 @@ for repo in ${repo_list};do
 done 
 }
 
+init_downloader kylin
+
 update_downloader(){
+local reponame=$1
 local mirrors_root=/opt/mirrors
-local repo_root=${mirrors_root}/kylin
-local repo_list=`yum repolist |awk '/kylin/{print $1}' |xargs`
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
 for repo in ${repo_list};do
   reposync --repoid ${repo} -np  ${repo_root}/
-  #reposync --repoid ks10sp2_aarch64-adv-os -np /opt/mirrors/kylin
   createrepo --repo ${repo} --update  ${repo_root}/${repo}
-  # createrepo --repo ks10sp2_aarch64-adv-os --update /opt/mirrors/kylin/ks10sp2_aarch64-adv-os
 done
 }
+update_downloader kylin
 
 zwc_yum_server(){
 yum_server_list='
@@ -700,27 +703,45 @@ gpgcheck = 0
 enabled = 1
 EOF
 
-for repo in `yum repolist |awk '/inlinux/{print $1}' |xargs`;do 
-  if [ ! -d /opt/mirrors/inlinux/${repo} ];then
-    mkdir -p /opt/mirrors/inlinux/${repo}/Packages/
+init_downloader(){
+local reponame=$1
+local mirrors_root=/opt/mirrors
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
+
+for repo in ${repo_list};do 
+  if [ ! -d ${repo_root}/${repo} ];then
+    mkdir -p ${repo_root}/${repo}/Packages/
   fi
-  reposync --urls --repoid ${repo} > /opt/mirrors/inlinux/${repo}/${repo}.txt
-  file=/opt/mirrors/inlinux/${repo}/${repo}.txt
+  reposync --urls --repoid ${repo} > ${repo_root}/${repo}/${repo}.txt
+  file=${repo_root}/${repo}/${repo}.txt
   cat $file | while read line;do
     echo $line
-    axel -k -c -p -n 4 $line -o /opt/mirrors/inlinux/${repo}/Packages/
+    axel -k -c -p -n 4 $line -o ${repo_root}/${repo}/Packages/
   done
 done
 
-for repo in `yum repolist |awk '/inlinux/{print $1}' |xargs`;do
-   reposync --repoid ${repo} -p /opt/mirrors/inlinux
+for repo in ${repo_list};do
+   reposync --repoid ${repo} -p ${repo_root}
 done 
+}
+
+init_downloader inlinux
 
 
-for repo in `yum repolist |awk '/inlinux/{print $1}' |xargs`;do
-  reposync -g -m -np /opt/mirrors/inlinux/${repo}
-  createrepo --update /opt/mirrors/inlinux/${repo}
+update_downloader(){
+local reponame=$1
+local mirrors_root=/opt/mirrors
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
+for repo in ${repo_list};do
+  reposync --repoid ${repo} -np  ${repo_root}/
+  createrepo --repo ${repo} --update  ${repo_root}/${repo}
 done
+}
+update_downloader inlinux
+
+
 ```
 # 9.创建docker镜像
 
