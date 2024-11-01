@@ -447,7 +447,7 @@ wget -nc -P ${workdir} ${openssh_url}/${openssh_release}.tar.gz
 
 zlib_installer(){
 local zlib_release=$1
-tar -zxvf /usr/local/src/${zlib_release}.tar.gz -C /usr/local/src/tar -zxvf /usr/local/src/${zlib_release}.tar.gz -C /usr/local/src/
+tar -zxvf /usr/local/src/${zlib_release}.tar.gz -C /usr/local/src/
 cd /usr/local/src/${zlib_release}
 ./configure --prefix=/usr/local/zlib
 make -j 4 && make test && make install
