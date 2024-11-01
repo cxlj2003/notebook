@@ -618,7 +618,13 @@ local mirrors_root=/opt/mirrors
 local repo_root=${mirrors_root}/yum.repos.d
 local http_scheme='http://'
 local http_port=':80'
-local local_server=$(zwc_yum_server)
+yum_server_list='
+100.201.3.111
+100.0.0.239
+192.168.10.239
+'
+for zwc_yum_server in ${yum_server_list};do
+local local_server=${zwc_yum_server}
 local repourl=${http_scheme}${local_server}${http_port}/zwc-kylin
 local version_arch='
 kylin_V10_SP1_aarch64
@@ -628,20 +634,22 @@ kylin_V10_SP1_x86_64
 kylin_V10_SP2_x86_64
 kylin_V10_SP3_x86_64
 '
+
 #[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os]
 #[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates]
-for v_a in ${version_arch};do
-cat << EOF > ${repo_root}/kylin_${v_a}.repo
+  for v_a in ${version_arch};do
+cat << EOF > ${repo_root}/${zwc_yum_server}_${v_a}.repo
 ##zwc-${v_a}##
 [zwc-${v_a}-adv-os]
-name = zwc KylinV10 adv-os
+name = zwc ${v_a} adv-os
 baseurl = ${repourl}/${v_a}-adv-os
 enabled = 1
 [zwc-${v_a}-adv-updates]
-name = zwc KylinV10 adv-updates
+name = zwc ${v_a} adv-updates
 baseurl = ${repourl}/${v_a}-adv-updates
 enabled = 1
 EOF
+  done
 done
 }
 kylinv10_local_repos
@@ -658,45 +666,45 @@ update_downloader
 ```
 #!/bin/bash
 cat << EOF > /etc/yum.repos.d/inlinux.repo
-[inlinux23_aarch64_everything]
+[inlinux_23.12_aarch64_everything]
 name = InLinux-23.12-LTS everything
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/everything/aarch64/
 gpgcheck = 0
 enabled = 1
-[inlinux23_aarch64_update]
+[inlinux_23.12_aarch64_update]
 name = InLinux-23.12-LTS update
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/update/aarch64/
 gpgcheck = 0
 enabled = 1
 
-[inlinux23_x86_64_everything]
+[inlinux_23.12_x86_64_everything]
 name = InLinux-23.12-LTS everything
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/everything/x86_64/
 gpgcheck = 0
 enabled = 1
-[inlinux23_x86_64_update]
+[inlinux_23.12_x86_64_update]
 name = InLinux-23.12-LTS update
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/update/x86_64/
 gpgcheck = 0
 enabled = 1
 
-[inlinux23sp1_aarch64_everything]
+[inlinux_23.12_sp1_aarch64_everything]
 name = InLinux-23.12-LTS everything
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/everything/aarch64/
 gpgcheck = 0
 enabled = 1
-[inlinux23sp1_aarch64_update]
+[inlinux_23.12_sp1_aarch64_update]
 name = InLinux-23.12-LTS update
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/update/aarch64/
 gpgcheck = 0
 enabled = 1
 
-[inlinux23sp1_x86_64_everything]
+[inlinux_23.12_sp1_x86_64_everything]
 name = InLinux-23.12-LTS everything
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/everything/x86_64/
 gpgcheck = 0
 enabled = 1
-[inlinux23sp1_x86_64_update]
+[inlinux_23.12_sp1_x86_64_update]
 name = InLinux-23.12-LTS update
 baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/update/x86_64/
 gpgcheck = 0
@@ -740,6 +748,45 @@ for repo in ${repo_list};do
 done
 }
 update_downloader inlinux
+
+inlinux_local_repos(){
+local mirrors_root=/opt/mirrors
+local repo_root=${mirrors_root}/yum.repos.d
+local http_scheme='http://'
+local http_port=':80'
+yum_server_list='
+100.201.3.111
+100.0.0.239
+192.168.10.239
+'
+for zwc_yum_server in ${yum_server_list};do
+local local_server=${zwc_yum_server}
+local repourl=${http_scheme}${local_server}${http_port}/zwc-inlinux
+local version_arch='
+inlinux_23.12_aarch64
+inlinux_23.12_x86_64
+inlinux_23.12_SP1_aarch64
+inlinux_23.12_SP1_x86_64
+'
+
+#[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os]
+#[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates]
+  for v_a in ${version_arch};do
+cat << EOF > ${repo_root}/${zwc_yum_server}_${v_a}.repo
+##zwc-${v_a}##
+[zwc-${v_a}-everything]
+name = zwc ${v_a} everything
+baseurl = ${repourl}/${v_a}-everything
+enabled = 1
+[zwc-${v_a}-update]
+name = zwc ${v_a} update
+baseurl = ${repourl}/${v_a}-update
+enabled = 1
+EOF
+  done
+done
+}
+inlinux_local_repos
 
 
 ```
