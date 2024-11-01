@@ -411,9 +411,9 @@ __do_release_upgrade
 >[!IMPORTANT]
 >升级不可跨越版本
 
-# 8.`reposync`创建yum镜像源
+# 8.`reposync/apt-mirror`创建镜像源
 
-## 8.1 kylinv10
+## 8.1 kylinv10 yum
 
 ```
 #!/bin/bash
@@ -613,6 +613,8 @@ for yum_server in ${yum_server_list};do
 done
 }
 
+
+
 kylinv10_local_repos(){
 local mirrors_root=/opt/mirrors
 local repo_root=${mirrors_root}/yum.repos.d
@@ -661,7 +663,7 @@ update_downloader
 }
 ```
 
-## 8.2 InLinux
+## 8.2 InLinux yum
 
 ```
 #!/bin/bash
@@ -790,6 +792,18 @@ inlinux_local_repos
 
 
 ```
+
+## 8.3 Ubuntu apt
+
+## 8.4 通过docker
+
+```
+
+```
+
+
+
+
 # 9.创建docker镜像
 
 ## 9.1创建Dockerflie
@@ -838,6 +852,12 @@ COPY --from=runner / /
 CMD /bin/bash
 ```
 [文件](https://github.com/cxlj2003/demo/tree/main/inlinux/23.12-sp1)
+>[!NOTE]
+>1.`$releaserver` 取值为release文件中的version;
+>命令: `rpm -qi $(rpm -qa |grep -Ev 'latest' |grep -E 'release')|awk -F : '/Version/{print $2}' |sed -n 's/ //p'`
+>2.`$basearch` 取值 `arch`
+
+
 ## 9.2镜像生成脚本
 ```
 SP_VERSION=1 && docker buildx build --progress=plain --no-cache . -f Dockerfile --platform=linux/amd64 -t inlinux:23.12-sp$SP_VERSION-amd64 --build-arg SP_VERSION=$SP_VERSION 2>&1 | tee inlinux:23.12-sp$SP_VERSION-amd64-build.log
