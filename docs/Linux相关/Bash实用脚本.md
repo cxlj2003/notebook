@@ -796,10 +796,21 @@ inlinux_local_repos
 ## 8.3 Ubuntu apt
 
 ## 8.4 通用docker
-### 8.4.1目录准备
-
+### 8.4.1宿主机
 
 ```
+/opt/.docker_root
+/opt/www/html
+/opt/mirrors/
+zwc-kylin/NS/V10/V10SP3/os/adv/lic/{base,updates}/{aarch64,x86_64}
+zwc-inlinux/InLinux-23.12-LTS-SP1/{everything,update}/{aarch64,x86_64}
+```
+### 8.4.2Docker
+```
+yum -y install dnf-plugins-core createrepo
+mkdir -p /repo/{aarch64,x86_64}
+reposync -p /repos/aarch64  --forcearch aarch64
+reposync -p /repo/x86_64  --forcearch x86_64
 
 ```
 
