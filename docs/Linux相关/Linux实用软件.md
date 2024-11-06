@@ -84,7 +84,7 @@ ssh -R 0.0.0.0:22022:198.19.201.119:22 198.19.201.138
 >2.实现的目的都是本地客户端通过本地客户端连接远程服务器
 
 
-# 2. screen
+# 2. `screen`
 
 ```
 screen -S yourname -> 新建一个叫yourname的session
@@ -94,7 +94,7 @@ screen -d yourname -> 远程detach某个session
 screen -d -r yourname -> 结束当前session并回到yourname这个session
 ```
 
-# 3.qemu-img
+# 3.`qemu-img`
 
 ```
 
