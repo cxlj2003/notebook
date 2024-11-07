@@ -613,8 +613,6 @@ for yum_server in ${yum_server_list};do
 done
 }
 
-
-
 kylinv10_local_repos(){
 local mirrors_root=/opt/mirrors
 local repo_root=${mirrors_root}/yum.repos.d
@@ -809,7 +807,7 @@ inlinux_local_repos
 zwc-kylin/NS/V10/V10SP3/os/adv/lic/{base,updates}/{aarch64,x86_64}
 zwc-inlinux/InLinux-23.12-LTS-SP1/{everything,update}/{aarch64,x86_64}
 ```
-### 8.4.2Docker
+### 8.4.2`Docker`
 ```
 yum -y install dnf-plugins-core createrepo
 mkdir -p /repo/{aarch64,x86_64}
@@ -818,8 +816,231 @@ reposync -p /repo/x86_64  --forcearch x86_64
 
 ```
 
+### 8.4.3 `Docker`镜像
 
+#### `Dockerfile`
+```dockerfile
+FROM registry.cn-hangzhou.aliyuncs.com/cxlj/openeuler:24.03-lts
+ENV TZ=Asia/Shanghai
+RUN yum -y update && \
+yum -y install dnf-plugins-core createrepo cronie && \
+rm -rf /etc/yum.repos.d/* && \
+yum clean all && rm -rf /var/cache/dnf/*
 
+COPY local.repo /etc/yum.repos.d/local.repo
+COPY start.sh /start.sh
+
+VOLUME [ "/opt/mirrors" ]
+ENTRYPOINT [ "/start.sh"  ]
+```
+#### `local.repo`
+```
+##############################x86_64##############################
+
+###Kylin Linux Advanced Server 10 SP1 x86_64 repo###
+
+[kylin_V10_SP1_x86_64-adv-os]
+name = Kylin Linux Advanced Server 10 SP1 x86_64 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP1/os/adv/lic/base/x86_64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP1_x86_64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP1 x86_64 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP1/os/adv/lic/updates/x86_64/
+gpgcheck = 0
+enabled = 1
+
+###Kylin Linux Advanced Server 10 SP2 x86_64 repo###
+
+[kylin_V10_SP2_x86_64-adv-os]
+name = Kylin Linux Advanced Server 10 SP2 x86_64 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/base/x86_64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP2_x86_64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP2 x86_64 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/updates/x86_64/
+gpgcheck = 0
+enabled = 1
+
+###Kylin Linux Advanced Server 10 SP3 x86_64 repo###
+
+[kylin_V10_SP3_x86_64-adv-os]
+name = Kylin Linux Advanced Server 10 SP3 x86_64 - Os 
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/base/x86_64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP3_x86_64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP3 x86_64 - Updates
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/updates/x86_64/
+gpgcheck = 0
+enabled = 1
+
+###InLinux 23.12 x86_64  repo###
+
+[inlinux_23.12_x86_64_everything]
+name = InLinux-23.12-LTS everything
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/everything/x86_64/
+gpgcheck = 0
+enabled = 1
+[inlinux_23.12_x86_64_update]
+name = InLinux-23.12-LTS update
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/update/x86_64/
+gpgcheck = 0
+enabled = 1
+
+###InLinux 23.12 SP1 x86_64  repo###
+
+[inlinux_23.12_sp1_x86_64_everything]
+name = InLinux-23.12-LTS everything
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/everything/x86_64/
+gpgcheck = 0
+enabled = 1
+[inlinux_23.12_sp1_x86_64_update]
+name = InLinux-23.12-LTS update
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/update/x86_64/
+gpgcheck = 0
+enabled = 1
+
+##############################aarch64##############################
+
+###Kylin Linux Advanced Server 10 SP1 aarch64 repo###
+
+[kylin_V10_SP1_aarch64-adv-os]
+name = Kylin Linux Advanced Server 10 SP1 aarch64 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP1/os/adv/lic/base/aarch64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP1_aarch64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP1 aarch64 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP1/os/adv/lic/updates/aarch64/
+gpgcheck = 0
+enabled = 1
+
+###Kylin Linux Advanced Server 10 SP2 aarch64 repo###
+
+[kylin_V10_SP2_aarch64-adv-os]
+name = Kylin Linux Advanced Server 10 SP2 aarch64 - Os 
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/base/aarch64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP2_aarch64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP2 aarch64 - Updates
+baseurl = http://update.cs2c.com.cn:8080/NS/V10/V10SP2/os/adv/lic/updates/aarch64/
+gpgcheck = 0
+enabled = 1
+
+###Kylin Linux Advanced Server 10 SP3 aarch64 repo###
+
+[kylin_V10_SP3_aarch64-adv-os]
+name = Kylin Linux Advanced Server 10 SP3 aarch64 - Os 
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/base/aarch64/
+gpgcheck = 0
+enabled = 1
+[kylin_V10_SP3_aarch64-adv-updates]
+name = Kylin Linux Advanced Server 10 SP3 aarch64 - Updates
+baseurl = https://update.cs2c.com.cn/NS/V10/V10SP3/os/adv/lic/updates/aarch64/
+gpgcheck = 0
+enabled = 1
+
+###InLinux 23.12  aarch64  repo###
+
+[inlinux_23.12_aarch64_everything]
+name = InLinux-23.12-LTS everything
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/everything/aarch64/
+gpgcheck = 0
+enabled = 1
+[inlinux_23.12_aarch64_update]
+name = InLinux-23.12-LTS update
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS/update/aarch64/
+gpgcheck = 0
+enabled = 1
+
+###InLinux 23.12 SP1 aarch64  repo###
+
+[inlinux_23.12_sp1_aarch64_everything]
+name = InLinux-23.12-LTS everything
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/everything/aarch64/
+gpgcheck = 0
+enabled = 1
+[inlinux_23.12_sp1_aarch64_update]
+name = InLinux-23.12-LTS update
+baseurl = https://repos-inlinux.inspurcloud.cn/InLinux-23.12-LTS-SP1/update/aarch64/
+gpgcheck = 0
+enabled = 1
+```
+
+#### `start.sh`
+```
+#!/bin/bash
+cat << 'EOF' > /root/init_mirrors.sh
+#!/bin/bash
+set -ex
+init_downloader(){
+local reponame=$1
+local mirrors_root=/opt/mirrors
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
+
+for repo in ${repo_list};do 
+  if [ ! -d ${repo_root}/${repo} ];then
+    mkdir -p ${repo_root}/${repo}/Packages/
+  fi
+  for repo in ${repo_list};do
+   reposync --repoid ${repo} -p ${repo_root}
+  done
+done 
+}
+init_downloader kylin &> /dev/null &
+init_downloader inlinux &> /dev/null &
+EOF
+
+cat << 'EOF' > /root/update_mirrors.sh
+#!/bin/bash
+set -ex
+update_downloader(){
+local reponame=$1
+local mirrors_root=/opt/mirrors
+local repo_root=${mirrors_root}/${reponame}
+local repo_list=`yum repolist |grep -E ${reponame}  |awk  '{print $1}' |xargs`
+for repo in ${repo_list};do
+  reposync --repoid ${repo} -np  ${repo_root}/
+  createrepo --repo ${repo} --update  ${repo_root}/${repo}
+done
+}
+update_downloader kylin &> /dev/null &
+update_downloader inlinux  &> /dev/null &
+set +ex
+EOF
+
+cat << EOF > /var/spool/cron/root
+0 0 * * * /usr/bin/bash /root/update_mirrors.sh &> /dev/null &
+EOF
+
+set +ex
+tail -f /dev/null
+```
+
+使用`docker bulid -t local_mirrors:v1.1 .`命令创建镜像
+#### `docker-compose.yaml`
+```yaml
+version: '3.3'
+services:
+  app:
+    image: local_mirrors:v1.1
+    container_name: local_mirrors
+    hostname: local_mirrors
+    volumes:
+      - /opt/mirrors:/opt/mirrors
+    privileged: true
+    environment:
+      - "UID:0"
+      - "GID:0"
+      - "GIDLIST:0"
+    restart: always
+```
+
+使用`docker compose up -d`命令启动,使用`docker exec -it local_mirrors bash`进入docker内部,使用`bash /root/init_mirrors.sh`命令启动初始化脚本.
 
 # 9.创建docker镜像
 
@@ -911,3 +1132,64 @@ cat << 'EOF' >> /etc/fstab
 EOF
 mount -a
 ```
+
+## 10.2 `rsync`
+
+yum源同步脚本
+### 10.2.1 centos7-vault
+```
+#!/bin/bash
+cat << 'EOF' > /opt/mirrors/include_vault1
++ 7*
++ 7*/
++ 7*/**
+- *
+EOF
+
+cat << 'EOF' > /opt/mirrors/include_vault2
++ centos/
++ centos/7*
++ centos/7*/
++ centos/7*/**
+- *
+EOF
+
+cat << 'EOF' > /opt/mirrors/include_vault3
++ altarch/
++ altarch/7*
++ altarch/7*/
++ altarch/7*/**
+- *
+EOF
+
+/usr/bin/rsync -arztvP rsync://mirrors.tuna.tsinghua.edu.cn/centos-vault/ /opt/mirrors/centos-vault/ --include-from=/opt/mirrors/include_vault1
+/usr/bin/rsync -arztvP rsync://mirrors.tuna.tsinghua.edu.cn/centos-vault/ /opt/mirrors/centos-vault/ --include-from=/opt/mirrors/include_vault2
+/usr/bin/rsync -arztvP rsync://mirrors.tuna.tsinghua.edu.cn/centos-vault/ /opt/mirrors/centos-vault/ --include-from=/opt/mirrors/include_vault3
+```
+
+### 10.2.2 epel7-vault
+```
+#!/bin/bash
+cat << 'EOF' > /opt/mirrors/include_epel1
++ aarch64/
++ aarch64/**
+- *
+EOF
+
+cat << 'EOF' > /opt/mirrors/include_epel2
++ x86_64/
++ x86_64/**
+- *
+EOF
+
+cat << 'EOF' > /opt/mirrors/include_epel3
++ source/
++ source/**
+- *
+EOF
+
+/usr/bin/rsync -arztvP rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/7/ /opt/mirrors/epel/7/ --include-from=/opt/mirrors/include_epel1
+/usr/bin/rsync -arztvP rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/7/ /opt/mirrors/epel/7/ --include-from=/opt/mirrors/include_epel2
+/usr/bin/rsync -arztvP rsync://ftp-stud.hs-esslingen.de/fedora-archive/epel/7/ /opt/mirrors/epel/7/ --include-from=/opt/mirrors/include_epel3
+```
+# 11.
