@@ -880,3 +880,34 @@ CMD /bin/bash
 SP_VERSION=1 && docker buildx build --progress=plain --no-cache . -f Dockerfile --platform=linux/amd64 -t inlinux:23.12-sp$SP_VERSION-amd64 --build-arg SP_VERSION=$SP_VERSION 2>&1 | tee inlinux:23.12-sp$SP_VERSION-amd64-build.log
 SP_VERSION=1 && docker buildx build --progress=plain --no-cache . -f Dockerfile --platform=linux/arm64 -t inlinux:23.12-sp$SP_VERSION-arm64 --build-arg SP_VERSION=$SP_VERSION 2>&1 | tee inlinux:23.12-sp$SP_VERSION-arm64-build.log
 ```
+
+# 10.文件
+## 10.1挂载cifs
+
+使用命令行挂载
+```
+mount -t cifs -o \
+username=<user>,password=<password> \
+//WIN_SHARE_IP/<share_name> /mnt/win_share
+```
+使用
+```
+cat << 'EOF' > /etc/win-credentials
+username = user
+password = password
+domain = domain
+EOF
+mount -t cifs -o credentials=/etc/win-credentials //WIN_SHARE_IP/<share_name> /mnt/win_share
+```
+
+```
+cat << 'EOF' > /etc/win-credentials
+username = user
+password = password
+domain = domain
+EOF
+cat << 'EOF' >> /etc/fstab
+//WIN_SHARE_IP/share_name  /mnt/win_share  cifs  credentials=/etc/win-credentials,file_mode=0755,dir_mode=0755 0       0
+EOF
+mount -a
+```
