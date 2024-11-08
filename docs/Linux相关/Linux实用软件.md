@@ -97,8 +97,14 @@ screen -d -r yourname -> 结束当前session并回到yourname这个session
 # 3.`qemu-img`
 
 ```
-
+#磁盘格式转换
 qemu-img convert -f qcow2 ecs-inlinux23.12-x64-20240425.qcow2 -O raw ecs-inlinux23.12-x64-20240425.img
 qemu-img convert -f qcow2 ecs-inlinux23.12-x64-20240425.qcow2 -O vmdk ecs-inlinux23.12-x64-20240425.vmdk
+
+```
+
+# 4.`zerotier-one`
+
+```
 
 ```
