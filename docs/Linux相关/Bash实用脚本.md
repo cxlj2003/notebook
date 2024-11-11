@@ -181,7 +181,7 @@ echo $ID
 case $(get_os_type) in
 	anolis|kylin|openEuler )
 		yum install chrony -y
-		sed -i  '/pool/d' /etc/chrony.conf
+		sed -i  '/^pool.*iburst/d' /etc/chrony.conf
 		cat << EOF >> /etc/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
@@ -194,7 +194,7 @@ EOF
 		apt update
 		export DEBIAN_FRONTEND=noninteractive
 		apt install chrony -y
-		sed -i  '/pool/d' /etc/chrony/chrony.conf
+		sed -i  '/^pool.*iburst/d' /etc/chrony/chrony.conf
 		cat << EOF >> /etc/chrony/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
@@ -220,6 +220,7 @@ echo $ID
 case $(get_os_type) in
 	anolis|kylin|openEuler )
 		yum install chrony -y
+		sed -i  '/^pool.*iburst/d' /etc/chrony.conf
 		cat << EOF >> /etc/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
@@ -231,6 +232,7 @@ EOF
 		apt update
 		export DEBIAN_FRONTEND=noninteractive
 		apt install chrony -y
+		sed -i  '/^pool.*iburst/d' /etc/chrony/chrony.conf
 		cat << EOF >> /etc/chrony/chrony.conf
 pool $ntpserver1 iburst
 pool $ntpserver2 iburst
