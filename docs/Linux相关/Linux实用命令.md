@@ -45,9 +45,36 @@ date "+%m%d%y"
 #分 %M
 #秒 %S
 ```
-# 3.`curl`和`wget`
+# 3.`ansible`
 
 ```
+apt -y install ansible
+mkdir -p /etc/ansible
+cat << 'EOF' > /etc/ansible/hosts
+[admin]
+192.168.100.1
+192.168.100.2
+[test]
+192.168.100.1
+192.168.100.2
+[test2:children]
+admin
+test
+EOF
+```
+
+获取帮助
+```
+ansible-doc apt
+ansible-doc -l
+```
+
+常用命令及模块
+```
+ansible all -m ping
+ansible all -m command -a "/sbin/reboot -t now"
+ansible all -m shell -a "bash /opt/baseconfig.sh"
+ansible 'all:!admin' -m service -a "name=httpd state=started"
 
 ```
 # 4. 内核模块
@@ -702,3 +729,7 @@ make && make install
 ln -svf /usr/local/bin/axel /usr/bin/axel
 
 ```
+
+## 15.2`curl`
+
+## 15.3 `wget`
