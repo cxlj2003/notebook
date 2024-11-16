@@ -2497,6 +2497,15 @@ echo ${colors["blue"]}
 ## 14.2 `sed`
 
 ```
+a ：新增， a 的后面可以接字串，而这些字串会在下一行出现 
+c ：行取代， c 的后面可以接字串，这些字串可以取代某几行！ 
+d ：删除行 
+i ：插入，i 的后面可以接字串，而这些字串会在新的一行出现(目前的上一行)； 
+p ：打印，即将某个选择的数据print出来 
+s ：字符串取代
+```
+
+```
 echo "This is a test" | sed 's/test/big test/'
 ```
 
@@ -2507,7 +2516,10 @@ echo "The quick brown fox jumps over the lazy dog." | sed -e '
 s/brown/green/
 s/fox/elephant/
 s/dog/cat/'
+
 ```
+
+
 
 ## 14.3 `awk`
 ## 14.4 `cut`

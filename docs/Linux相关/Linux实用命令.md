@@ -75,7 +75,7 @@ ansible all -m ping
 ansible all -m command -a "/sbin/reboot -t now"
 ansible all -m shell -a "bash /opt/baseconfig.sh"
 ansible 'all:!admin' -m service -a "name=httpd state=started"
-
+ansible 'all:!admin' -m synchronize -a "src=/opt dest=/"
 ```
 # 4. 内核模块
 

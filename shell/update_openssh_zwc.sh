@@ -126,8 +126,46 @@ enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
 gpgcheck=0
 EOF
-elif [[ ${os_type} == 'kylin' ]];then
-local sub_version=`cat /etc/.kyinfo|grep dist_id |sed -e 's/-Release.*//' -e 's/^dist_id.*SP/SP/'`
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Tercel |wc -l` -gt 0 ]];then
+local sub_version=SP1
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-os
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os
+enabled = 1
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-updates
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates
+enabled = 1
+EOF
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Sword |wc -l` -gt 0 ]];then
+local sub_version=SP2
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-os
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os
+enabled = 1
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-updates
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates
+enabled = 1
+EOF
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Lance |wc -l` -gt 0 ]];then
+local sub_version=SP3
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-os
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-os
+enabled = 1
+[zwc-${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates]
+name = zwc KylinV10 ${sub_version}_$(uname -i) adv-updates
+baseurl = ${yum_server}/${ID}_${VERSION_ID}_${sub_version}_$(uname -i)-adv-updates
+enabled = 1
+EOF
+'''
+{
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Tercel |wc -l` -gt 0 ]];then
+local sub_version=SP1
 cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
 ###Kylin Linux Advanced Server 10 - os repo###
 
@@ -152,6 +190,60 @@ gpgcheck = 1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
 enabled = 0
 EOF
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Sword |wc -l` -gt 0 ]];then
+local sub_version=SP2
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
+###Kylin Linux Advanced Server 10 - os repo###
+
+[ks10-adv-os]
+name = Kylin Linux Advanced Server ${os_version_id} - Os 
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/base/\$basearch/
+gpgcheck = 0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10-adv-updates]
+name = Kylin Linux Advanced Server ${os_version_id} - Updates
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/updates/\$basearch/
+gpgcheck = 0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10-adv-addons]
+name = Kylin Linux Advanced Server ${os_version_id} - Addons
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/addons/\$basearch/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+EOF
+elif [[ ${os_type} == 'kylin' && `cat /etc/os-release |grep Lance |wc -l` -gt 0 ]];then
+local sub_version=SP3
+cat << EOF > /etc/yum.repos.d/kylin_$(uname -i).repo
+###Kylin Linux Advanced Server 10 - os repo###
+
+[ks10-adv-os]
+name = Kylin Linux Advanced Server ${os_version_id} - Os 
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/base/\$basearch/
+gpgcheck = 0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10-adv-updates]
+name = Kylin Linux Advanced Server ${os_version_id} - Updates
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/updates/\$basearch/
+gpgcheck = 0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 1
+
+[ks10-adv-addons]
+name = Kylin Linux Advanced Server ${os_version_id} - Addons
+baseurl = http://${yum_server}/${os_type}/NS/${os_version_id}/${os_version_id}${sub_version}/os/adv/lic/addons/\$basearch/
+gpgcheck = 1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-kylin
+enabled = 0
+EOF
+}
+'''
 elif [[ ${os_type} == 'openEuler' ]];then
 local sub_version=`cat /etc/os-release |awk -F \" '/VERSION=/{print $(NF-1)}' |sed -e 's/(//g' -e 's/)//g' -e 's/ /-/g'`
 cat << EOF > /etc/yum.repos.d/openEuler.repo
@@ -303,7 +395,6 @@ elif [[ ${os_type} == 'debian' || ${os_type} == 'ubuntu' ]];then
 fi
 
 }
-
 env_installer(){
 local os_type=${ID}
 local os_version_id=${VERSION_ID}
