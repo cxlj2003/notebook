@@ -1,16 +1,22 @@
 # 1.部署环境
 
-| 主机名                   | IP地址           | FQDN                        | 角色   | 备注  |
-| :-------------------- | :------------- | :-------------------------- | :--- | :-- |
-| openstack-controller1 | 172.16.254.141 | controller1.openstack.local | 控制节点 |     |
-| openstack-controller2 | 172.16.254.142 | controller2.openstack.local | 控制节点 |     |
-| openstack-controller3 | 172.16.254.143 | controller3.openstack.local | 控制节点 |     |
-| openstack-compute1    | 172.16.254.151 | compute1.openstack.local    | 计算节点 |     |
-| openstack-compute2    | 172.16.254.152 | compute2.openstack.local    | 计算节点 |     |
-| openstack-compute3    | 172.16.254.153 | compute3.openstack.local    | 计算节点 |     |
-| openstack-storage1    | 172.16.254.161 | storage1.openstack.local    | 存储节点 |     |
-| openstack-storage2    | 172.16.254.162 | storage2.openstack.local    | 存储节点 |     |
-| openstack-storage3    | 172.16.254.163 | storage3.openstack.local    | 存储节点 |     |
+| 主机名   | 管理地址           | VTEP          | Provider | FQDN                  | 角色   | 备注  |
+| :---- | :------------- | :------------ | :------- | :-------------------- | :--- | :-- |
+| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 控制节点 |     |
+| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 控制节点 |     |
+| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 控制节点 |     |
+| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 计算节点 |     |
+| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 计算节点 |     |
+| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 计算节点 |     |
+| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 存储节点 |     |
+| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 存储节点 |     |
+| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 存储节点 |     |
+>[!注]
+>1.每个节点配置3块网卡,4块磁盘
+>2.
+>2.操作系统安装时使用lvm逻辑卷
+
+
 # 2.初始化
 
 ```
