@@ -1880,7 +1880,7 @@ service memcached restart
 service swift-proxy restart
 ```
 
-完成[[Openstack部署#5.1 对象存储]]的配置后执行
+完成[[Openstack部署#5.1 Swift]]的配置后执行
 ### 3.8.5 验证配置
 
 ```
