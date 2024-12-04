@@ -2421,7 +2421,7 @@ openstack compute service list --service nova-compute
 ### 4.2.1 安装和配置组件
 
 ```
-apt install neutron-openvswitch-agent -y
+apt install neutron-openvswitch-agent -y &> /dev/null
 cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak
 ```
 
@@ -3146,8 +3146,124 @@ openstack volume service list
 ```
 
 # 6. 启动实例
-## 6.1
+## 6.1 先决条件
+### 6.1.1 创建Provider网络
 
+```
+source /opt/openstack-admin.rc
+openstack network create  --share --external \
+  --provider-physical-network provider \
+  --provider-network-type flat provider
+START_IP_ADDRESS=198.51.100.1
+END_IP_ADDRESS=198.51.100.100
+DNS_RESOLVER=8.8.8.8
+PROVIDER_NETWORK_GATEWAY=198.51.100.254
+PROVIDER_NETWORK_CIDR=198.51.100.0/24
+openstack subnet create --network provider \
+  --allocation-pool start=$START_IP_ADDRESS,end=$END_IP_ADDRESS \
+  --dns-nameserver $DNS_RESOLVER --gateway $PROVIDER_NETWORK_GATEWAY \
+  --subnet-range $PROVIDER_NETWORK_CIDR provider
+```
+
+### 6.1.2 创建VXLAN
+
+```
+openstack network create selfservice
+DNS_RESOLVER=8.8.8.8
+SELFSERVICE_NETWORK_GATEWAY=172.16.0.254
+SELFSERVICE_NETWORK_CIDR=172.16.0.0/24
+openstack subnet create --network selfservice \
+  --dns-nameserver $DNS_RESOLVER --gateway $SELFSERVICE_NETWORK_GATEWAY \
+  --subnet-range $SELFSERVICE_NETWORK_CIDR selfservice
+```
+### 6.1.3 创建路由器并添加网络接口
+
+```
+openstack router create router
+openstack router add subnet router selfservice
+openstack router set router --external-gateway provider
+```
+### 6.1.4 验证网络
+
+```
+ip netns
+openstack port list --router router
+```
+
+### 6.1.5 创建VM规格
+
+创建1核1G20G
+```
+openstack flavor create --id 0 --vcpus 1 --ram 1024 --disk 20 m1.nano
+```
+
+### 6.1.6 创建密钥
+
+```
+openstack keypair create --public-key ~/.ssh/id_rsa.pub mykey
+openstack keypair list
+```
+
+### 6.1.7 新增默认安全组策略
+
+```
+openstack security group rule create --proto icmp default
+openstack security group rule create --proto tcp --dst-port 22 default
+```
+
+## 6.2 创建VM实例
+### 6.2.1 验证先决条件
+
+```
+openstack flavor list
+openstack image list
+openstack network list
+openstack security group list
+```
+### 6.2.2 创建VM实例
+
+```
+PROVIDER_NET_ID=`openstack network list -f csv  --name provider |grep -Ev 'ID'|awk -F '"' '{print $2}'`
+openstack server create --flavor m1.nano --image cirros \
+  --nic net-id=$PROVIDER_NET_ID --security-group default \
+  --key-name mykey provider-instance
+```
+
+```
+SELFSERVICE_NET_ID=`openstack network list -f csv  --name selfservice |grep -Ev 'ID'|awk -F '"' '{print $2}'`
+openstack server create --flavor m1.nano --image cirros \
+  --nic net-id=$SELFSERVICE_NET_ID --security-group default \
+  --key-name mykey selfservice-instance
+```
+
+### 6.2.3 查看VM实例状态
+
+```
+openstack server list
+```
+
+### 6.2.4 控制台连接实例
+
+```
+openstack console url show provider-instance
+openstack console url selfservice-instance
+```
+
+通过浏览器连接实例
+### 6.2.5 远程连接实例
+
+Provier实例通过providerIP连接
+```
+providerip=
+ssh cirros@$providerip
+```
+
+VXLAN实例通过FloatingIP连接
+```
+openstack floating ip create provider
+floatingip=
+openstack server add floating ip selfservice-instance $floatingip
+```
 # 7. 使用kolla-ansible部署
 
 
