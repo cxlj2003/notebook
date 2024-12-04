@@ -35,6 +35,7 @@ cat << EOF > /etc/resolv.conf
 nameserver 8.8.8.8
 nameserver 114.114.114.114
 EOF
+systemctl mask systemd-resolved.service
 int=ens34
 ipadd=198.19.32.101/24
 ip add add $ipadd dev $int
@@ -303,7 +304,7 @@ ansible all -m shell -a "ls -l /opt"
 ansible all -m shell -a "chronyc sources"
 ```
 
-# 3.Controller节点配置
+# 3.控制节点配置
 
 ## 3.1 Prerequisites
 
@@ -366,7 +367,12 @@ echo '-l 0.0.0.0' >> /etc/memcached.conf
 systemctl restart memcached &> /dev/null
 ```
 
-### 3.1.4 验证配置
+### 3.1.4 完成安装
+
+```
+systemctl enable  mariadb rabbitmq-server memcached
+```
+### 3.1.5 验证配置
 
 ```
 mysql -uroot -p$mysql_root_password -e "show databases;"
@@ -445,6 +451,7 @@ cat /etc/apache2/apache2.conf |grep ServerName
 
 ```
 systemctl restart apache2
+systemctl enable apache2
 
 cat << EOF > /opt/openstack-admin.rc
 export OS_USERNAME=admin
@@ -485,7 +492,7 @@ export OS_PROJECT_DOMAIN_NAME=Default
 export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_NAME=myproject
 export OS_USERNAME=myuser
-export OS_PASSWORD=DEMO_PASS
+export OS_PASSWORD=MYUSER_PASS
 export OS_AUTH_URL=http://$controller:5000/v3
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
@@ -613,6 +620,10 @@ su -s /bin/sh -c "glance-manage db_sync" glance &> /dev/null
 service glance-api restart
 ```
 
+```
+systemctl enable glance-api
+```
+
 ### 3.3.4 验证配置
 
 ```
@@ -660,7 +671,7 @@ openstack endpoint list
 ### 3.4.2 安装和配置组件
 
 ```
-apt install placement-api -y
+apt install placement-api -y &> /dev/null
 cp /etc/placement/placement.conf /etc/placement/placement.conf.bak
 cat << EOF > /etc/placement/placement.conf
 [DEFAULT]
@@ -687,13 +698,17 @@ EOF
 
 ```
 cat /etc/placement/placement.conf
-su -s /bin/sh -c "placement-manage db sync" placement
+su -s /bin/sh -c "placement-manage db sync" placement &> /dev/null
 ```
 
 ### 3.4.3 完成安装
 
 ```
 systemctl restart apache2
+```
+
+```
+systemctl enable apache2
 ```
 
 ### 3.4.4 验证配置
@@ -704,7 +719,7 @@ placement-status upgrade check
 ```
 
 ```
-apt install python3-osc-placement -y
+apt install python3-osc-placement -y &> /dev/null
 openstack --os-placement-api-version 1.2 resource class list --sort-column name
 openstack --os-placement-api-version 1.6 trait list --sort-column name
 ```
@@ -751,9 +766,12 @@ openstack endpoint create --region RegionOne \
 ### 3.5.2 安装和配置组件
 
 ```
-apt install nova-api nova-conductor nova-novncproxy nova-scheduler -y
+
+apt install nova-api nova-conductor nova-novncproxy nova-scheduler -y &> /dev/null
 cp /etc/nova/nova.conf /etc/nova/nova.conf.bak
-export controller=node1.openstack.local
+```
+
+```
 cat << EOF > /etc/nova/nova.conf
 [DEFAULT]
 my_ip = `ip add show dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
@@ -831,16 +849,16 @@ password = PLACEMENT_PASS
 [remote_debug]
 [scheduler]
 [serial_console]
-[service_user]
-send_service_user_token = true
-auth_url = http://$controller:5000/identity
-auth_strategy = keystone
-auth_type = password
-project_domain_name = Default
-project_name = service
-user_domain_name = Default
-username = nova
-password = NOVA_PASS
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
 [spice]
 [upgrade_levels]
 [vault]
@@ -857,10 +875,15 @@ server_proxyclient_address = \$my_ip
 #enable = False
 [os_region_name]
 openstack = 
-EOF	
+EOF
 ```
 
 ```
+sed -i '/\[scheduler\]/adiscover_hosts_in_cells_interval = 300' /etc/nova/nova.conf
+```
+
+```
+cat /etc/nova/nova.conf
 su -s /bin/sh -c "nova-manage api_db sync" nova
 su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
 su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
@@ -876,6 +899,22 @@ service nova-scheduler restart
 service nova-conductor restart
 service nova-novncproxy restart
 ```
+
+```
+systemctl enable nova-api
+systemctl enable nova-scheduler
+systemctl enable nova-conductor
+systemctl enable nova-novncproxy
+```
+
+手动扫描计算主机
+```
+source /opt/openstack-admin.rc
+openstack compute service list --service nova-compute
+su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
+openstack compute service list --service nova-compute
+```
+
 
 ### 3.5.4 验证配置
 
@@ -893,5 +932,1552 @@ nova-status upgrade check
 ### 3.6.1 先决条件
 
 ```
+mysql -uroot -p$mysql_root_password -e "CREATE DATABASE neutron;"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' \
+  IDENTIFIED BY 'NEUTRON_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' \
+  IDENTIFIED BY 'NEUTRON_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "show databases;"
+```
 
 ```
+source /opt/openstack-admin.rc
+openstack user create --domain default --password NEUTRON_PASS neutron
+openstack role add --project service --user neutron admin
+openstack service create --name neutron \
+  --description "OpenStack Networking" network
+export controller=node1.openstack.local
+openstack endpoint create --region RegionOne \
+  network public http://$controller:9696
+openstack endpoint create --region RegionOne \
+  network internal http://$controller:9696
+openstack endpoint create --region RegionOne \
+  network admin http://$controller:9696
+```
+### 3.6.2 配置网络选项
+
+```
+apt install neutron-server neutron-plugin-ml2 \
+  neutron-openvswitch-agent neutron-l3-agent neutron-dhcp-agent \
+  neutron-metadata-agent -y &> /dev/null
+```
+
+```
+cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak
+cat << EOF > /etc/neutron/neutron.conf
+[DEFAULT]
+core_plugin = ml2
+service_plugins = router
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+agent_down_time = 75
+[agent]
+root_helper = "sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf"
+report_interval = 30
+[cache]
+[cors]
+[database]
+connection = mysql+pymysql://neutron:NEUTRON_DBPASS@$controller/neutron
+[healthcheck]
+[ironic]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = neutron
+password = NEUTRON_PASS
+[nova]
+auth_url = http://$controller:5000
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = RegionOne
+project_name = service
+username = nova
+password = NOVA_PASS
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[placement]
+[privsep]
+[profiler]
+[quotas]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[ssl]
+EOF
+```
+
+```
+cp /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugins/ml2/ml2_conf.ini.bak
+cat << EOF > /etc/neutron/plugins/ml2/ml2_conf.ini
+[DEFAULT]
+[ml2]
+type_drivers = flat,vlan,vxlan
+tenant_network_types = vxlan
+mechanism_drivers = openvswitch,l2population
+extension_drivers = port_security
+[ml2_type_flat]
+flat_networks = provider
+[ml2_type_geneve]
+[ml2_type_gre]
+[ml2_type_vlan]
+[ml2_type_vxlan]
+vni_ranges = 1:1000
+[ovs_driver]
+[securitygroup]
+[sriov_driver]
+EOF
+```
+
+```
+cp /etc/neutron/plugins/ml2/openvswitch_agent.ini /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak
+PROVIDER_BRIDGE_NAME=ovs-br-provider
+PROVIDER_INTERFACE_NAME=ens35
+OVERLAY_INTERFACE_IP_ADDRESS=`ip add sh dev ens34 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+##OVERLAY_INTERFACE是指vxlan的endpoint接口,使用第二块网卡.
+ovs-vsctl add-br $PROVIDER_BRIDGE_NAME
+ovs-vsctl add-port $PROVIDER_BRIDGE_NAME $PROVIDER_INTERFACE_NAME
+
+cat << EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
+[DEFAULT]
+[agent]
+tunnel_types = vxlan
+l2_population = true
+[dhcp]
+[network_log]
+[ovs]
+bridge_mappings = provider:$PROVIDER_BRIDGE_NAME
+local_ip = $OVERLAY_INTERFACE_IP_ADDRESS
+[securitygroup]
+enable_security_group = true
+firewall_driver = openvswitch
+#firewall_driver = iptables_hybrid
+EOF
+
+#firewall_driver = iptables_hybrid额外配置如下内容:
+#cat << EOF > /etc/sysctl.d/99-ovs-br.conf
+#net.bridge.bridge-nf-call-iptables=1
+#net.bridge.bridge-nf-call-ip6tables=1
+#EOF
+#sysctl -p
+
+```
+
+```
+cp /etc/neutron/l3_agent.ini /etc/neutron/l3_agent.ini.bak
+cat << EOF > /etc/neutron/l3_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+[agent]
+[network_log]
+[ovs]
+EOF
+```
+
+```
+cp /etc/neutron/dhcp_agent.ini /etc/neutron/dhcp_agent.ini.bak
+cat << EOF > /etc/neutron/dhcp_agent.ini
+[DEFAULT]
+interface_driver = openvswitch
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+enable_isolated_metadata = true
+[agent]
+[ovs]
+EOF
+```
+### 3.6.3 配置元数据代理
+
+```
+cp /etc/neutron/metadata_agent.ini /etc/neutron/metadata_agent.ini.bak
+cat << EOF > /etc/neutron/metadata_agent.ini
+[DEFAULT]
+nova_metadata_host = $controller
+metadata_proxy_shared_secret = METADATA_SECRET
+[agent]
+[cache]
+EOF
+```
+
+### 3.6.4 计算服务对接网络服务
+
+```
+cat << EOF > /etc/nova/nova.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller:5672/
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+[api]
+auth_strategy = keystone
+[api_database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova_api
+[barbican]
+[barbican_service_user]
+[cache]
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[cyborg]
+[database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+[glance]
+api_servers = http://$controller:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[image_cache]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000/
+auth_url = http://$controller:5000/
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = NOVA_PASS
+[libvirt]
+[metrics]
+[mks]
+[neutron]
+auth_url = http://$controller:5000
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = NEUTRON_PASS
+service_metadata_proxy = true
+metadata_proxy_shared_secret = METADATA_SECRET
+[notifications]
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[pci]
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://$controller:5000/v3
+username = placement
+password = PLACEMENT_PASS
+[powervm]
+[privsep]
+[profiler]
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+[serial_console]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+[vmware]
+[vnc]
+enabled = true
+server_listen = \$my_ip
+server_proxyclient_address = \$my_ip
+[workarounds]
+[wsgi]
+[zvm]
+[cells]
+#enable = False
+[os_region_name]
+openstack = 
+EOF
+```
+
+### 3.6.5 完成安装
+
+```
+cat /etc/neutron/neutron.conf
+cat /etc/neutron/plugins/ml2/ml2_conf.ini
+ovs-vsctl show
+cat /etc/neutron/plugins/ml2/openvswitch_agent.ini
+cat /etc/neutron/l3_agent.ini
+cat /etc/neutron/dhcp_agent.ini
+cat /etc/neutron/metadata_agent.ini
+```
+
+```
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+```
+
+```
+service nova-api restart
+service neutron-server restart
+service neutron-openvswitch-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+service neutron-l3-agent restart
+```
+
+```
+systemctl enable nova-api
+systemctl enable neutron-server
+systemctl enable neutron-openvswitch-agent
+systemctl enable neutron-dhcp-agent
+systemctl enable neutron-metadata-agent
+systemctl enable neutron-l3-agent
+```
+
+### 3.6.6 验证配置
+
+```
+ovs-vsctl show
+service nova-api status
+service neutron-server status
+service neutron-openvswitch-agent status
+service neutron-dhcp-agent status
+service neutron-metadata-agent status
+service neutron-l3-agent status
+```
+
+```
+openstack network agent list
+```
+## 3.7 Horizon
+
+### 3.7.1 先决条件
+
+- Keystone服务部署完成
+- Python 3.8 or 3.11
+- Django 4.2
+```
+apt install conda-package-handling -y
+```
+### 3.7.2 安装和配置组件
+
+```
+apt install openstack-dashboard -y &> /dev/null
+```
+	
+```
+cp /etc/openstack-dashboard/local_settings.py /etc/openstack-dashboard/local_settings.py.bak
+cat << EOF > /etc/openstack-dashboard/local_settings.py
+import os
+from django.utils.translation import gettext_lazy as _
+from horizon.utils import secret_key
+from openstack_dashboard.settings import HORIZON_CONFIG
+DEBUG = False
+ALLOWED_HOSTS = ['*']
+LOCAL_PATH = os.path.dirname(os.path.abspath(__file__))
+SECRET_KEY = secret_key.generate_or_read_from_file('/var/lib/openstack-dashboard/secret_key')
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': 'node1.openstack.local:11211',
+    },
+}
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+OPENSTACK_HOST = "node1.openstack.local"
+#OPENSTACK_KEYSTONE_URL = "http://%s/identity/v3" % OPENSTACK_HOST
+#官网错误
+OPENSTACK_KEYSTONE_URL = "http://%s:5000" % OPENSTACK_HOST 
+OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
+OPENSTACK_API_VERSIONS = {
+    "identity": 3,
+    "image": 2,
+    "volume": 3,
+}
+OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = "Default"
+OPENSTACK_KEYSTONE_DEFAULT_ROLE = "user"
+TIME_ZONE = "UTC"
+LOGGING = {
+    'version': 1,
+    # When set to True this will disable all logging except
+    # for loggers specified in this configuration dictionary. Note that
+    # if nothing is specified here and disable_existing_loggers is True,
+    # django.db.backends will still log unless it is disabled explicitly.
+    'disable_existing_loggers': False,
+    # If apache2 mod_wsgi is used to deploy OpenStack dashboard
+    # timestamp is output by mod_wsgi. If WSGI framework you use does not
+    # output timestamp for logging, add %(asctime)s in the following
+    # format definitions.
+    'formatters': {
+        'console': {
+            'format': '%(levelname)s %(name)s %(message)s'
+        },
+        'operation': {
+            # The format of "%(message)s" is defined by
+            # OPERATION_LOG_OPTIONS['format']
+            'format': '%(message)s'
+        },
+    },
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            # Set the level to "DEBUG" for verbose output logging.
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+        'operation': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'operation',
+        },
+    },
+    'loggers': {
+        'horizon': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'horizon.operation_log': {
+            'handlers': ['operation'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'openstack_dashboard': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'novaclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'cinderclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'keystoneauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'keystoneclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'glanceclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'neutronclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'swiftclient': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'oslo_policy': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'openstack_auth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logging from django.db.backends is VERY verbose, send to null
+        # by default.
+        'django.db.backends': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'requests': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'urllib3': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'chardet.charsetprober': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'iso8601': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+        'scss': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+    },
+}
+SECURITY_GROUP_RULES = {
+    'all_tcp': {
+        'name': _('All TCP'),
+        'ip_protocol': 'tcp',
+        'from_port': '1',
+        'to_port': '65535',
+    },
+    'all_udp': {
+        'name': _('All UDP'),
+        'ip_protocol': 'udp',
+        'from_port': '1',
+        'to_port': '65535',
+    },
+    'all_icmp': {
+        'name': _('All ICMP'),
+        'ip_protocol': 'icmp',
+        'from_port': '-1',
+        'to_port': '-1',
+    },
+    'ssh': {
+        'name': 'SSH',
+        'ip_protocol': 'tcp',
+        'from_port': '22',
+        'to_port': '22',
+    },
+    'smtp': {
+        'name': 'SMTP',
+        'ip_protocol': 'tcp',
+        'from_port': '25',
+        'to_port': '25',
+    },
+    'dns': {
+        'name': 'DNS',
+        'ip_protocol': 'tcp',
+        'from_port': '53',
+        'to_port': '53',
+    },
+    'http': {
+        'name': 'HTTP',
+        'ip_protocol': 'tcp',
+        'from_port': '80',
+        'to_port': '80',
+    },
+    'pop3': {
+        'name': 'POP3',
+        'ip_protocol': 'tcp',
+        'from_port': '110',
+        'to_port': '110',
+    },
+    'imap': {
+        'name': 'IMAP',
+        'ip_protocol': 'tcp',
+        'from_port': '143',
+        'to_port': '143',
+    },
+    'ldap': {
+        'name': 'LDAP',
+        'ip_protocol': 'tcp',
+        'from_port': '389',
+        'to_port': '389',
+    },
+    'https': {
+        'name': 'HTTPS',
+        'ip_protocol': 'tcp',
+        'from_port': '443',
+        'to_port': '443',
+    },
+    'smtps': {
+        'name': 'SMTPS',
+        'ip_protocol': 'tcp',
+        'from_port': '465',
+        'to_port': '465',
+    },
+    'imaps': {
+        'name': 'IMAPS',
+        'ip_protocol': 'tcp',
+        'from_port': '993',
+        'to_port': '993',
+    },
+    'pop3s': {
+        'name': 'POP3S',
+        'ip_protocol': 'tcp',
+        'from_port': '995',
+        'to_port': '995',
+    },
+    'ms_sql': {
+        'name': 'MS SQL',
+        'ip_protocol': 'tcp',
+        'from_port': '1433',
+        'to_port': '1433',
+    },
+    'mysql': {
+        'name': 'MYSQL',
+        'ip_protocol': 'tcp',
+        'from_port': '3306',
+        'to_port': '3306',
+    },
+    'rdp': {
+        'name': 'RDP',
+        'ip_protocol': 'tcp',
+        'from_port': '3389',
+        'to_port': '3389',
+    },
+}
+DEFAULT_THEME = 'ubuntu'
+WEBROOT='/horizon/'
+ALLOWED_HOSTS = ['*']
+COMPRESS_OFFLINE = True
+EOF
+```
+
+```
+#python版本大于3.11
+#Django 大于5.0
+sed -i \
+'s/django.core.cache.backends.memcached.MemcachedCache/django.core.cache.backends.memcached.PyMemcacheCache/g' /etc/openstack-dashboard/local_settings.py
+```
+
+```
+cp /etc/apache2/conf-available/openstack-dashboard.conf /etc/apache2/conf-available/openstack-dashboard.conf.bak
+cat /etc/apache2/conf-available/openstack-dashboard.conf |grep -E 'WSGIApplicationGroup %{GLOBAL}'
+```
+
+### 3.7.3 完成安装
+
+```
+systemctl reload apache2
+systemctl restart apache2
+```
+
+### 3.7.4 验证配置
+
+```
+#配置host文件
+198.51.100.101 node1.openstack.local node1 
+198.51.100.102 node2.openstack.local node2 
+198.51.100.103 node3.openstack.local node3 
+#http://node1.openstack.local/horizon/
+##admin ADMIN_PASS
+##myuser MYUSER_PASS
+```
+
+## 3.8 Swift
+
+### 3.8.1 先决条件
+
+```
+source /opt/openstack-admin.rc
+openstack user create --domain default --password SWIFT_PASS swift
+openstack role add --project service --user swift admin
+openstack service create --name swift \
+  --description "OpenStack Object Storage" object-store
+openstack endpoint create --region RegionOne \
+  object-store public http://$controller:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  object-store internal http://$controller:8080/v1/AUTH_%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  object-store admin http://$controller:8080/v1
+```
+
+### 3.8.2 安装和配置组件
+
+```
+apt-get install swift swift-proxy python3-swiftclient \
+  python3-keystoneclient python3-keystonemiddleware \
+  memcached -y &> /dev/null
+if [ ! -e /etc/swift ];then
+	mkdir /etc/swift
+fi
+curl -o /etc/swift/proxy-server.conf https://opendev.org/openstack/swift/raw/branch/master/etc/proxy-server.conf-sample
+cp /etc/swift/proxy-server.conf /etc/swift/proxy-server.conf.bak
+```
+
+```
+cat << EOF > /etc/swift/proxy-server.conf
+[DEFAULT]
+bind_port = 8080
+user = swift
+swift_dir = /etc/swift
+[pipeline:main]
+#pipeline = catch_errors gatekeeper healthcheck proxy-logging cache listing_formats \
+#container_sync bulk tempurl ratelimit tempauth copy container-quotas account-quotas slo \
+#dlo versioned_writes symlink proxy-logging proxy-server
+pipeline = catch_errors gatekeeper healthcheck proxy-logging cache container_sync bulk \
+ratelimit authtoken keystoneauth container-quotas account-quotas slo dlo versioned_writes \
+proxy-logging proxy-server
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = True
+#[filter:tempauth]
+#use = egg:swift#tempauth
+#user_admin_admin = admin .admin .reseller_admin
+#user_admin_auditor = admin_ro .reseller_reader
+#user_test_tester = testing .admin
+#user_test_tester2 = testing2 .admin
+#user_test_tester3 = testing3
+#user_test2_tester2 = testing2 .admin
+#user_test5_tester5 = testing5 service
+[filter:keystoneauth]
+use = egg:swift#keystoneauth
+operator_roles = admin,user
+[filter:authtoken]
+paste.filter_factory = keystonemiddleware.auth_token:filter_factory
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_id = default
+user_domain_id = default
+project_name = service
+username = swift
+password = SWIFT_PASS
+delay_auth_decision = True
+[filter:s3api]
+use = egg:swift#s3api
+[filter:s3token]
+use = egg:swift#s3token
+#reseller_prefix = AUTH_
+#delay_auth_decision = False
+#auth_uri = http://keystonehost:5000/v3
+#http_timeout = 10.0
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $controller:11211
+[filter:ratelimit]
+use = egg:swift#ratelimit
+[filter:read_only]
+use = egg:swift#read_only
+[filter:domain_remap]
+use = egg:swift#domain_remap
+[filter:catch_errors]
+use = egg:swift#catch_errors
+[filter:cname_lookup]
+use = egg:swift#cname_lookup
+[filter:staticweb]
+use = egg:swift#staticweb
+#[filter:tempurl]
+#use = egg:swift#tempurl
+[filter:formpost]
+use = egg:swift#formpost
+[filter:name_check]
+use = egg:swift#name_check
+[filter:etag-quoter]
+use = egg:swift#etag_quoter
+[filter:list-endpoints]
+use = egg:swift#list_endpoints
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+[filter:bulk]
+use = egg:swift#bulk
+[filter:slo]
+use = egg:swift#slo
+[filter:dlo]
+use = egg:swift#dlo
+[filter:container-quotas]
+use = egg:swift#container_quotas
+[filter:account-quotas]
+use = egg:swift#account_quotas
+[filter:gatekeeper]
+use = egg:swift#gatekeeper
+[filter:container_sync]
+use = egg:swift#container_sync
+[filter:xprofile]
+use = egg:swift#xprofile
+[filter:versioned_writes]
+use = egg:swift#versioned_writes
+[filter:copy]
+use = egg:swift#copy
+[filter:keymaster]
+use = egg:swift#keymaster
+meta_version_to_write = 2
+encryption_root_secret = changeme
+[filter:kms_keymaster]
+use = egg:swift#kms_keymaster
+[filter:kmip_keymaster]
+use = egg:swift#kmip_keymaster
+[filter:encryption]
+use = egg:swift#encryption
+[filter:listing_formats]
+use = egg:swift#listing_formats
+[filter:symlink]
+use = egg:swift#symlink
+EOF
+```
+
+### 3.8.3 创建并分发初始环
+
+账户环
+```
+cd /etc/swift
+swift-ring-builder account.builder create 10 3 1
+
+STORAGE_NODE_MANAGEMENT_INTERFACE_IP_ADDRESS='
+198.51.100.101
+198.51.100.102
+198.51.100.103
+'
+DEVICE_NAME='
+sdc
+sdd
+'
+DEVICE_WEIGHT=100
+for i in $STORAGE_NODE_MANAGEMENT_INTERFACE_IP_ADDRESS;
+do 
+for j in $DEVICE_NAME;
+		do 
+swift-ring-builder account.builder \
+  add --region 1 --zone 1 --ip $i --port 6202 \
+  --device $j --weight $DEVICE_WEIGHT
+done
+done
+```
+
+```
+swift-ring-builder account.builder
+swift-ring-builder account.builder rebalance
+```
+容器环
+```
+cd /etc/swift
+swift-ring-builder container.builder create 10 3 1
+
+for i in $STORAGE_NODE_MANAGEMENT_INTERFACE_IP_ADDRESS;
+	do for j in $DEVICE_NAME;
+		do 
+swift-ring-builder container.builder \
+  add --region 1 --zone 1 --ip $i --port 6201 \
+  --device $j --weight $DEVICE_WEIGHT
+  done
+done
+```
+
+```
+swift-ring-builder container.builder
+swift-ring-builder container.builder rebalance
+```
+对象环
+```
+cd /etc/swift
+swift-ring-builder object.builder create 10 3 1
+
+for i in $STORAGE_NODE_MANAGEMENT_INTERFACE_IP_ADDRESS;
+	do for j in $DEVICE_NAME;
+		do 
+swift-ring-builder object.builder \
+  add --region 1 --zone 1 --ip $i --port 6200 \
+  --device $j --weight $DEVICE_WEIGHT
+  done
+done
+```
+
+```
+swift-ring-builder object.builder
+swift-ring-builder object.builder rebalance
+```
+分发环配置文件
+```
+ringfiles='
+account.ring.gz
+container.ring.gz
+object.ring.gz
+'
+for f in $ringfiles;
+do
+  ansible storages -m synchronize -a "src=/etc/swift/$f dest=/etc/swift/$f"
+done
+ansible storages -m shell -a "ls -l /etc/swift/"
+```
+
+### 3.8.4 完成安装
+
+```
+curl -o /etc/swift/swift.conf \
+  https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
+```
+
+```
+HASH_PATH_SUFFIX=HASH_PATH_SUFFIX_
+HASH_PATH_PREFIX=HASH_PATH_PREFIX_
+cat << EOF > /etc/swift/swift.conf
+[swift-hash]
+swift_hash_path_suffix = $HASH_PATH_SUFFIX
+swift_hash_path_prefix = $HASH_PATH_PREFIX
+[storage-policy:0]
+name = Policy-0
+default = yes
+aliases = yellow, orange
+[swift-constraints]
+EOF
+```
+
+```
+ringfiles='
+swift.conf
+'
+for f in $ringfiles;
+do
+  ansible storages -m synchronize -a "src=/etc/swift/$f dest=/etc/swift/$f"
+done
+
+chown -R root:swift /etc/swift
+service memcached restart
+service swift-proxy restart
+```
+
+```
+ansible storages -m shell -a "chown -R root:swift /etc/swift"
+ansible storages -m shell -a "swift-init all start"
+```
+
+### 3.8.5 验证配置
+
+```
+
+ansible storages -m shell -a "chcon -R system_u:object_r:swift_data_t:s0 /srv/node"
+source /opt/openstack-admin.rc
+swift stat
+openstack container create container1
+openstack container list
+```
+
+```
+echo 'This is a testing file!' > testfile
+openstack object create container1 testfile
+openstack object list container1
+rm -rf testfile
+openstack object save container1 testfile
+cat testfile
+rm -rf testfile
+```
+
+## 3.9 Cinder
+
+### 3.9.1 先决条件
+
+```
+mysql -uroot -p$mysql_root_password -e "CREATE DATABASE cinder;"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' \
+  IDENTIFIED BY 'CINDER_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' \
+  IDENTIFIED BY 'CINDER_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "show databases;"
+```
+
+```
+source /opt/openstack-admin.rc
+openstack user create --domain default --password CINDER_PASS cinder
+openstack role add --project service --user cinder admin
+openstack service create --name cinderv3 \
+  --description "OpenStack Block Storage" volumev3
+openstack endpoint create --region RegionOne \
+  volumev3 public http://$controller:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 internal http://$controller:8776/v3/%\(project_id\)s
+openstack endpoint create --region RegionOne \
+  volumev3 admin http://$controller:8776/v3/%\(project_id\)s
+```
+### 3.9.2 安装和配置组件
+
+```
+apt install cinder-api cinder-scheduler -y &> /dev/null
+cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
+```
+
+```
+cat << EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = lioadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+auth_strategy = keystone
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+enabled_backends = lvm
+[database]
+connection = mysql+pymysql://cinder:CINDER_DBPASS@$controller/cinder
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = cinder
+password = CINDER_PASS
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+EOF
+```
+
+```
+su -s /bin/sh -c "cinder-manage db sync" cinder
+```
+
+### 3.9.3 计算服务对接存储服务
+
+```
+sed -i '/\[cinder\]/aos_region_name = RegionOne' /etc/nova/nova.conf
+```
+
+### 3.9.4 完成安装
+
+```
+service nova-api restart
+service cinder-scheduler restart
+service apache2 restart
+```
+
+```
+systemctl enable cinder-scheduler
+```
+
+### 3.9.5 验证配置
+
+```
+openstack volume service list
+```
+
+### 3.9.6 Cinder Backup
+
+```
+apt install cinder-backup -y
+cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
+```
+
+```
+MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+SWIFT_URL=openstack catalog show swift |grep public |awk '{print $(NF-1)}'
+cat << EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+my_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+glance_api_servers = http://$controller:9292
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = lioadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+auth_strategy = keystone
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+enabled_backends = lvm
+backup_driver = cinder.backup.drivers.swift.SwiftBackupDriver
+backup_swift_url = $SWIFT_URL
+[database]
+#connection = sqlite:////var/lib/cinder/cinder.sqlite
+connection = mysql+pymysql://cinder:CINDER_DBPASS@$controller/cinder
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = cinder
+password = CINDER_PASS
+[lvm]
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = cinder-volumes
+target_protocol = iscsi
+target_helper = tgtadm
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+EOF
+```
+
+```
+service cinder-backup restart
+```
+
+```
+source /opt/openstack-admin.rc
+openstack volume service list
+```
+## 3.10 Heat
+
+编排服务
+### 3.10.1 先决条件
+
+```
+mysql -uroot -p$mysql_root_password -e "CREATE DATABASE heat;"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON heat.* TO 'heat'@'localhost' \
+  IDENTIFIED BY 'HEAT_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON heat.* TO 'heat'@'%' \
+  IDENTIFIED BY 'HEAT_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "show databases;"
+```
+
+```
+source /opt/openstack-admin.rc
+openstack user create --domain default --password HEAT_PASS heat
+openstack role add --project service --user heat admin
+openstack service create --name heat \
+  --description "Orchestration" orchestration
+openstack service create --name heat-cfn \
+  --description "Orchestration"  cloudformation
+openstack endpoint create --region RegionOne \
+  orchestration public http://$controller:8004/v1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne \
+  orchestration internal http://$controller:8004/v1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne \
+  orchestration admin http://$controller:8004/v1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne \
+  cloudformation public http://$controller:8000/v1
+openstack endpoint create --region RegionOne \
+  cloudformation internal http://$controller:8000/v1
+openstack endpoint create --region RegionOne \
+  cloudformation admin http://$controller:8000/v1
+openstack domain create --description "Stack projects and users" heat
+openstack user create --domain heat --password HEAT_DOMAIN_ADMIN_PASS heat_domain_admin
+openstack role add --domain heat --user-domain heat --user heat_domain_admin admin
+openstack role create heat_stack_owner
+openstack role add --project demo --user demo heat_stack_owner
+openstack role create heat_stack_user
+```
+
+### 3.10.2 安装和配置组件
+
+```
+apt-get install heat-api heat-api-cfn heat-engine -y
+cp /etc/heat/heat.conf /etc/heat/heat.conf.bak
+```
+
+```
+cat << EOF > /etc/heat/heat.conf
+
+EOF
+```
+
+### 3.10.3 完成安装
+
+```
+service heat-api restart
+service heat-api-cfn restart
+service heat-engine restart
+```
+
+```
+ssystemctl enable heat-api
+ssystemctl enable heat-api-cfn
+ssystemctl enable heat-engine
+```
+
+### 3.10.4 验证配置
+
+```
+source /opt/openstack-admin.rc
+openstack orchestration service list
+```
+
+## 3.11 ceilometer
+
+### 3.11.1 先决条件
+
+```
+mysql -uroot -p$mysql_root_password -e "CREATE DATABASE gnocchi;"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON gnocchi.* TO 'gnocchi'@'localhost' \
+  IDENTIFIED BY 'GNOCCHI_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "GRANT ALL PRIVILEGES ON gnocchi.* TO 'gnocchi'@'%' \
+  IDENTIFIED BY 'GNOCCHI_DBPASS';"
+mysql -uroot -p$mysql_root_password -e "show databases;"
+```
+
+```
+source /opt/openstack-admin.rc
+openstack user create --domain default --password CEILMETER_PASS ceilometer
+openstack role add --project service --user ceilometer admin
+openstack service create --name ceilometer \
+  --description "Telemetry" metering
+openstack user create --domain default --password GNOCCHI_PASS gnocchi
+openstack service create --name gnocchi \
+  --description "Metric Service" metric
+openstack role add --project service --user gnocchi admin
+openstack endpoint create --region RegionOne \
+  metric public http://$controller:8041
+openstack endpoint create --region RegionOne \
+  metric internal http://$controller:8041
+openstack endpoint create --region RegionOne \
+  metric admin http://$controller:8041
+```
+
+
+安装和配置Gnocchi
+```
+apt-get install gnocchi-api gnocchi-metricd python-gnocchiclient -y
+apt-get install uwsgi-plugin-python3 uwsgi -y
+cp /etc/gnocchi/gnocchi.conf /etc/gnocchi/gnocchi.conf.bak
+```
+
+```
+cat << EOF > /etc/gnocchi/gnocchi.conf
+
+EOF
+```
+
+```
+gnocchi-upgrade
+service gnocchi-api restart
+service gnocchi-metricd restart
+systemctl enable gnocchi-api gnocchi-metricd
+```
+### 3.11.2 安装和配置组件
+
+```
+apt-get install ceilometer-agent-notification \
+  ceilometer-agent-central -y
+cp /etc/ceilometer/pipeline.yaml /etc/ceilometer/pipeline.yaml.bak
+```
+
+```
+ceilometer-upgrade
+```
+
+### 3.11.3 完成安装
+
+```
+service ceilometer-agent-central restart
+service ceilometer-agent-notification restart
+```
+
+```
+systemctl enable ceilometer-agent-central \
+ceilometer-agent-notification
+```
+
+### 3.11.4 验证配置
+
+```
+
+gnocchi resource list  --type image
+IMAGE_ID=$(glance image-list | grep 'cirros' | awk '{ print $2 }')
+glance image-download $IMAGE_ID > /tmp/cirros.img
+
+gnocchi measures show 839afa02-1668-4922-a33e-6b6ea7780715
+rm /tmp/cirros.img
+```
+
+## 3.12 trove(DataBase)
+
+## 3.13 Octavia(LB)
+## 3.14 zun(containers)
+## 3.15 designate(DNS)
+
+# 4.计算节点
+
+## 4.1 安装和配置组件
+
+```
+apt install nova-compute -y &> /dev/null
+cp /etc/nova/nova.conf /etc/nova/nova.conf.bak
+```
+
+单纯计算节点
+```
+cat << EOF > /etc/nova/nova.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+[api]
+auth_strategy = keystone
+[api_database]
+#connection = sqlite:////var/lib/nova/nova_api.sqlite
+[barbican]
+[barbican_service_user]
+[cache]
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[cyborg]
+[database]
+#connection = sqlite:////var/lib/nova/nova.sqlite
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+[glance]
+api_servers = http://$controller:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[image_cache]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000/
+auth_url = http://$controller:5000/
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = NOVA_PASS
+[libvirt]
+[metrics]
+[mks]
+[neutron]
+[notifications]
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[pci]
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://$controller:5000/v3
+username = placement
+password = PLACEMENT_PASS
+[powervm]
+[privsep]
+[profiler]
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+[serial_console]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+[vmware]
+[vnc]
+enabled = true
+server_listen = 0.0.0.0
+server_proxyclient_address = \$my_ip
+novncproxy_base_url = http://$controller:6080/vnc_auto.html
+[workarounds]
+[wsgi]
+[zvm]
+[cells]
+enable = False
+[os_region_name]
+openstack = 
+EOF
+```
+
+控制和计算节点部署在一起
+```
+cat << EOF > /etc/nova/nova.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+[api]
+auth_strategy = keystone
+[api_database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova_api
+[barbican]
+[barbican_service_user]
+[cache]
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[cyborg]
+[database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+[glance]
+api_servers = http://$controller:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[image_cache]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000/
+auth_url = http://$controller:5000/
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = NOVA_PASS
+[libvirt]
+[metrics]
+[mks]
+[neutron]
+[notifications]
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[pci]
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://$controller:5000/v3
+username = placement
+password = PLACEMENT_PASS
+[powervm]
+[privsep]
+[profiler]
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+[serial_console]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+[vmware]
+[vnc]
+enabled = true
+server_listen = 0.0.0.0
+server_proxyclient_address = \$my_ip
+novncproxy_base_url = http://$controller:6080/vnc_auto.html
+[workarounds]
+[wsgi]
+[zvm]
+[cells]
+#enable = False
+[os_region_name]
+openstack = 
+EOF
+```
+## 4.2 完成安装
+
+```
+cat /etc/nova/nova.conf
+
+if [[ `egrep -c '(vmx|svm)' /proc/cpuinfo` -eq 0 ]];then
+ sed -i 's/virt_type=.*/virt_type=qemu/g' /etc/nova/nova-compute.conf
+fi
+
+service nova-compute restart
+```
+
+## 4.3 验证配置
+
+在控制节点上
+```
+source /opt/openstack-admin.rc
+
+su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
+openstack compute service list --service nova-compute
+```
+# 5. 存储节点
+
+## 5.1 先决条件
+
+## 5.2 
+
+# 6.使用kolla-ansible部署
+
+
