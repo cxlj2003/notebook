@@ -15,6 +15,8 @@
 >1.每个节点配置3块网卡,4块磁盘
 >2.网卡1:管理网;网卡2:VTEP网卡;网卡3:Provider
 >3.操作系统安装时使用lvm逻辑卷
+>4.第二块网卡用于Cinder LVM
+>5.第三和第四块用于Swift对象存储
 
 
 # 2.环境初始化
@@ -960,10 +962,10 @@ openstack endpoint create --region RegionOne \
 apt install neutron-server neutron-plugin-ml2 \
   neutron-openvswitch-agent neutron-l3-agent neutron-dhcp-agent \
   neutron-metadata-agent -y &> /dev/null
+cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak
 ```
 
 ```
-cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak
 cat << EOF > /etc/neutron/neutron.conf
 [DEFAULT]
 core_plugin = ml2
@@ -1827,12 +1829,13 @@ swift-ring-builder object.builder rebalance
 ```
 分发环配置文件
 ```
-ringfiles='
+ansible 'storages!admin' -m shell -a 'mkdir /etc/swift"'
+files='
 account.ring.gz
 container.ring.gz
 object.ring.gz
 '
-for f in $ringfiles;
+for f in $files;
 do
   ansible storages -m synchronize -a "src=/etc/swift/$f dest=/etc/swift/$f"
 done
@@ -1844,6 +1847,7 @@ ansible storages -m shell -a "ls -l /etc/swift/"
 ```
 curl -o /etc/swift/swift.conf \
   https://opendev.org/openstack/swift/raw/branch/master/etc/swift.conf-sample
+cp /etc/swift/swift.conf /etc/swift/swift.conf.bak
 ```
 
 ```
@@ -1862,10 +1866,11 @@ EOF
 ```
 
 ```
-ringfiles='
+cat /etc/swift/swift.conf
+files='
 swift.conf
 '
-for f in $ringfiles;
+for f in $files;
 do
   ansible storages -m synchronize -a "src=/etc/swift/$f dest=/etc/swift/$f"
 done
@@ -1875,12 +1880,14 @@ service memcached restart
 service swift-proxy restart
 ```
 
+完成[[Openstack部署#5.1 对象存储]]的配置后执行
+### 3.8.5 验证配置
+
 ```
 ansible storages -m shell -a "chown -R root:swift /etc/swift"
 ansible storages -m shell -a "swift-init all start"
+ansible storages -m shell -a "swift-init all restart"
 ```
-
-### 3.8.5 验证配置
 
 ```
 
@@ -1892,6 +1899,7 @@ openstack container list
 ```
 
 ```
+cd 
 echo 'This is a testing file!' > testfile
 openstack object create container1 testfile
 openstack object list container1
@@ -1990,72 +1998,7 @@ service apache2 restart
 systemctl enable cinder-scheduler
 ```
 
-### 3.9.5 验证配置
-
-```
-openstack volume service list
-```
-
-### 3.9.6 Cinder Backup
-
-```
-apt install cinder-backup -y
-cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
-```
-
-```
-MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
-SWIFT_URL=openstack catalog show swift |grep public |awk '{print $(NF-1)}'
-cat << EOF > /etc/cinder/cinder.conf
-[DEFAULT]
-transport_url = rabbit://openstack:RABBIT_PASS@$controller
-auth_strategy = keystone
-my_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
-glance_api_servers = http://$controller:9292
-rootwrap_config = /etc/cinder/rootwrap.conf
-api_paste_confg = /etc/cinder/api-paste.ini
-iscsi_helper = lioadm
-volume_name_template = volume-%s
-volume_group = cinder-volumes
-verbose = True
-auth_strategy = keystone
-state_path = /var/lib/cinder
-lock_path = /var/lock/cinder
-volumes_dir = /var/lib/cinder/volumes
-enabled_backends = lvm
-backup_driver = cinder.backup.drivers.swift.SwiftBackupDriver
-backup_swift_url = $SWIFT_URL
-[database]
-#connection = sqlite:////var/lib/cinder/cinder.sqlite
-connection = mysql+pymysql://cinder:CINDER_DBPASS@$controller/cinder
-[keystone_authtoken]
-www_authenticate_uri = http://$controller:5000
-auth_url = http://$controller:5000
-memcached_servers = $controller:11211
-auth_type = password
-project_domain_name = default
-user_domain_name = default
-project_name = service
-username = cinder
-password = CINDER_PASS
-[lvm]
-volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
-volume_group = cinder-volumes
-target_protocol = iscsi
-target_helper = tgtadm
-[oslo_concurrency]
-lock_path = /var/lib/cinder/tmp
-EOF
-```
-
-```
-service cinder-backup restart
-```
-
-```
-source /opt/openstack-admin.rc
-openstack volume service list
-```
+完成[[Openstack部署#5.2 块存储]]
 ## 3.10 Heat
 
 编排服务
@@ -2227,7 +2170,8 @@ rm /tmp/cirros.img
 
 # 4.计算节点
 
-## 4.1 安装和配置组件
+## 4.1 Nova
+### 4.1.1 安装和配置组件
 
 ```
 apt install nova-compute -y &> /dev/null
@@ -2451,7 +2395,7 @@ novncproxy_base_url = http://$controller:6080/vnc_auto.html
 openstack = 
 EOF
 ```
-## 4.2 完成安装
+### 4.1.2 完成安装
 
 ```
 cat /etc/nova/nova.conf
@@ -2459,11 +2403,11 @@ cat /etc/nova/nova.conf
 if [[ `egrep -c '(vmx|svm)' /proc/cpuinfo` -eq 0 ]];then
  sed -i 's/virt_type=.*/virt_type=qemu/g' /etc/nova/nova-compute.conf
 fi
-
+cat /etc/nova/nova.conf |grep virt_type
 service nova-compute restart
 ```
 
-## 4.3 验证配置
+### 4.1.3 验证配置
 
 在控制节点上
 ```
@@ -2472,12 +2416,738 @@ source /opt/openstack-admin.rc
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
 openstack compute service list --service nova-compute
 ```
+
+## 4.2 Netron
+### 4.2.1 安装和配置组件
+
+```
+apt install neutron-openvswitch-agent -y
+cp /etc/neutron/neutron.conf /etc/neutron/neutron.conf.bak
+```
+
+纯计算节点配置如下,控制节点和计算节点在一起,无需修改配置
+```
+cat << EOF > /etc/neutron/neutron.conf
+[DEFAULT]
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+[agent]
+root_helper = "sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf"
+report_interval = 30
+[cache]
+[cors]
+[database]
+[healthcheck]
+[ironic]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = neutron
+password = NEUTRON_PASS
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[placement]
+[privsep]
+[profiler]
+[quotas]
+[ssl]
+EOF
+```
+### 4.2.2 配置网络选项
+
+纯计算节点配置如下,控制节点和计算节点在一起,无需修改配置
+```
+cp /etc/neutron/plugins/ml2/openvswitch_agent.ini /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak
+PROVIDER_BRIDGE_NAME=ovs-br-provider
+PROVIDER_INTERFACE_NAME=ens35
+OVERLAY_INTERFACE_IP_ADDRESS=`ip add sh dev ens34 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+##OVERLAY_INTERFACE是指vxlan的endpoint接口,使用第二块网卡.
+ovs-vsctl add-br $PROVIDER_BRIDGE_NAME
+ovs-vsctl add-port $PROVIDER_BRIDGE_NAME $PROVIDER_INTERFACE_NAME
+cat << EOF > /etc/neutron/plugins/ml2/openvswitch_agent.ini
+[DEFAULT]
+[agent]
+tunnel_types = vxlan
+l2_population = true
+[dhcp]
+[network_log]
+[ovs]
+bridge_mappings = provider:$PROVIDER_BRIDGE_NAME
+local_ip = $OVERLAY_INTERFACE_IP_ADDRESS
+[securitygroup]
+enable_security_group = true
+firewall_driver = openvswitch
+#firewall_driver = iptables_hybrid
+EOF
+
+#firewall_driver = iptables_hybrid额外配置如下内容:
+#cat << EOF > /etc/sysctl.d/99-ovs-br.conf
+#net.bridge.bridge-nf-call-iptables=1
+#net.bridge.bridge-nf-call-ip6tables=1
+#EOF
+#sysctl -p
+```
+
+### 4.2.3 计算服务对接网络服务
+
+纯计算节点配置如下:
+```
+cat << EOF > /etc/nova/nova.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller:5672/
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+[api]
+auth_strategy = keystone
+[api_database]
+#connection = sqlite:////var/lib/nova/nova_api.sqlite
+[barbican]
+[barbican_service_user]
+[cache]
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[cyborg]
+[database]
+#connection = sqlite:////var/lib/nova/nova.sqlite
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+[glance]
+api_servers = http://$controller:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[image_cache]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000/
+auth_url = http://$controller:5000/
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = NOVA_PASS
+[libvirt]
+[metrics]
+[mks]
+[neutron]
+auth_url = http://$controller:5000
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = NEUTRON_PASS
+[notifications]
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[pci]
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://$controller:5000/v3
+username = placement
+password = PLACEMENT_PASS
+[powervm]
+[privsep]
+[profiler]
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+[serial_console]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+[vmware]
+[vnc]
+enabled = true
+server_listen = 0.0.0.0
+server_proxyclient_address = \$my_ip
+novncproxy_base_url = http://$controller:6080/vnc_auto.html
+[workarounds]
+[wsgi]
+[zvm]
+[cells]
+enable = False
+[os_region_name]
+openstack = 
+EOF
+```
+
+计算节点和控制节点在一起
+```
+cat << EOF > /etc/nova/nova.conf
+[DEFAULT]
+my_ip = `ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+transport_url = rabbit://openstack:RABBIT_PASS@$controller:5672/
+log_dir = /var/log/nova
+lock_path = /var/lock/nova
+state_path = /var/lib/nova
+[api]
+auth_strategy = keystone
+[api_database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova_api
+[barbican]
+[barbican_service_user]
+[cache]
+[cinder]
+[compute]
+[conductor]
+[console]
+[consoleauth]
+[cors]
+[cyborg]
+[database]
+connection = mysql+pymysql://nova:NOVA_DBPASS@$controller/nova
+[devices]
+[ephemeral_storage_encryption]
+[filter_scheduler]
+[glance]
+api_servers = http://$controller:9292
+[guestfs]
+[healthcheck]
+[hyperv]
+[image_cache]
+[ironic]
+[key_manager]
+[keystone]
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000/
+auth_url = http://$controller:5000/
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = nova
+password = NOVA_PASS
+[libvirt]
+[metrics]
+[mks]
+[neutron]
+auth_url = http://$controller:5000
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = RegionOne
+project_name = service
+username = neutron
+password = NEUTRON_PASS
+service_metadata_proxy = true
+metadata_proxy_shared_secret = METADATA_SECRET
+[notifications]
+[oslo_concurrency]
+lock_path = /var/lib/nova/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[pci]
+[placement]
+region_name = RegionOne
+project_domain_name = Default
+project_name = service
+auth_type = password
+user_domain_name = Default
+auth_url = http://$controller:5000/v3
+username = placement
+password = PLACEMENT_PASS
+[powervm]
+[privsep]
+[profiler]
+[quota]
+[rdp]
+[remote_debug]
+[scheduler]
+[serial_console]
+#[service_user]
+#send_service_user_token = true
+#auth_url = http://$controller:5000/identity
+#auth_strategy = keystone
+#auth_type = password
+#project_domain_name = Default
+#project_name = service
+#user_domain_name = Default
+#username = nova
+#password = NOVA_PASS
+[spice]
+[upgrade_levels]
+[vault]
+[vendordata_dynamic_auth]
+[vmware]
+[vnc]
+enabled = true
+server_listen = 0.0.0.0
+server_proxyclient_address = \$my_ip
+novncproxy_base_url = http://$controller:6080/vnc_auto.html
+[workarounds]
+[wsgi]
+[zvm]
+[cells]
+enable = False
+[os_region_name]
+openstack = 
+EOF
+```
+
+### 4.2.4 完成安装
+
+```
+cat /etc/neutron/neutron.conf
+cat /etc/neutron/plugins/ml2/openvswitch_agent.ini
+cat /etc/nova/nova.conf
+ovs-vsctl show
+```
+
+```
+service nova-compute restart
+service neutron-openvswitch-agent restart
+```
+
+### 4.2.5 验证配置
+
+```
+source /opt/openstack-admin.rc
+openstack network agent list
+```
 # 5. 存储节点
 
-## 5.1 先决条件
+## 5.1 Swift
+### 5.1.1 先决条件
 
-## 5.2 
+```
+apt-get install xfsprogs rsync -y
+mkfs.xfs /dev/sdc
+mkfs.xfs /dev/sdd
+mkdir -p /srv/node/sdc
+mkdir -p /srv/node/sdd
+cat << EOF >> /etc/fstab
+UUID="`blkid /dev/sdc |awk -F \" '{print $2}'`" /srv/node/sdc xfs noatime 0 2
+UUID="`blkid /dev/sdd |awk -F \" '{print $2}'`" /srv/node/sdd xfs noatime 0 2
+EOF
+systemctl daemon-reload
+mount /srv/node/sdc
+mount /srv/node/sdd
+#cp /etc/rsyncd.conf /etc/rsyncd.conf.bak
+```
 
-# 6.使用kolla-ansible部署
+```
+MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+
+cat << EOF > /etc/rsyncd.conf
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+address = $MANAGEMENT_INTERFACE_IP_ADDRESS
+
+[account]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/account.lock
+
+[container]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/container.lock
+
+[object]
+max connections = 2
+path = /srv/node/
+read only = False
+lock file = /var/lock/object.lock
+EOF
+```
+
+```
+service rsync start
+systemctl enable rsync
+```
+
+```
+df -hT |grep /srv/node/
+```
+### 5.1.2 安装和配置组件
+
+```
+apt-get install swift swift-account swift-container swift-object -y &> /dev/null
+if [ ! -e /etc/swift ];then
+	mkdir /etc/swift
+fi
+curl -o /etc/swift/account-server.conf.org https://opendev.org/openstack/swift/raw/branch/master/etc/account-server.conf-sample
+curl -o /etc/swift/container-server.conf.org https://opendev.org/openstack/swift/raw/branch/master/etc/container-server.conf-sample
+curl -o /etc/swift/object-server.conf.org https://opendev.org/openstack/swift/raw/branch/master/etc/object-server.conf-sample
+curl -o /etc/swift/internal-client.conf.org https://opendev.org/openstack/swift/raw/branch/master/etc/internal-client.conf-sample
+curl -o /etc/swift/container-reconciler.conf https://opendev.org/openstack/swift/raw/branch/master/etc/container-reconciler.conf-sample
+```
+
+```
+MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+cat << EOF > /etc/swift/account-server.conf
+[DEFAULT]
+bind_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+bind_port = 6202
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+#pipeline = healthcheck recon backend_ratelimit account-server
+pipeline = healthcheck recon account-server
+[app:account-server]
+use = egg:swift#account
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[account-replicator]
+[account-auditor]
+[account-reaper]
+[filter:xprofile]
+use = egg:swift#xprofile
+EOF
+```
+
+```
+cat << EOF > /etc/swift/container-server.conf
+[DEFAULT]
+bind_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+bind_port = 6201
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+#pipeline = healthcheck recon backend_ratelimit container-server
+pipeline = healthcheck recon container-server
+[app:container-server]
+use = egg:swift#container
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[container-replicator]
+[container-updater]
+[container-auditor]
+[container-sync]
+[filter:xprofile]
+use = egg:swift#xprofile
+[container-sharder]
+EOF
+```
+
+```
+cat << EOF > /etc/swift/object-server.conf
+[DEFAULT]
+bind_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+bind_port = 6200
+user = swift
+swift_dir = /etc/swift
+devices = /srv/node
+mount_check = True
+[pipeline:main]
+#pipeline = healthcheck recon backend_ratelimit object-server
+pipeline = healthcheck recon object-server
+[app:object-server]
+use = egg:swift#object
+[filter:healthcheck]
+use = egg:swift#healthcheck
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+recon_lock_path = /var/lock
+[filter:backend_ratelimit]
+use = egg:swift#backend_ratelimit
+[object-replicator]
+[object-reconstructor]
+[object-updater]
+[object-auditor]
+[object-expirer]
+[filter:xprofile]
+use = egg:swift#xprofile
+[object-relinker]
+EOF
+```
+
+```
+##internal-client
+##官方文档没有此配置
+##无此配置swift-init all start报错
+cat << EOF > /etc/swift/internal-client.conf
+[DEFAULT]
+[pipeline:main]
+pipeline = catch_errors proxy-logging cache symlink proxy-server
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = true
+[filter:symlink]
+use = egg:swift#symlink
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $controller:11211
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+[filter:catch_errors]
+use = egg:swift#catch_errors
+EOF
+```
+	
+```
+##官方文档没有此配置
+##无此配置swift-init all start报错
+cat << EOF > /etc/swift/container-reconciler.conf
+[DEFAULT]
+[container-reconciler]
+[pipeline:main]
+pipeline = catch_errors proxy-logging cache proxy-server
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = true
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $controller:11211
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+[filter:catch_errors]
+use = egg:swift#catch_errors
+EOF
+```
+
+### 5.1.3 完成安装
+
+```
+chown -R swift:swift /srv/node
+mkdir -p /var/cache/swift
+chown -R swift:swift /srv/node
+chown -R root:swift /var/cache/swift
+chmod -R 775 /var/cache/swift
+```
+
+### 5.1.4 验证配置
+
+返回控制节点验证配置[[Openstack部署#3.8.5 验证配置]]]
+
+## 5.2 Cinder
+
+### 5.2.1 先决条件
+
+```
+apt install lvm2 thin-provisioning-tools -y &> /dev/null
+pvcreate /dev/sdb
+vgcreate cinder-volumes /dev/sdb
+cp /etc/lvm/lvm.conf /etc/lvm/lvm.conf.bak
+```
+
+```
+##在devices部分，添加一个过滤器，只接受/dev/sdb设备，拒绝其他所有设备：
+##存储节点在操作系统磁盘上使用了 LVM，您还必需添加相关的设备到过滤器中。例如，如果 /dev/sda 设备包含操作系统：
+##filter = [ "a/sda/", "a/sdb/", "r/.*/" ]
+##计算节点在操作系统磁盘上使用了 LVM，您也必需修改这些节点上 /etc/lvm/lvm.conf 文件中的过滤器，将操作系统磁盘包含到过滤器中。
+##例如，如果/dev/sda设备包含操作系统：
+##filter = [ "a/sda/", "r/.*/" ]
+```
+
+```
+
+sed -i '/devices {/afilter = \[ "a/sda/", "a/sdb/", "r/.*/" \]' /etc/lvm/lvm.conf
+cat /etc/lvm/lvm.conf |grep 'filter ='
+```
+
+### 5.2.2 安装和配置组件
+
+```
+apt install cinder-volume tgt -y &> /dev/null
+cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
+```
+
+```
+
+MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+cat << EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+my_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+glance_api_servers = http://$controller:9292
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = lioadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+auth_strategy = keystone
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+enabled_backends = lvm
+[database]
+#connection = sqlite:////var/lib/cinder/cinder.sqlite
+connection = mysql+pymysql://cinder:CINDER_DBPASS@$controller/cinder
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = cinder
+password = CINDER_PASS
+[lvm]
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = cinder-volumes
+target_protocol = iscsi
+target_helper = tgtadm
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+EOF
+```
+
+```
+echo 'include /var/lib/cinder/volumes/*' > /etc/tgt/conf.d/cinder.conf
+```
+
+### 5.2.3 完成安装
+
+```
+service tgt restart
+service cinder-volume restart
+```
+
+```
+systemctl enable tgt cinder-volume
+```
+### 5.2.4  验证配置
+
+```
+source /opt/openstack-admin.rc
+openstack volume service list
+```
+### 5.2.5 Cinder Backup
+
+```
+apt install cinder-backup -y &> /dev/null
+cp /etc/cinder/cinder.conf /etc/cinder/cinder.conf.bak
+```
+
+```
+openstack catalog show swift |grep public |awk '{print $(NF-1)}'
+```
+
+```
+MANAGEMENT_INTERFACE_IP_ADDRESS=`ip add sh dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+SWIFT_URL=http://node1.openstack.local:8080/v1/AUTH_85666f61fcde47cbbd2c3758386c4374
+cat << EOF > /etc/cinder/cinder.conf
+[DEFAULT]
+transport_url = rabbit://openstack:RABBIT_PASS@$controller
+auth_strategy = keystone
+my_ip = $MANAGEMENT_INTERFACE_IP_ADDRESS
+glance_api_servers = http://$controller:9292
+rootwrap_config = /etc/cinder/rootwrap.conf
+api_paste_confg = /etc/cinder/api-paste.ini
+iscsi_helper = lioadm
+volume_name_template = volume-%s
+volume_group = cinder-volumes
+verbose = True
+auth_strategy = keystone
+state_path = /var/lib/cinder
+lock_path = /var/lock/cinder
+volumes_dir = /var/lib/cinder/volumes
+enabled_backends = lvm
+backup_driver = cinder.backup.drivers.swift.SwiftBackupDriver
+backup_swift_url = $SWIFT_URL
+[database]
+#connection = sqlite:////var/lib/cinder/cinder.sqlite
+connection = mysql+pymysql://cinder:CINDER_DBPASS@$controller/cinder
+[keystone_authtoken]
+www_authenticate_uri = http://$controller:5000
+auth_url = http://$controller:5000
+memcached_servers = $controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = cinder
+password = CINDER_PASS
+[lvm]
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = cinder-volumes
+target_protocol = iscsi
+target_helper = tgtadm
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+EOF
+```
+
+```
+service cinder-backup restart
+systemctl enable cinder-backup
+```
+
+```
+source /opt/openstack-admin.rc
+openstack volume service list
+```
+
+# 6. 启动实例
+## 6.1
+
+# 7. 使用kolla-ansible部署
 
 
