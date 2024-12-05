@@ -3291,6 +3291,6 @@ openstack volume list
 ```
 lsblk
 ```
-# 7. 使用kolla-ansible部署
+# 7. 
 
 
