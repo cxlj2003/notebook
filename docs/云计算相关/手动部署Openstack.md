@@ -218,11 +218,7 @@ ansible all -m ping
 ```
 cat << 'EEOOFF' > /opt/baseconfig.sh
 #1.playbook
-cat << 'EOF' > /opt/playbook
-198.51.100.101 node1.openstack.local node1 1qaz#EDC
-198.51.100.102 node2.openstack.local node2 1qaz#EDC
-198.51.100.103 node3.openstack.local node3 1qaz#EDC
-EOF
+#ansible sync
 #2.apt源
 echo export DEBIAN_FRONTEND=noninteractive > /etc/profile.d/apt.sh
 source /etc/profile
@@ -290,7 +286,15 @@ cat << EOF > /etc/security/limits.conf
 EOF
 ulimit -a &> /dev/null
 EEOOFF
-ansible 'all:!admin' -m synchronize -a "src=/opt/baseconfig.sh dest=/opt/baseconfig.sh"
+
+files='
+playbook
+baseconfig.sh
+'
+for f in $files;do
+ansible 'all:!admin' -m synchronize -a "src=/opt/$f dest=/opt/$f"
+done
+
 ansible all -m shell -a "bash /opt/baseconfig.sh"
 ```
 
