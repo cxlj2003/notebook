@@ -1881,7 +1881,7 @@ service memcached restart
 service swift-proxy restart
 ```
 
-完成[[Openstack部署#5.1 Swift]]的配置后执行
+完成[[手动部署Openstack#5.1 Swift]]的配置后执行
 ### 3.8.5 验证配置
 
 ```
@@ -1999,7 +1999,7 @@ service apache2 restart
 systemctl enable cinder-scheduler
 ```
 
-完成[[Openstack部署#5.2 块存储]]
+完成[[手动部署Openstack#5.2 块存储]]
 ## 3.10 Heat
 
 编排服务
@@ -2982,7 +2982,7 @@ chmod -R 775 /var/cache/swift
 
 ### 5.1.4 验证配置
 
-返回控制节点验证配置[[Openstack部署#3.8.5 验证配置]]]
+返回控制节点验证配置[[手动部署Openstack#3.8.5 验证配置]]]
 
 ## 5.2 Cinder
 
