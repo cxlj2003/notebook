@@ -1289,6 +1289,7 @@ service neutron-l3-agent status
 
 ```
 openstack network agent list
+openstack extension list --network
 ```
 ## 3.7 Horizon
 
@@ -3223,14 +3224,16 @@ openstack security group list
 ### 6.2.2 创建VM实例
 
 ```
-PROVIDER_NET_ID=`openstack network list -f csv  --name provider |grep -Ev 'ID'|awk -F '"' '{print $2}'`
+
+PROVIDER_NET_ID=`openstack network list | awk '/ provider / { print $2 }'`
 openstack server create --flavor m1.nano --image cirros \
   --nic net-id=$PROVIDER_NET_ID --security-group default \
   --key-name mykey provider-instance
 ```
 
 ```
-SELFSERVICE_NET_ID=`openstack network list -f csv  --name selfservice |grep -Ev 'ID'|awk -F '"' '{print $2}'`
+
+SELFSERVICE_NET_ID=`openstack network list | awk '/ selfservice / { print $2 }'`
 openstack server create --flavor m1.nano --image cirros \
   --nic net-id=$SELFSERVICE_NET_ID --security-group default \
   --key-name mykey selfservice-instance
@@ -3246,7 +3249,7 @@ openstack server list
 
 ```
 openstack console url show provider-instance
-openstack console url selfservice-instance
+openstack console url show selfservice-instance
 ```
 
 通过浏览器连接实例
@@ -3254,7 +3257,7 @@ openstack console url selfservice-instance
 
 Provier实例通过providerIP连接
 ```
-providerip=
+providerip=`openstack server list |awk '/ provider-instance / {print $8}' |awk -F = '{print $NF}'`
 ssh cirros@$providerip
 ```
 
@@ -3263,6 +3266,30 @@ VXLAN实例通过FloatingIP连接
 openstack floating ip create provider
 floatingip=
 openstack server add floating ip selfservice-instance $floatingip
+```
+
+## 6.3 块存储
+
+### 6.3.1 创建卷
+
+```
+openstack volume create --size 1 volume1
+openstack volume list
+```
+
+### 6.3.2 将卷附加到实例
+
+```
+INSTANCE_NAME=selfservice-instance
+VOLUME_NAME=volume1
+openstack server add volume $INSTANCE_NAME $VOLUME_NAME
+openstack volume list
+```
+
+### 6.3.3 验证
+
+```
+lsblk
 ```
 # 7. 使用kolla-ansible部署
 
