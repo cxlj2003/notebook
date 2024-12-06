@@ -143,6 +143,14 @@ nmcli dev wifi list
 
 ```
 
+```
+netplan get
+netplan set bonds.bond1.parameters.mode=active-backup
+```
+
+```
+##The default is `balance-rr` (round robin). Possible values are `balance-rr`, `active-backup`, `balance-xor`, `broadcast`, `802.3ad`, `balance-tlb` and `balance-alb`. For Open vSwitch `active-backup` and the additional modes `balance-tcp` and `balance-slb` are supported.
+```
 # 8.用户和组
 
 ```

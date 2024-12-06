@@ -132,6 +132,110 @@ EOF
 done
 netplan apply
 ```
+
+```
+cat << EOF > /etc/modules-load.d/bonding.conf
+bonding
+EOF
+modprobe bonding
+lsmod | grep bonding
+
+rm -rf /etc/netplan/*
+ip4=113
+bond1_active=ens32
+bond1_backup=ens34
+bond1_addr="198.51.100.${ip4}/24"
+bond1_gw='198.51.100.254'
+bond2_active=ens35
+bond2_backup=ens36
+bond2_addr="198.19.32.${ip4}/24"
+bond3_active=ens37
+bond3_backup=ens38
+bond4_active=ens39
+bond4_backup=ens40
+bond4_addr="198.19.33.${ip4}/24"
+cat <<EOF > /etc/netplan/bonds.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ${bond1_active}:
+      dhcp4: false
+    ${bond1_backup}:
+      dhcp4: false
+    ${bond2_active}:
+      dhcp4: false
+    ${bond2_backup}:
+      dhcp4: false
+    ${bond3_active}:
+      dhcp4: false
+    ${bond3_backup}:
+      dhcp4: false
+    ${bond4_active}:
+      dhcp4: false
+    ${bond4_backup}:
+      dhcp4: false
+  bonds:
+    bond1:
+      addresses:
+      - "${bond1_addr}"
+      nameservers:
+        addresses:
+        - 8.8.8.8
+        - 114.114.114.114
+        search:
+        - local
+      interfaces:
+      - ${bond1_active}
+      - ${bond1_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond1_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+      routes:
+      - to: "default"
+        via: "${bond1_gw}"
+    bond2:
+      addresses:
+      - "${bond2_addr}"
+      interfaces:
+      - ${bond2_active}
+      - ${bond2_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond2_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+    bond3:
+      interfaces:
+      - ${bond3_active}
+      - ${bond3_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond3_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+    bond4:
+      addresses:
+      - "${bond4_addr}"
+      interfaces:
+      - ${bond4_active}
+      - ${bond4_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond4_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+EOF
+
+chmod 600 /etc/netplan/bonds.yaml
+netplan apply
+```
 # 3. ssh对等
 
 ```

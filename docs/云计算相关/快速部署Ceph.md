@@ -1,8 +1,24 @@
 # 1. Cephadm
 
-## 1.1 操作系统
+## 1.1 规划
 
-Ubuntu 24.01LTS
+| 主机名   | bond1_ip       | bond2_ip      | bond4_ip      | fqdn         | 角色  | 备注  |
+| ----- | -------------- | ------------- | ------------- | ------------ | --- | --- |
+| node1 | 198.51.100.111 | 198.51.32.111 | 198.51.33.111 | node1.ait.lo |     |     |
+| node2 | 198.51.100.112 | 198.51.32.112 | 198.51.33.112 | node2.ait.lo |     |     |
+| node3 | 198.51.100.113 | 198.51.32.113 | 198.51.33.113 | node3.ait.lo |     |     |
+>[!note]
+>1.网卡8块组成4个bond: 
+> bond1: 管理
+> bond2: 控制
+> bond3: 业务 (openstack)
+> bond4: 存储 
+>2.硬盘4块:
+>sda:操作系统
+>sdb: OSD
+>sdc: OSD
+>sdd: OSD
+>3.操作系统:Ubuntu 24.01LTS
 ## 1.2 先决条件
 
 - Python 3    
@@ -10,7 +26,7 @@ Ubuntu 24.01LTS
 - Podman or Docker for running containers    
 - Time synchronization    
 - LVM2 for provisioning storage devices
-	### 1.2.1 基础网络配置
+### 1.2.1 基础网络配置
 
 ```
 cat << EOF > /etc/modules-load.d/bonding.conf
@@ -20,75 +36,96 @@ modprobe bonding
 lsmod | grep bonding
 
 rm -rf /etc/netplan/*
+ip4=111
+bond1_active=ens32
+bond1_backup=ens34
+bond1_addr="198.51.100.${ip4}/24"
+bond1_gw='198.51.100.254'
+bond2_active=ens35
+bond2_backup=ens36
+bond2_addr="198.19.32.${ip4}/24"
+bond3_active=ens37
+bond3_backup=ens38
+bond4_active=ens39
+bond4_backup=ens40
+bond4_addr="198.19.33.${ip4}/24"
 cat <<EOF > /etc/netplan/bonds.yaml
 network:
+  version: 2
+  renderer: networkd
   ethernets:
-    ens32:
-      dhcp4: no
-    ens34:
-      dhcp4: no
-    ens35:
-      dhcp4: no
-    ens36:
-      dhcp4: no
-    ens37:
-      dhcp4: no
-    ens38:
-      dhcp4: no
-    ens39:
-      dhcp4: no
-    ens40:
-      dhcp4: no
+    ${bond1_active}:
+      dhcp4: false
+    ${bond1_backup}:
+      dhcp4: false
+    ${bond2_active}:
+      dhcp4: false
+    ${bond2_backup}:
+      dhcp4: false
+    ${bond3_active}:
+      dhcp4: false
+    ${bond3_backup}:
+      dhcp4: false
+    ${bond4_active}:
+      dhcp4: false
+    ${bond4_backup}:
+      dhcp4: false
   bonds:
     bond1:
-      macaddress: 18:80:51:10:01:11
-      interfaces:
-        - ens32
-        - ens34
-      parameters:
-        mode: active-backup
-        primary: ens32
-        mii-monitor-interval: 100
-      addresses: 
-        - "198.51.100.111/24"
-      routes:
-        - to: default
-          via: "198.51.100.254"
+      addresses:
+      - "${bond1_addr}"
       nameservers:
         addresses:
-          - "8.8.8.8"
-          - "8.8.4.4"
+        - 8.8.8.8
+        - 114.114.114.114
+        search:
+        - local
+      interfaces:
+      - ${bond1_active}
+      - ${bond1_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond1_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+      routes:
+      - to: "default"
+        via: "${bond1_gw}"
     bond2:
-      macaddress: 18:80:19:03:21:11
+      addresses:
+      - "${bond2_addr}"
       interfaces:
-        - ens35
-        - ens36
+      - ${bond2_active}
+      - ${bond2_backup}
       parameters:
-        mode: active-backup
-        primary: ens35
-        mii-monitor-interval: 100
-      addresses: 
-        - "198.19.32.111/24"
+        mode: "active-backup"
+        primary: "${bond2_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
     bond3:
-      macaddress: aa:80:51:10:01:11
       interfaces:
-        - ens37
-        - ens38
+      - ${bond3_active}
+      - ${bond3_backup}
       parameters:
-        mode: active-backup
-        primary: ens37
-        mii-monitor-interval: 100
+        mode: "active-backup"
+        primary: "${bond3_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
     bond4:
-      macaddress: 18:80:19:03:31:11
+      addresses:
+      - "${bond4_addr}"
       interfaces:
-        - ens39
-        - ens40
+      - ${bond4_active}
+      - ${bond4_backup}
       parameters:
-        mode: active-backup
-        primary: ens39
-        mii-monitor-interval: 100
-      addresses: 
-        - "198.19.33.111/24"
+        mode: "active-backup"
+        primary: "${bond4_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
 EOF
 
 chmod 600 /etc/netplan/bonds.yaml
@@ -101,6 +138,12 @@ cat << 'EOF' > /opt/playbook
 198.51.100.111 node1.ait.lo node1 1qaz#EDC
 198.51.100.112 node2.ait.lo node2 1qaz#EDC
 198.51.100.113 node3.ait.lo node3 1qaz#EDC
+198.19.32.111 node1.ait.lo node1 1qaz#EDC
+198.19.32.112 node2.ait.lo node2 1qaz#EDC
+198.19.32.113 node3.ait.lo node3 1qaz#EDC
+198.19.33.111 node1.ait.lo node1 1qaz#EDC
+198.19.33.112 node2.ait.lo node2 1qaz#EDC
+198.19.33.113 node3.ait.lo node3 1qaz#EDC
 EOF
 ```
 ### 1.2.3 配置apt源
@@ -146,7 +189,7 @@ ff02::2 ip6-allrouters
 # Openstack
 EOF
 cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
-hostip=`ip add show dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+hostip=`ip add show dev bond1 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
 HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
 hostnamectl set-hostname $HostName
 ```
@@ -185,6 +228,40 @@ fi
 cat << EOF > /etc/ansible/hosts
 [admin]
 node1
+####ceph
+[mon]
+node1
+node2
+node3
+[mgr]
+node1
+node2
+node3
+[mds]
+node1
+node2
+node3
+[osd]
+node1
+node2
+node3
+[lb]
+node1
+node2
+node3
+[obj]
+node1
+node2
+node3
+[iscsi]
+node1
+node2
+node3
+[nfs]
+node1
+node2
+node3
+####openstack
 [controllers]
 node1
 node2
@@ -197,6 +274,38 @@ node3
 node1
 node2
 node3
+####k8s
+[master]
+node1
+node2
+node3
+[lb]
+node1
+node2
+node3
+[etcd]
+node1
+node2
+node3
+[reg]
+node1
+node2
+node3
+[node]
+node1
+node2
+node3
+[ipvs:children]
+master
+node
+lb
+[docker:children]
+master
+node
+reg
+[k8s:children]
+master
+node
 EOF
 ansible all -m ping
 ```
@@ -231,6 +340,7 @@ deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restr
 EOF
 apt update &> /dev/null && apt -y upgrade &> /dev/null
 apt -y install lrzsz &> /dev/null
+apt install cephadm -y &> /dev/null
 #3.域名解析
 cat << 'EOF' > /etc/resolv.conf
 nameserver 8.8.8.8
@@ -248,7 +358,7 @@ ff02::2 ip6-allrouters
 # Openstack
 EOF
 cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
-hostip=`ip add show dev ens32 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
+hostip=`ip add show dev bond1 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
 HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
 hostnamectl set-hostname $HostName
 
@@ -298,14 +408,410 @@ ansible all -m shell -a "bash /opt/baseconfig.sh"
 ## 1.3 安装cephadm
 
 ```
-apt install cephadm=19.2.0-0ubuntu0.24.04.1 -y 
+apt install cephadm -y 
 ```
 
 ## 1.4 Ceph容器镜像
 
-[https://quay.io/repository/ceph/ceph](https://quay.io/repository/ceph/ceph) [https://hub.docker.com/r/ceph](https://hub.docker.com/r/ceph)
+cephadm的版本并从官方镜像站下载镜像文件,最新版:[https://quay.io/repository/ceph/ceph](https://quay.io/repository/ceph/ceph)旧版本: [https://hub.docker.com/r/ceph](https://hub.docker.com/r/ceph)
+```
+apt show cephadm |grep Version |uniq |awk '{print $NF}' 
+```
 
 ```
 docker pull quay.io/ceph/ceph:v19.2.0
+docker tag quay.io/ceph/ceph:v19.2.0 registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
+docker push registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
+docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
+docker tag  registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0 quay.io/ceph/ceph:v19.2.0
 ```
+## 1.5  引导一个新集群
+
+创建新 Ceph 集群的第一步是在 Ceph 集群的第一台主机上运行`cephadm bootstrap`命令。运行的行为 Ceph 集群第一台主机上的`cephadm bootstrap`命令创建 Ceph 集群的第一个 Monitor 守护进程。您必须将 Ceph 集群第一台主机的 IP 地址传递给`ceph bootstrap`命令，因此您需要知道该主机的 IP 地址。
+
+```
+cephadm bootstrap --mon-ip 198.19.33.111
+```
+运行结果:
+- 在本地主机上为新集群创建监视器和管理器守护程序。
+- 为 Ceph 集群生成新的 SSH 密钥并将其添加到 root 用户的`/root/.ssh/authorized_keys`文件中。
+- 将公钥的副本写入`/etc/ceph/ceph.pub` 。
+- 将最小配置文件写入`/etc/ceph/ceph.conf` 。需要此文件与 Ceph 守护进程进行通信。
+- 将`client.admin`管理（特权！）密钥的副本写入 `/etc/ceph/ceph.client.admin.keyring` 。
+- 将`_admin`标签添加到引导主机。默认情况下，任何具有此标签的主机都将（也）获得`/etc/ceph/ceph.conf`的副本，并且 `/etc/ceph/ceph.client.admin.keyring` .
+高级选项:
+- 默认情况下，Ceph 守护进程将其日志输出发送到 stdout/stderr，该日志输出由容器运行时（docker 或 podman）拾取并（在大多数系统上）发送到 Journald。如果您希望 Ceph 将传统日志文件写入`/var/log/ceph/$fsid` ，请在引导期间使用`--log-to-file`选项。
+- 当（Ceph 集群外部）公共网络流量与（Ceph 集群内部）集群流量分开时，较大的 Ceph 集群性能最佳。内部集群流量处理 OSD 守护进程之间的复制、恢复和心跳。您可以通过向`bootstrap`提供`--cluster-network`选项来定义[集群网络](https://docs.ceph.com/en/reef/rados/configuration/network-config-ref/#cluster-network) 子命令。该参数必须是 CIDR 表示法中的子网（例如 `10.90.90.0/24`或`fe80::/64` ）
+- `cephadm bootstrap`写入访问新集群所需的`/etc/ceph`文件。这个中心位置使得安装在主机上的 Ceph 软件包（例如，可以访问 cephadm 命令行界面的软件包）可以找到这些文件。
+- 然而，使用 cephadm 部署的守护进程容器不需要 `/etc/ceph`根本没有。使用`--output-dir *<directory>*`选项将它们放在不同的目录中（例如， `.` ）。这可能有助于避免与同一主机上的现有 Ceph 配置（cephadm 或其他）发生冲突。
+- 您可以将任何初始 Ceph 配置选项传递到新集群，方法是将它们放入标准 ini 样式配置文件中并使用`--config *<config-file>*`选项。例如：
+```
+cat <<EOF > initial-ceph.conf
+[global]
+osd crush chooseleaf type = 0
+EOF
+$ ./cephadm bootstrap --config initial-ceph.conf ...
+```
+- `--ssh-user *<user>*`选项可以指定 cephadm 将使用哪个 SSH 用户连接到主机。关联的 SSH 密钥将添加到 `/home/*<user>*/.ssh/authorized_keys` 。您使用此选项指定的用户必须具有无密码 sudo 访问权限。
+- 如果您使用来自需要登录的注册表的容器映像，则可以添加参数：- `--registry-json <path to json file>`,包含登录信息的 JSON 文件的示例内容：
+```
+{"url":"REGISTRY_URL", "username":"REGISTRY_USERNAME", "password":"REGISTRY_PASSWORD"}
+```
+- Cephadm 将尝试登录到此注册表，以便它可以拉取您的容器，然后将登录信息存储在其配置数据库中。添加到集群的其他主机也将能够使用经过身份验证的容器注册表。
+
+```
+root@node1:~# cephadm bootstrap --mon-ip 198.19.33.111
+This is a development version of cephadm.
+For information regarding the latest stable release:
+    https://docs.ceph.com/docs/squid/cephadm/install
+Creating directory /etc/ceph for ceph.conf
+Verifying podman|docker is present...
+Verifying lvm2 is present...
+Verifying time synchronization is in place...
+Unit chrony.service is enabled and running
+Repeating the final host check...
+docker (/usr/bin/docker) is present
+systemctl is present
+lvcreate is present
+Unit chrony.service is enabled and running
+Host looks OK
+Cluster fsid: 1c581fea-b391-11ef-a138-000c296ec16b
+Verifying IP 198.19.33.111 port 3300 ...
+Verifying IP 198.19.33.111 port 6789 ...
+Mon IP `198.19.33.111` is in CIDR network `198.19.33.0/24`
+Mon IP `198.19.33.111` is in CIDR network `198.19.33.0/24`
+Internal network (--cluster-network) has not been provided, OSD replication will default to the public_network
+Pulling container image quay.io/ceph/ceph:v19...
+Ceph version: ceph version 19.2.0 (16063ff2022298c9300e49a547a16ffda59baf13) squid (stable)
+Extracting ceph user uid/gid from container image...
+Creating initial keys...
+Creating initial monmap...
+Creating mon...
+Waiting for mon to start...
+Waiting for mon...
+mon is available
+Assimilating anything we can from ceph.conf...
+Generating new minimal ceph.conf...
+Restarting the monitor...
+Setting public_network to 198.19.33.0/24 in mon config section
+Wrote config to /etc/ceph/ceph.conf
+Wrote keyring to /etc/ceph/ceph.client.admin.keyring
+Creating mgr...
+Verifying port 0.0.0.0:9283 ...
+Verifying port 0.0.0.0:8765 ...
+Verifying port 0.0.0.0:8443 ...
+Waiting for mgr to start...
+Waiting for mgr...
+mgr not available, waiting (1/15)...
+mgr not available, waiting (2/15)...
+mgr not available, waiting (3/15)...
+mgr not available, waiting (4/15)...
+mgr not available, waiting (5/15)...
+mgr is available
+Enabling cephadm module...
+Waiting for the mgr to restart...
+Waiting for mgr epoch 5...
+mgr epoch 5 is available
+Setting orchestrator backend to cephadm...
+Generating ssh key...
+Wrote public SSH key to /etc/ceph/ceph.pub
+Adding key to root@localhost authorized_keys...
+Adding host node1...
+Deploying mon service with default placement...
+Deploying mgr service with default placement...
+Deploying crash service with default placement...
+Deploying ceph-exporter service with default placement...
+Deploying prometheus service with default placement...
+Deploying grafana service with default placement...
+Deploying node-exporter service with default placement...
+Deploying alertmanager service with default placement...
+Enabling the dashboard module...
+Waiting for the mgr to restart...
+Waiting for mgr epoch 9...
+mgr epoch 9 is available
+Generating a dashboard self-signed certificate...
+Creating initial admin user...
+Fetching dashboard port number...
+Ceph Dashboard is now available at:
+
+             URL: https://node1.ait.lo:8443/
+            User: admin
+        Password: etxkbspky4
+
+Enabling client.admin keyring and conf on hosts with "admin" label
+Saving cluster configuration to /var/lib/ceph/1c581fea-b391-11ef-a138-000c296ec16b/config directory
+You can access the Ceph CLI as following in case of multi-cluster or non-default config:
+
+        sudo /usr/sbin/cephadm shell --fsid 1c581fea-b391-11ef-a138-000c296ec16b -c /etc/ceph/ceph.conf -k /etc/ceph/ceph.client.admin.keyring
+
+Or, if you are only running a single cluster on this host:
+
+        sudo /usr/sbin/cephadm shell 
+
+Please consider enabling telemetry to help improve Ceph:
+
+        ceph telemetry on
+
+For more information see:
+
+        https://docs.ceph.com/en/latest/mgr/telemetry/
+
+Bootstrap complete.
+```
+
+admin 密码修改为1qaz#EDC
+## 1.6 启用ceph cli
+
+Cephadm 不需要在主机上安装任何 Ceph 软件包。但是，我们建议启用对`ceph`轻松访问 命令。有几种方法可以做到这一点：
+- `cephadm shell`命令在安装了所有 Ceph 软件包的容器中启动 bash shell。默认情况下，如果在`/etc/ceph`中找到配置和密钥环文件 主机，它们被传递到容器环境中，以便 shell 功能齐全。请注意，当在 MON 主机上执行时， `cephadm shell`将从 MON 容器推断`config`而不是使用默认配置。如果`--mount <path>` 给定后，主机`<path>` （文件或目录）将出现在容器内的`/mnt`下：
+交互式
+```
+cephadm shell
+ceph -s
+```
+非交互式
+```
+cephadm shell -- ceph -s
+```
+- 您可以安装`ceph-common`软件包，其中包含所有 ceph 命令，包括`ceph` 、 `rbd` 、 `mount.ceph` （用于挂载 CephFS 文件系统）等：
+```
+cephadm install ceph-common
+ceph -v
+ceph status
+```
+
+查看组件状态
+
+```
+alias ceph='cephadm shell -- ceph'
+echo "alias ceph='cephadm shell -- ceph'" >>/root/.bashrc
+source /root/.bashrc
+
+ceph orch ps
+ceph status
+ceph -v
+ceph orch host ls
+```
+
+>[!NOTE]
+>添加管理主机
+默认情况下， `ceph.conf`文件和`client.admin`密钥环的副本保存在所有具有`_admin`标签的主机上的`/etc/ceph`中。该标签最初仅应用于引导主机。我们建议为一台或多台其他主机指定`_admin`标签，以便可以在多台主机上轻松访问 Ceph CLI（例如，通过`cephadm shell` ）。要将`_admin`标签添加到其他主机，请运行以下形式的命令：
+>`ceph orch host label add *<host>* _admin`
+
+## 1.7 主机操作
+
+### 1.7.1 向群集中添加主机
+
+更新密钥
+```
+hosts=`cat /opt/playbook |sort |uniq |awk '{print $1}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+hosts=`cat /opt/playbook |sort |uniq |awk '{print $2}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+hosts=`cat /opt/playbook |sort |uniq |awk '{print $3}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+```
+
+```
+ceph orch apply mon 5
+ceph orch host add node2 198.19.33.112 --labels _admin
+ceph orch host add node3 198.19.33.113 --labels _admin
+
+ceph orch host label add node2  _admin
+ceph orch host label add node3  _admin
+```
+
+```
+alias ceph='cephadm shell -- ceph'
+echo "alias ceph='cephadm shell -- ceph'" >>/root/.bashrc
+source /root/.bashrc
+```
+
+```
+ceph orch host ls
+ceph orch ps
+
+```
+### 1.7.2 删除主机
+
+```
+ceph orch host drain node2  #删除守护进程
+ceph orch osd rm status #删除osd
+ceph orch ps node2
+ceph orch host rm node2
+ceph orch host rm node2 --offline --force #删除离线主机
+```
+
+>[!note]
+>## 主机标签
+>1. `_no_schedule` ：_不在该主机上调度或部署守护程序_
+>2. `_no_conf_keyring` ：_不要在此主机上部署配置文件或密钥环_。
+>3. `_no_autotune_memory` ：_不自动调整该主机上的内存_。
+>4. `_admin` ：_将 client.admin 和 ceph.conf 分发到该主机_。
+
+### 1.7.3 维护模式
+
+```
+ceph orch host maintenance enter <hostname> [--force] [--yes-i-really-mean-it]
+ceph orch host maintenance exit <hostname>
+
+```
+
+### 1.7.4 重新扫描主机
+
+```
+ceph orch host rescan <hostname> [--with-summary]
+```
+## 1.8 添加额外的 MON
+
+典型的 Ceph 集群具有三到五个分布在不同主机上的 Monitor 守护进程。如果集群中有五个或更多节点，我们建议部署五个监视器。大多数集群不会从七个或更多监视器中受益。
+随着集群的增长，Ceph 会自动部署监控守护进程，而随着集群的收缩，Ceph 会自动缩减监控守护进程。这种自动增长和收缩的顺利执行取决于正确的子网配置。
+cephadm 引导过程将集群中的第一个监视器守护进程分配给特定子网。 `cephadm`将该子网指定为集群的默认子网。默认情况下，新的监视器守护进程将分配给该子网，除非 cephadm 收到其他指示。
+如果集群中的所有 ceph 监控守护进程都位于同一子网中， 无需手动管理 ceph 监视器守护进程。 当新主机添加到集群时， `cephadm`将根据需要自动向子网添加最多五个监视器。
+
+
+
+### 1.8.1 为监视器指定特定子网
+
+要指定 ceph 监控守护进程使用的特定 IP 子网，请使用以下形式的命令，包括[CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation)中的子网地址 格式（例如`10.1.2.0/24` ）：
+
+```
+ceph config set mon public_network 10.1.2.0/24
+```
+
+您还可以使用网络列表指定两个公共网络：
+
+```
+ceph config set mon public_network 10.1.2.0/24,192.168.0.1/24
+```
+
+### 1.8.2在特定网络上部署监视器
+
+您可以为每个显示器显式指定 IP 地址或 CIDR 网络，并控制每个显示器的放置位置。要禁用自动监视器部署，请运行以下命令：
+
+```
+ceph orch apply mon --unmanaged
+```
+
+### 1.8.3 要部署每个附加监视器：
+
+例如，要使用 IP 地址`10.1.2.123`在`newhost1`上部署第二个监视器，并在网络`10.1.2.0/24`中的`newhost2`上部署第三个监视器，请运行以下命令：
+
+```
+ceph orch apply mon --unmanaged
+ceph orch daemon add mon newhost1:10.1.2.123
+ceph orch daemon add mon newhost2:10.1.2.0/24
+ceph orch apply mon --placement="newhost1,newhost2,newhost3" --dry-run
+ceph orch apply mon --placement="newhost1,newhost2,newhost3"
+```
+
+### 1.8.4 将监视器移至不同网络
+
+例如，要使用 IP 地址`10.1.2.123`在`newhost1`上部署第二个监视器，并在网络`10.1.2.0/24`中的`newhost2`上部署第三个监视器，请运行以下命令
+
+```
+ceph orch apply mon --unmanaged
+ceph orch daemon add mon newhost1:10.1.2.123
+ceph orch daemon add mon newhost2:10.1.2.0/24
+
+ceph orch daemon rm *mon.<oldhost1>*
+
+ceph config set mon public_network 10.1.2.0/24
+ceph orch apply mon --placement="newhost1,newhost2,newhost3" --dry-run
+ceph orch apply mon --placement="newhost1,newhost2,newhost3"
+```
+
+## 1.9 部署mgr
+
+```
+ceph orch apply mgr 3
+ceph orch apply mgr --placement="node1,node2,node3" --dry-run
+ceph orch apply mgr --placement="node1,node2,node3"
+ceph orch ps |grep mgr
+
+```
+## 1.10 部署osd
+
+```
+
+
+ceph config set mgr mgr/cephadm/device_enhanced_scan true
+
+lsmcli ldl
+ceph orch device ls
+
+
+#reboot node3
+ceph orch host rescan node3
+#reboot node2
+ceph orch host rescan node2
+#reboot node1
+ceph orch host rescan node1
+
+ceph orch apply osd --all-available-devices --dry-run
+ceph orch apply osd --all-available-devices
+
+ceph orch daemon add osd node1:/dev/sdb
+ceph orch daemon add osd node2:/dev/sdb
+ceph orch daemon add osd node3:/dev/sdb
+
+
+ceph orch osd rm status
+
+
+```
+从特定主机上的特定设备创建 OSD：
+```
+ceph orch daemon add osd node1:/dev/sdb
+```
+从特定主机上的特定设备创建高级 OSD：
+```
+ceph orch daemon add osd host1:data_devices=/dev/sda,/dev/sdb,db_devices=/dev/sdc,osds_per_device=2
+```
+在特定主机上的特定LVM逻辑卷上创建OSD：
+```
+ceph orch daemon add osd host1:/dev/vg_osd/lvm_osd1701
+```
+您可以使用[高级 OSD 服务规范](https://docs.ceph.com/en/reef/cephadm/services/osd/#drivegroups)根据设备的属性对设备进行分类。这可能有助于更清晰地了解哪些设备可供使用。属性包括设备类型（SSD 或 HDD）、设备型号名称、大小以及设备所在的主机：
+```
+ceph orch apply -i spec.yml
+```
+
+```
+ceph orch osd rm status
+```
+## 1.11 使用ceph
+
+### 1.11.1 部署cephfs
+
+```
+
+```
+
+### 1.11.2  部署RGW
+
+```
+
+```
+
+### 1.11.3 部署NFS
+
+```
+
+```
+### 1.11.4 部署iscsi
+
+```
+
+```
+
 # 2. 

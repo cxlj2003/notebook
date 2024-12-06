@@ -142,4 +142,15 @@ echo $line
 done
 ```
 
-# 6. 
+# 6. ansible同步文件
+
+```
+files='
+playbook
+baseconfig.sh
+'
+for f in $files;do
+  ansible 'all:!admin' -m synchronize -a "src=/opt/$f dest=/opt/$f"
+done
+
+```
