@@ -830,11 +830,11 @@ ceph osd pool create volumes 128
 ceph osd pool create backups 128
 ```
 
-创建ceph客户端
+创建ceph用户
 
 | 用户名                  | 访问权限               | 备注                 |
 | -------------------- | ------------------ | ------------------ |
-| client.glance        | images             | controller         |
+| client.glance        | images             | controller,storage |
 | client.cinder        | images vms volumes | controller,compute |
 | client.cinder-backup | backups            | controller         |
 |                      |                    |                    |
@@ -848,12 +848,40 @@ ceph auth get-or-create client.cinder-backup mon 'profile rbd' osd 'profile rbd 
 
 ```
 
-创建keyring
+查看用户信息
+```
+ceph auth list
+```
+
+分发keyring
 
 ```
-ceph auth get-or-create-key client.glance 
-ceph auth get-or-create-key client.cinder
-ceph auth get-or-create-key client.cinder-backup 
+
+#用于glance-api,分发至控制节点,存储节点(cinder-volume)
+ceph auth get-or-create client.glance > /etc/ceph/ceph.client.glance.keyring
+#用于cinder,分发至控制节点,计算节点
+ceph auth get-or-create-key client.cinder > /etc/ceph/ceph.client.cinder.keyring
+#用于cinder-backup,分发至控制节点,
+ceph auth get-or-create-key client.cinder-backup > /etc/ceph/ceph.client.cinder-backup.keyring
+#用于nova-compute,分发至计算节点
+ceph auth get-key  client.cinder >/etc/ceph/ceph.client.cinder.key
+
+files='
+ceph.client.glance.keyring
+ceph.client.cinder.keyring
+ceph.client.cinder-backup.keyring
+ceph.client.cinder.key
+'
+srcdir=/etc/ceph
+dstdri=/etc/ceph
+for f in $files;do
+  ansible 'all:!admin' -m synchronize -a "src=$srcdir/$f dest=$dstdir/$f"
+done
+
+ansible all -m shell -a "chown glance:glance ceph.client.glance.keyring"
+ansible all -m shell -a "chown cinder:cinder ceph.client.cinder.keyring"
+ansible all -m shell -a "chown cinder:cinder ceph.client.cinder-backup.keyring"
+
 ```
 
 ```
