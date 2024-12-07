@@ -837,7 +837,6 @@ ceph osd pool create backups 128
 | client.glance        | images             | controller,storage |
 | client.cinder        | images vms volumes | controller,compute |
 | client.cinder-backup | backups            | controller         |
-|                      |                    |                    |
 
 ```
 ceph auth get-or-create client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children,allow rwx pool=images'
