@@ -813,5 +813,51 @@ ceph orch osd rm status
 ```
 
 ```
+## 1.12 对接openstack
+
+在生产环境中，我们经常能够看见将Nova、Cinder、Glance与Ceph RBD进行对接。除此之外，还可以将Swift、Manila分别对接到Ceph RGW与CephFS。Ceph作为统一存储解决方案，有效降低了OpenStack云环境的复杂性与运维成本。
+### 1.12.1 先决条件
+
+创建RBD存储池
+- images 对接 glance
+- vms对接nova
+- volumes对接cinder
+- backups对接cinder-bakup
+```
+ceph osd pool create images 128
+ceph osd pool create vms 128
+ceph osd pool create volumes 128
+ceph osd pool create backups 128
+```
+
+创建ceph客户端
+
+| 用户名                  | 访问权限               | 备注                 |
+| -------------------- | ------------------ | ------------------ |
+| client.glance        | images             | controller         |
+| client.cinder        | images vms volumes | controller,compute |
+| client.cinder-backup | backups            | controller         |
+|                      |                    |                    |
+
+```
+ceph auth get-or-create client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children,allow rwx pool=images'
+
+ceph auth get-or-create client.cinder mon 'profile rbd' osd 'profile rbd pool=volumes, profile rbd pool=vms, profile rbd pool=images'
+
+ceph auth get-or-create client.cinder-backup mon 'profile rbd' osd 'profile rbd pool=backups'
+
+```
+
+创建keyring
+
+```
+ceph auth get-or-create-key client.glance 
+ceph auth get-or-create-key client.cinder
+ceph auth get-or-create-key client.cinder-backup 
+```
+
+```
+ceph orch client-keyring ls
+```
 
 # 2. 
