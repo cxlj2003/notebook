@@ -18,4 +18,29 @@
 >4.第二块网卡用于Cinder LVM
 >5.第三和第四块用于Swift对象存储
 # 2. 先决条件
-## 2.1 
+## 2.1 docker镜像
+
+查看维护的版本
+```
+https://github.com/openstack/kolla/branches
+```
+使用`-b`克隆指定版本
+```
+git clone -b stable/2024.2 https://github.com/openstack/kolla.git
+```
+获取docker镜像名称
+```
+ls -R kolla/docker/ |grep  ":" |awk -F "/" '{print $4}' |grep -Ev '^$' |awk -F ":" '{print $1}'
+```
+拉取镜像
+```
+images=`ls -R kolla/docker/ |grep  ":" |awk -F "/" '{print $4}' |grep -Ev '^$' |awk -F ":" '{print $1}'`
+imgtag='2024.2-ubuntu-noble'
+for i in $images;do
+  docker pull kolla/$i:$imgtag
+  docker tag kolla/$i:$imgtag registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
+  docker push registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
+  docker rmi registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
+  docker rmi kolla/$i:$imgtag
+  done
+```
