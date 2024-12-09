@@ -51,18 +51,92 @@ for i in $images;do
 apt update
 apt install git python3-dev libffi-dev gcc libssl-dev python3-venv -y
 
-python3 -m venv /usr/local/kolla
-source /usr/local/kolla/activate
-pip config set global.index-url http://pypi.tuna.tsinghua.edu.cn/simple
-pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
-pip install -U pip
-pip install 'ansible-core>=|ANSIBLE_CORE_VERSION_MIN|,<|ANSIBLE_CORE_VERSION_MAX|.99'
+venv_path=/usr/local/kolla
+if [[ ! -e $venv_path ]];then
+mkdir -p $venv_path
+python3 -m venv $venv_path
+source $venv_path/bin/activate
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple  &> /dev/null
+pip install -U pip &> /dev/null
+pip install 'ansible-core>=2.16,<2.17.99' &> /dev/null
+deactivate
+fi
+
 ```
 # 3. 安装`kolla-ansible`
 
 ```
-git clone -b stable/2024.2 https://opendev.org/openstack/kolla-ansible.git
- 
-cd kolla-ansible
+venv_path=/usr/local/kolla
+source $venv_path/bin/activate
+pip install 'kolla-ansible==19.0.0' &> /dev/null
+kolla-ansible install-deps &> /dev/null
+if [ ! -e /etc/kolla ];then
+	mkdir -p /etc/kolla
+	chown $USER:$USER /etc/kolla
+	cp -r $venv_path/share/kolla-ansible/etc_examples/kolla/* /etc/kolla
+	cp -r $venv_path/share/kolla-ansible/ansible/inventory/* /etc/kolla
+fi
+kolla-genpwd
+deactivate
+```
 
+# 4. 修改配置文件
+
+## 4.1 `globals.yml`
+
+```
+cat << EOF > /etc/kolla/globals.yml
+node_config: "/etc/kolla"   
+kolla_base_distro: "ubuntu"
+openstack_release: "2024.02"
+node_custom_config: "{{ node_config }}/config"
+kolla_internal_vip_address: "198.51.100.110"
+docker_registry: quay.nju.edu.cn
+network_interface: "bond1"
+neutron_external_interface: "bond3"
+neutron_plugin_agent: "openvswitch"
+enable_openstack_core: "yes"
+enable_hacluster: "no"
+enable_haproxy: "yes"
+enable_keepalived: "{{ enable_haproxy | bool }}"
+enable_cinder: "no"
+enable_cinder_backend_nfs: "no"
+cinder_volume_group: "cinder-volumes"
+nova_compute_virt_type: "kvm"
+EOF
+```
+
+## 4.2 `multinode`
+
+```
+sed -i -e '/^control./d
+/^network./d
+/^compute./d
+/^storage./d
+/^monitoring./d' /etc/kolla/multinode
+
+sed -i -e '
+/^\[control\]/anode\[1:3\] ansible_user=root
+/^\[network\]/anode\[1:3\] ansible_user=root
+/^\[compute\]/anode\[1:3\] ansible_user=root
+/^\[storage\]/anode\[1:3\] ansible_user=root
+/^\[monitoring\]/anode\[1:3\] ansible_user=root
+' /etc/kolla/multinode
+```
+
+# 5. 部署
+
+部署预检测
+```
+kolla-ansible prechecks -i /etc/kolla/multinode
+```
+
+开始部署
+```
+kolla-ansible deploy -i /etc/kolla/multinode
+```
+
+验证部署
+```
+kolla-ansible validate-config -i /etc/kolla/multinode
 ```
