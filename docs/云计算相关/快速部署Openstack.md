@@ -19,6 +19,194 @@
 >5.第三和第四块用于Swift对象存储
 >6.参考文档: https://docs.openstack.org/kolla-ansible/2024.2/user/quickstart.html
 
+## 1.1 域名解析
+
+```
+cat << 'EOF' > /opt/playbook
+172.16.250.101 controller1.ait.lo controller1 1qaz#EDC
+172.16.250.102 controller2.ait.lo controller2 1qaz#EDC
+172.16.250.103 controller3.ait.lo controller3 1qaz#EDC
+172.16.250.104 compute1.ait.lo compute1 1qaz#EDC
+172.16.250.105 compute2.ait.lo compute2 1qaz#EDC
+172.16.250.106 compute3.ait.lo compute3 1qaz#EDC
+172.16.250.107 storage1.ait.lo storage1 1qaz#EDC
+172.16.250.108 storage2.ait.lo storage2 1qaz#EDC
+172.16.250.109 storage3.ait.lo storage3 1qaz#EDC
+EOF
+
+```
+
+```
+cat << 'EOF' > /etc/hosts
+127.0.0.1 localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+EOF
+cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
+```
+## 1.2 apt源
+```
+mirrors_server='mirrors.ustc.edu.cn'
+source /etc/os-release
+rm -rf /etc/apt/sources.list.d/*
+cat << EOF > /etc/apt/sources.list
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+
+# deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+EOF
+
+echo export DEBIAN_FRONTEND=noninteractive > /etc/profile.d/apt.sh && source /etc/profile &> /dev/null
+apt update &> /dev/null  && apt -y upgrade &> /dev/null
+```
+
+## 1.3 ssh免密
+
+```
+apt -y install sshpass &> /dev/null
+
+if [ ! -e /root/.ssh/id_rsa ];then
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N '' &> /dev/null
+fi
+
+hosts=`cat /opt/playbook |sort |uniq |awk '{print $1}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+```
+
+## 1.4 Ansible
+
+```
+apt -y install ansible &> /dev/null
+cat << EOF > /opt/ansibe-hosts
+[admin]
+`cat /opt/playbook |sort |uniq |grep controller1 |awk '{print $1}'`
+[controllers]
+`cat /opt/playbook |sort |uniq |grep controller |awk '{print $1}'`
+[computes]
+`cat /opt/playbook |sort |uniq |grep compute |awk '{print $1}'`
+[storages]
+`cat /opt/playbook |sort |uniq |grep storage |awk '{print $1}'`
+[ntpservers:children]
+controllers
+[ntpclients:children]
+computes
+storages
+EOF
+if [ ! -e /etc/ansible ];then
+	mkdir -p /etc/ansible
+fi
+cat /opt/ansibe-hosts > /etc/ansible/hosts
+ansible all -m ping
+```
+
+## 1.5 基础配置脚本
+
+```
+cat << 'EEOOFF' > /opt/baseconfig.sh
+#!/bin/bash
+set -ex
+#主机名
+hostip=`ip route | egrep -v "br|docker|default" | egrep "eth|ens|enp" |awk '{print $NF}'`
+HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
+hostnamectl set-hostname $HostName
+#域名解析
+cat << 'EOF' > /etc/hosts
+127.0.0.1 localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+EOF
+cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
+#apt源
+mirrors_server='mirrors.ustc.edu.cn'
+source /etc/os-release
+rm -rf /etc/apt/sources.list.d/*
+cat << EOF > /etc/apt/sources.list
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME} main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-security main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-updates main restricted universe multiverse
+
+deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-backports main restricted universe multiverse
+
+# deb http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+# deb-src http://${mirrors_server}/${ID}/ ${VERSION_CODENAME}-proposed main restricted universe multiverse
+EOF
+
+echo export DEBIAN_FRONTEND=noninteractive > /etc/profile.d/apt.sh && source /etc/profile &> /dev/null
+apt update &> /dev/null  && apt -y upgrade &> /dev/null
+#基础环境
+apt install git python3-dev libffi-dev gcc libssl-dev -y &> /dev/null
+#NTP
+apt -y install chrony &> /dev/null
+ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+sed -i '/^pool.*iburst/d' /etc/chrony/chrony.conf
+sed -i '/^server.*iburst/d' /etc/chrony/chrony.conf
+sed -i '/^allow/d' /etc/chrony/chrony.conf
+if [[ $HostName == 'controller1' || $HostName == 'controller2' || $HostName == 'controller3' ]];then
+#ntpserver
+cat << EOF >> /etc/chrony/chrony.conf
+server time.windows.com iburst
+server pool.ntp.org iburst
+allow 0.0.0.0/0
+EOF
+systemctl restart chrony
+else
+#ntpclient
+cat << EOF >> /etc/chrony/chrony.conf
+server controller1 iburst
+server controller2 iburst
+server controller3 iburst
+EOF
+systemctl restart chrony
+fi
+#安全相关
+systemctl disable  ufw --now && systemctl mask ufw &> /dev/null
+systemctl disable apparmor --now && systemctl mask apparmor &> /dev/null
+set +ex
+EEOOFF
+
+#将/opt目录的内容同步至其他主机
+files='
+playbook
+baseconfig.sh
+'
+for file in $files;do
+ansible 'all:!admin' -m synchronize -a "src=/opt/$file dest=/opt/$file"
+ansible 'all' -m shell -a "chmod 600 /opt/$file"
+done
+
+ansible all -m shell -a "bash /opt/baseconfig.sh"
+```
 # 2. 先决条件
 ## 2.1 docker镜像
 
