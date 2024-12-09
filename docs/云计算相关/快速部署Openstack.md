@@ -145,14 +145,20 @@ sed -i -e '
 /^\[storage\]/anode\[1:3\] ansible_user=root
 /^\[monitoring\]/anode\[1:3\] ansible_user=root
 ' /etc/kolla/multinode
+
 ```
 
 # 5. 部署
 
 部署预检测
 ```
-kolla-ansible bootstrap-servers -i /etc/kolla/multinode
+
 kolla-ansible prechecks -i /etc/kolla/multinode
+
+kolla-ansible bootstrap-servers -i /etc/kolla/multinode
+
+
+#
 ```
 
 开始部署
