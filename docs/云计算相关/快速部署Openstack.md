@@ -44,3 +44,25 @@ for i in $images;do
   docker rmi kolla/$i:$imgtag
   done
 ```
+
+## 2.2 安装依赖
+
+```
+apt update
+apt install git python3-dev libffi-dev gcc libssl-dev python3-venv -y
+
+python3 -m venv /usr/local/kolla
+source /usr/local/kolla/activate
+pip config set global.index-url http://pypi.tuna.tsinghua.edu.cn/simple
+pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+pip install -U pip
+pip install 'ansible-core>=|ANSIBLE_CORE_VERSION_MIN|,<|ANSIBLE_CORE_VERSION_MAX|.99'
+```
+# 3. 安装`kolla-ansible`
+
+```
+git clone -b stable/2024.2 https://opendev.org/openstack/kolla-ansible.git
+ 
+cd kolla-ansible
+
+```
