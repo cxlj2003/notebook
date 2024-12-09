@@ -152,12 +152,9 @@ sed -i -e '
 
 部署预检测
 ```
-
-kolla-ansible prechecks -i /etc/kolla/multinode
-
 kolla-ansible bootstrap-servers -i /etc/kolla/multinode
 
-
+kolla-ansible prechecks -i /etc/kolla/multinode
 #
 ```
 
