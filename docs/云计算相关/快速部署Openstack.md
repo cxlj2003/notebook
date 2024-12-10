@@ -404,21 +404,23 @@ ansible all -m shell -a "bash /opt/baseconfig.sh"
 # 2. 先决条件
 ## 2.1 docker镜像
 
-查看维护的版本
 ```
-https://github.com/openstack/kolla/branches
-```
-使用`-b`克隆指定版本
-```
-git clone -b stable/2024.2 https://github.com/openstack/kolla.git
-```
-获取docker镜像名称
-```
-ls -R kolla/docker/ |grep  ":" |awk -F "/" '{print $4}' |grep -Ev '^$' |awk -F ":" '{print $1}'
-```
-拉取镜像
-```
-images=`ls -R kolla/docker/ |grep  ":" |awk -F "/" '{print $4}' |grep -Ev '^$' |awk -F ":" '{print $1}'`
+apt update &> /dev/null 
+apt install git python3-dev libffi-dev gcc libssl-dev python3-venv -y &> /dev/null
+
+venv_path=/usr/local/kolla-images
+if [[ ! -e $venv_path ]];then
+mkdir -p $venv_path
+python3 -m venv $venv_path
+source $venv_path/bin/activate
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple  &> /dev/null
+pip install -U pip &> /dev/null
+fi
+
+python3 -m pip install kolla &> /dev/null
+python3 -m pip install docker &> /dev/null
+
+images=`kolla-build -b ubuntu --list-images |awk  '{print $NF}'`
 imgtag='2024.2-ubuntu-noble'
 for i in $images;do
   docker pull kolla/$i:$imgtag
@@ -426,7 +428,8 @@ for i in $images;do
   docker push registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
   docker rmi registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
   docker rmi kolla/$i:$imgtag
-  done
+done
+deactivate
 ```
 
 ## 2.2 安装依赖
@@ -454,8 +457,9 @@ fi
 ```
 venv_path=/usr/local/kolla
 source $venv_path/bin/activate
-git clone --branch stable/2024.2 https://opendev.org/openstack/kolla-ansible
-pip install ./kolla-ansible &> /dev/null
+#git clone --branch stable/2024.2 https://opendev.org/openstack/kolla-ansible
+#pip install ./kolla-ansible &> /dev/null
+pip install kolla-ansible==19.1.0
 # Install Ansible Galaxy requirements
 kolla-ansible install-deps &> /dev/null
 if [ ! -e /etc/kolla ];then
@@ -478,9 +482,9 @@ deactivate
 cat << EOF > /etc/kolla/globals.yml
 node_config: "/etc/kolla"   
 kolla_base_distro: "ubuntu"
-openstack_release: "2024.02"
+openstack_release: "2024.2"
 node_custom_config: "{{ node_config }}/config"
-kolla_internal_vip_address: "198.51.100.110"
+kolla_internal_vip_address: "172.16.250.110"
 docker_registry: registry.cn-hangzhou.aliyuncs.com
 docker_namespace: "mgt"
 network_interface: "bond1"
@@ -490,22 +494,22 @@ enable_openstack_core: "yes"
 enable_hacluster: "yes"
 enable_haproxy: "yes"
 enable_keepalived: "{{ enable_haproxy | bool }}"
-enable_cinder: "yes"
-enable_cinder_backend_nfs: "no"
-cinder_backend_ceph: "yes"
-cinder_volume_group: "cinder-volumes"
+#enable_cinder: "yes"
+#enable_cinder_backend_nfs: "no"
+#cinder_backend_ceph: "yes"
+#cinder_volume_group: "cinder-volumes"
 # Glance
-ceph_glance_user: "glance"
-ceph_glance_pool_name: "images"
+#ceph_glance_user: "glance"
+#ceph_glance_pool_name: "images"
 # Cinder
-ceph_cinder_user: "cinder"
-ceph_cinder_pool_name: "volumes"
-ceph_cinder_backup_user: "cinder-backup"
-ceph_cinder_backup_pool_name: "backups"
+#ceph_cinder_user: "cinder"
+#ceph_cinder_pool_name: "volumes"
+#ceph_cinder_backup_user: "cinder-backup"
+#ceph_cinder_backup_pool_name: "backups"
 # Nova
-ceph_nova_user: "{{ ceph_cinder_user }}"
-ceph_nova_pool_name: "vms"
-nova_compute_virt_type: "kvm"
+#ceph_nova_user: "{{ ceph_cinder_user }}"
+#ceph_nova_pool_name: "vms"
+#nova_compute_virt_type: "kvm"
 EOF
 ```
 
@@ -518,7 +522,7 @@ sed -i -e '/^control./d
 /^compute./d
 /^storage./d
 /^monitoring./d' /etc/kolla/multinode
-#添加node1-node3至配置文件的控制,网络,计算,存储,监控
+#添加控制,网络,计算,存储,监控
 sed -i -e '
 /^\[control\]/acontroller\[1:3\] ansible_user=root
 /^\[network\]/acontroller\[1:3\] ansible_user=root
@@ -526,17 +530,22 @@ sed -i -e '
 /^\[storage\]/astorage\[1:3\] ansible_user=root
 /^\[monitoring\]/acontroller\[1:3\] ansible_user=root
 ' /etc/kolla/multinode
-
 ```
 
 # 5. 部署
 
-部署预检测
+部署环境
 ```
 kolla-ansible bootstrap-servers -i /etc/kolla/multinode
 
-kolla-ansible prechecks -i /etc/kolla/multinode
+#Docker 安装报错处理
+sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collections/ansible_collections/openstack/kolla/roles/docker/defaults/main.yml
 
+kolla-ansible bootstrap-servers -i /etc/kolla/multinode
+```
+部署预测试
+```
+kolla-ansible prechecks -i /etc/kolla/multinode
 ```
 
 开始部署
