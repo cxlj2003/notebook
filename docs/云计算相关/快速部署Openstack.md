@@ -445,7 +445,6 @@ source $venv_path/bin/activate
 pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple  &> /dev/null
 pip install -U pip &> /dev/null
 pip install 'ansible-core>=2.16,<2.17.99' &> /dev/null
-pip3 install docker &> /dev/null
 deactivate
 fi
 
