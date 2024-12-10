@@ -536,8 +536,6 @@ sed -i -e '
 
 部署环境
 ```
-kolla-ansible bootstrap-servers -i /etc/kolla/multinode
-
 #Docker 安装报错处理
 sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collections/ansible_collections/openstack/kolla/roles/docker/defaults/main.yml
 
