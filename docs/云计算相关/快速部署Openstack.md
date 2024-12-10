@@ -408,7 +408,7 @@ ansible all -m shell -a "bash /opt/baseconfig.sh"
 apt update &> /dev/null 
 apt install git python3-dev libffi-dev gcc libssl-dev python3-venv -y &> /dev/null
 
-venv_path=/usr/local/kolla-images
+venv_path=/usr/local/kolla
 if [[ ! -e $venv_path ]];then
 mkdir -p $venv_path
 python3 -m venv $venv_path
@@ -534,14 +534,17 @@ sed -i -e '
 
 # 5. 部署
 
-部署环境
+安装依赖
 ```
 #Docker 安装报错处理
 sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collections/ansible_collections/openstack/kolla/roles/docker/defaults/main.yml
-
+#计算节点自动注册
+sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: true/g" /usr/local/kolla/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
 kolla-ansible bootstrap-servers -i /etc/kolla/multinode
 ```
-部署预测试
+
+前置检查
+
 ```
 kolla-ansible prechecks -i /etc/kolla/multinode
 ```
@@ -549,6 +552,12 @@ kolla-ansible prechecks -i /etc/kolla/multinode
 开始部署
 ```
 kolla-ansible deploy -i /etc/kolla/multinode
+```
+
+完成部署
+
+```
+kolla-ansible post-deploy -i /etc/kolla/multinode
 ```
 
 验证部署
@@ -559,8 +568,15 @@ kolla-ansible validate-config -i /etc/kolla/multinode
 安装 OpenStack CLI 客户端
 ```
 pip install python-openstackclient -c https://releases.openstack.org/constraints/upper/2024.2
+```
 
-kolla-ansible post-deploy
+使用客户端
+```
+source /etc/kolla/admin-openrc.sh
+```
 
-/usr/local/kolla/share/kolla-ansible/init-runonce
+执行初始化
+```
+source /usr/local/kolla-ansible/share/kolla/init-runonce
+
 ```
