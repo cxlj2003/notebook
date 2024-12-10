@@ -1,39 +1,223 @@
 # 1.部署环境
 
-| 主机名   | 管理地址           | VTEP          | Provider | FQDN                  | 角色   | 备注  |
-| :---- | :------------- | :------------ | :------- | :-------------------- | :--- | :-- |
-| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 控制节点 |     |
-| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 控制节点 |     |
-| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 控制节点 |     |
-| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 计算节点 |     |
-| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 计算节点 |     |
-| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 计算节点 |     |
-| node1 | 198.51.100.101 | 198.19.32.101 |          | node1.openstack.local | 存储节点 |     |
-| node2 | 198.51.100.102 | 198.19.32.102 |          | node2.openstack.local | 存储节点 |     |
-| node3 | 198.51.100.103 | 198.19.32.103 |          | node3.openstack.local | 存储节点 |     |
->[!注]
->1.每个节点配置3块网卡,4块磁盘
->2.网卡1:管理网;网卡2:VTEP网卡;网卡3:Provider
->3.操作系统安装时使用lvm逻辑卷
->4.第二块网卡用于Cinder LVM
->5.第三和第四块用于Swift对象存储
->6.参考文档: https://docs.openstack.org/kolla-ansible/2024.2/user/quickstart.html
+| 主机名         | bond1          | bond2          | bond3 | bond4          | 角色   |
+| ----------- | -------------- | -------------- | ----- | -------------- | ---- |
+| controller1 | 172.16.250.101 | 172.16.251.101 |       | 172.16.254.101 | 控制节点 |
+| controller2 | 172.16.250.102 | 172.16.251.102 |       | 172.16.254.102 | 控制节点 |
+| controller3 | 172.16.250.103 | 172.16.251.103 |       | 172.16.254.103 | 控制节点 |
+| compute1    | 172.16.250.104 | 172.16.251.104 |       | 172.16.254.104 | 计算节点 |
+| compute2    | 172.16.250.105 | 172.16.251.105 |       | 172.16.254.105 | 计算节点 |
+| compute3    | 172.16.250.106 | 172.16.251.106 |       | 172.16.254.106 | 计算节点 |
+| storage1    | 172.16.250.107 |                |       | 172.16.254.107 | 存储节点 |
+| storage2    | 172.16.250.108 |                |       | 172.16.254.108 | 存储节点 |
+| storage3    | 172.16.250.109 |                |       | 172.16.254.109 | 存储节点 |
 
-## 1.1 域名解析
+>[!NOTE]
+>
+1.网卡8块组成4个bond:  
+bond1: 管理  
+bond2: 控制  
+bond3: 业务 (openstack)  
+bond4: 存储  
+2.硬盘4块:  
+sda:操作系统  
+sdb: OSD  
+sdc: OSD  
+sdd: OSD  
+3.操作系统:Ubuntu 24.01LTS
+>4.域名:test.local
+>参考文档: https://docs.openstack.org/kolla-ansible/2024.2/user/quickstart.html
 
+## 1.1 bond配置
+控制计算节点
 ```
-cat << 'EOF' > /opt/playbook
-172.16.250.101 controller1.ait.lo controller1 1qaz#EDC
-172.16.250.102 controller2.ait.lo controller2 1qaz#EDC
-172.16.250.103 controller3.ait.lo controller3 1qaz#EDC
-172.16.250.104 compute1.ait.lo compute1 1qaz#EDC
-172.16.250.105 compute2.ait.lo compute2 1qaz#EDC
-172.16.250.106 compute3.ait.lo compute3 1qaz#EDC
-172.16.250.107 storage1.ait.lo storage1 1qaz#EDC
-172.16.250.108 storage2.ait.lo storage2 1qaz#EDC
-172.16.250.109 storage3.ait.lo storage3 1qaz#EDC
+cat << EOF > /etc/modules-load.d/bonding.conf
+bonding
+EOF
+modprobe bonding
+lsmod | grep bonding
+
+rm -rf /etc/netplan/*
+ip4=`ip route |grep -Ev 'default' |awk '{print $NF}' |awk -F . '{print $NF}'`
+bond1_active=ens160
+bond1_backup=ens192
+bond1_addr="172.16.250.${ip4}/24"
+bond1_gw='172.16.250.254'
+bond2_active=ens224
+bond2_backup=ens256
+bond2_addr="172.16.251.${ip4}/24"
+bond3_active=ens161
+bond3_backup=ens193
+bond4_active=ens225
+bond4_backup=ens257
+bond4_addr="172.16.254.${ip4}/24"
+
+cat <<EOF > /etc/netplan/bonds.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ${bond1_active}:
+      dhcp4: false
+    ${bond1_backup}:
+      dhcp4: false
+    ${bond2_active}:
+      dhcp4: false
+    ${bond2_backup}:
+      dhcp4: false
+    ${bond3_active}:
+      dhcp4: false
+    ${bond3_backup}:
+      dhcp4: false
+    ${bond4_active}:
+      dhcp4: false
+    ${bond4_backup}:
+      dhcp4: false
+  bonds:
+    bond1:
+      addresses:
+      - "${bond1_addr}"
+      nameservers:
+        addresses:
+        - 8.8.8.8
+        - 114.114.114.114
+        search:
+        - local
+      interfaces:
+      - ${bond1_active}
+      - ${bond1_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond1_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+      routes:
+      - to: "default"
+        via: "${bond1_gw}"
+    bond2:
+      addresses:
+      - "${bond2_addr}"
+      interfaces:
+      - ${bond2_active}
+      - ${bond2_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond2_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+    bond3:
+      interfaces:
+      - ${bond3_active}
+      - ${bond3_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond3_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+    bond4:
+      addresses:
+      - "${bond4_addr}"
+      interfaces:
+      - ${bond4_active}
+      - ${bond4_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond4_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
 EOF
 
+chmod 600 /etc/netplan/bonds.yaml
+netplan apply
+```
+
+存储节点
+```
+cat << EOF > /etc/modules-load.d/bonding.conf
+bonding
+EOF
+modprobe bonding
+lsmod | grep bonding
+
+rm -rf /etc/netplan/*
+ip4=`ip route |grep -Ev 'default' |awk '{print $NF}' |awk -F . '{print $NF}'`
+bond1_active=ens160
+bond1_backup=ens192
+bond1_addr="172.16.250.${ip4}/24"
+bond1_gw='172.16.250.254'
+bond2_active=ens224
+bond2_backup=ens256
+bond2_addr="172.16.254.${ip4}/24"
+cat <<EOF > /etc/netplan/bonds.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ${bond1_active}:
+      dhcp4: false
+    ${bond1_backup}:
+      dhcp4: false
+    ${bond2_active}:
+      dhcp4: false
+    ${bond2_backup}:
+      dhcp4: false
+  bonds:
+    bond1:
+      addresses:
+      - "${bond1_addr}"
+      nameservers:
+        addresses:
+        - 8.8.8.8
+        - 114.114.114.114
+        search:
+        - local
+      interfaces:
+      - ${bond1_active}
+      - ${bond1_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond1_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+      routes:
+      - to: "default"
+        via: "${bond1_gw}"
+    bond2:
+      addresses:
+      - "${bond2_addr}"
+      interfaces:
+      - ${bond2_active}
+      - ${bond2_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond2_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+EOF
+
+chmod 600 /etc/netplan/bonds.yaml
+netplan apply
+```
+## 1.2 域名解析
+
+```
+cat << 'EOF' > /opt/plan
+172.16.250.101 controller1.test.local controller1 1qaz#EDC
+172.16.250.102 controller2.test.local controller2 1qaz#EDC
+172.16.250.103 controller3.test.local controller3 1qaz#EDC
+172.16.250.104 compute1.test.local compute1 1qaz#EDC
+172.16.250.105 compute2.test.local compute2 1qaz#EDC
+172.16.250.106 compute3.test.local compute3 1qaz#EDC
+172.16.250.107 storage1.test.local storage1 1qaz#EDC
+172.16.250.108 storage2.test.local storage2 1qaz#EDC
+172.16.250.109 storage3.test.local storage3 1qaz#EDC
+EOF
 ```
 
 ```
@@ -48,9 +232,9 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
 EOF
-cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
+cat /opt/plan |awk '{print $1" "$2" "$3}' >> /etc/hosts
 ```
-## 1.2 apt源
+## 1.3 apt源
 ```
 mirrors_server='mirrors.ustc.edu.cn'
 source /etc/os-release
@@ -76,40 +260,49 @@ echo export DEBIAN_FRONTEND=noninteractive > /etc/profile.d/apt.sh && source /et
 apt update &> /dev/null  && apt -y upgrade &> /dev/null
 ```
 
-## 1.3 ssh免密
+## 1.4 ssh免密
 
 ```
+apt update &> /dev/null
 apt -y install sshpass &> /dev/null
 
 if [ ! -e /root/.ssh/id_rsa ];then
 	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N '' &> /dev/null
 fi
 
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $1}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $1}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
+
+hosts=`cat /opt/plan |sort |uniq |awk '{print $2}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
+hosts=`cat /opt/plan |sort |uniq |awk '{print $3}' |xargs`
+for host in $hosts;do
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
 ```
 
-## 1.4 Ansible
+## 1.5 Ansible
 
 ```
 apt -y install ansible &> /dev/null
 cat << EOF > /opt/ansibe-hosts
 [admin]
-`cat /opt/playbook |sort |uniq |grep controller1 |awk '{print $1}'`
+`cat /opt/plan |sort |uniq |grep controller1 |awk '{print $1}'`
 [controllers]
-`cat /opt/playbook |sort |uniq |grep controller |awk '{print $1}'`
+`cat /opt/plan|sort |uniq |grep controller |awk '{print $1}'`
 [computes]
-`cat /opt/playbook |sort |uniq |grep compute |awk '{print $1}'`
+`cat /opt/plan |sort |uniq |grep compute |awk '{print $1}'`
 [storages]
-`cat /opt/playbook |sort |uniq |grep storage |awk '{print $1}'`
-[ntpservers:children]
-controllers
-[ntpclients:children]
-computes
-storages
+`cat /opt/plan |sort |uniq |grep storage |awk '{print $1}'`
 EOF
 if [ ! -e /etc/ansible ];then
 	mkdir -p /etc/ansible
@@ -118,15 +311,16 @@ cat /opt/ansibe-hosts > /etc/ansible/hosts
 ansible all -m ping
 ```
 
-## 1.5 基础配置脚本
+## 1.6 基础配置脚本
 
 ```
 cat << 'EEOOFF' > /opt/baseconfig.sh
 #!/bin/bash
 set -ex
 #主机名
-hostip=`ip route | egrep -v "br|docker|default" | egrep "eth|ens|enp" |awk '{print $NF}'`
-HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
+mgmtnic=`ip route |grep default |awk '{print $(NF-2)}'`
+hostip=`ip route |grep -Ev "br|docker|default" |grep $mgmtnic |awk '{print $NF}'`
+HostName=`cat /opt/plan |grep $hostip |awk '{print $3}'`
 hostnamectl set-hostname $HostName
 #域名解析
 cat << 'EOF' > /etc/hosts
@@ -140,7 +334,7 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
 EOF
-cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
+cat /opt/plan |awk '{print $1" "$2" "$3}' >> /etc/hosts
 #apt源
 mirrors_server='mirrors.ustc.edu.cn'
 source /etc/os-release
@@ -197,7 +391,7 @@ EEOOFF
 
 #将/opt目录的内容同步至其他主机
 files='
-playbook
+plan
 baseconfig.sh
 '
 for file in $files;do
@@ -327,11 +521,11 @@ sed -i -e '/^control./d
 /^monitoring./d' /etc/kolla/multinode
 #添加node1-node3至配置文件的控制,网络,计算,存储,监控
 sed -i -e '
-/^\[control\]/anode\[1:3\] ansible_user=root
-/^\[network\]/anode\[1:3\] ansible_user=root
-/^\[compute\]/anode\[1:3\] ansible_user=root
-/^\[storage\]/anode\[1:3\] ansible_user=root
-/^\[monitoring\]/anode\[1:3\] ansible_user=root
+/^\[control\]/acontroller\[1:3\] ansible_user=root
+/^\[network\]/acontroller\[1:3\] ansible_user=root
+/^\[compute\]/acompute\[1:3\] ansible_user=root
+/^\[storage\]/astorage\[1:3\] ansible_user=root
+/^\[monitoring\]/acontroller\[1:3\] ansible_user=root
 ' /etc/kolla/multinode
 
 ```
@@ -343,7 +537,7 @@ sed -i -e '
 kolla-ansible bootstrap-servers -i /etc/kolla/multinode
 
 kolla-ansible prechecks -i /etc/kolla/multinode
-#
+
 ```
 
 开始部署
