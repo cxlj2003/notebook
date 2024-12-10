@@ -1321,3 +1321,26 @@ echo \
 apt-get update
 apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 ```
+
+# 12. kolla-ansilbe docker 镜像
+
+```
+#!/bin/bash
+set -ex
+public_registry=docker.io
+image_namespace=kolla
+private_registry=registry.cn-hangzhou.aliyuncs.com
+private_namespace=mgt
+openstack_release=2024.1
+image_base_os=ubuntu-jammy
+image_list=`kolla-build -b ubuntu --openstack-release ${openstack_release} --list-images |awk  '{print $NF}'`
+for image in $image_list;do
+        docker pull $public_registry/$image_namespace/$image:$openstack_release-$image_base_os
+        docker tag $public_registry/$image_namespace/$image:$openstack_release-$image_base_os $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
+        docker push $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
+        docker rmi  $public_registry/$image_namespace/$image:$openstack_release-$image_base_os
+        docker rmi $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
+done
+
+set +ex
+```

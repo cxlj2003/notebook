@@ -509,7 +509,7 @@ enable_keepalived: "{{ enable_haproxy | bool }}"
 # Nova
 #ceph_nova_user: "{{ ceph_cinder_user }}"
 #ceph_nova_pool_name: "vms"
-#nova_compute_virt_type: "kvm"
+#nova_compute_virt_type: "qemu"
 EOF
 ```
 
@@ -540,6 +540,11 @@ sed -i -e '
 sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collections/ansible_collections/openstack/kolla/roles/docker/defaults/main.yml
 #计算节点自动注册
 sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: true/g" /usr/local/kolla/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
+#nova-compute容器启动认证报错
+sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" /usr/local/kolla/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
+```
+
+```
 kolla-ansible bootstrap-servers -i /etc/kolla/multinode
 ```
 
