@@ -443,6 +443,9 @@ docker tag  registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0 quay.io/ceph/ceph
 创建新 Ceph 集群的第一步是在 Ceph 集群的第一台主机上运行`cephadm bootstrap`命令。运行的行为 Ceph 集群第一台主机上的`cephadm bootstrap`命令创建 Ceph 集群的第一个 Monitor 守护进程。您必须将 Ceph 集群第一台主机的 IP 地址传递给`ceph bootstrap`命令，因此您需要知道该主机的 IP 地址。
 
 ```
+if [ ! -e /root/.ssh/id_rsa ];then
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ''
+fi
 cephadm bootstrap --mon-ip 172.16.254.107
 ```
 运行结果:
@@ -617,23 +620,38 @@ ceph orch host ls
 
 存储1向所有存储免密
 ```
-hosts=`cat /opt/plan |sort |uniq |awk '{print $1}' |xargs`
+if [ ! -e /root/.ssh/id_rsa ];then
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ''
+fi
+hosts='
+172.16.250.107
+172.16.250.108
+172.16.250.109
+'
 for host in $hosts;do
  os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
-done
-hosts=`cat /opt/plan |sort |uniq |awk '{print $2}' |xargs`
-for host in $hosts;do
- os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
-done
-hosts=`cat /opt/plan |sort |uniq |awk '{print $3}' |xargs`
-for host in $hosts;do
- os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+ sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 
-hosts='172.16.250.107
+apt install ansilbe -y
+if [ ! -e /etc/ansible ];then
+	mkdir -p /etc/ansible
+fi
+cat << EOF > /etc/ansible/hosts
+[admin]
+172.16.250.107
+[storages]
+172.16.250.107
+172.16.250.108
+172.16.250.109
+EOF
+ansible storages -m ping
+```
+分发密钥
+```
+
+hosts='
+172.16.250.107
 172.16.250.108
 172.16.250.109
 '
@@ -642,20 +660,41 @@ for host in $hosts;do
  sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 
-hosts='172.16.254.107
+hosts='
+storage1
+storage2
+storage3
+'
+for host in $hosts;do
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
+hosts='
+storage1.test.local
+storage2.test.local
+storage3.test.local
+'
+for host in $hosts;do
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
+hosts='
+172.16.254.107
 172.16.254.108
 172.16.254.109
 '
 for host in $hosts;do
  os_password='1qaz#EDC'
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 ```
 
 ```
 ceph orch apply mon 5
-ceph orch host add storage2 172.16.254.102 --labels _admin
-ceph orch host add storage3 172.16.254.103 --labels _admin
+ceph orch host add storage2 172.16.254.108 --labels _admin
+ceph orch host add storage3 172.16.254.109 --labels _admin
 
 ceph orch host label add node2  _admin
 ceph orch host label add node3  _admin
@@ -765,40 +804,31 @@ ceph orch apply mon --placement="newhost1,newhost2,newhost3"
 
 ```
 ceph orch apply mgr 3
-ceph orch apply mgr --placement="node1,node2,node3" --dry-run
-ceph orch apply mgr --placement="node1,node2,node3"
+ceph orch apply mgr --placement="storage1,storage2,storage3" --dry-run
+ceph orch apply mgr --placement="storage1,storage2,storage3"
 ceph orch ps |grep mgr
 
 ```
 ## 1.10 部署osd
 
 ```
-
-
 ceph config set mgr mgr/cephadm/device_enhanced_scan true
 
 lsmcli ldl
 ceph orch device ls
 
-
-#reboot node3
-ceph orch host rescan node3
-#reboot node2
-ceph orch host rescan node2
-#reboot node1
-ceph orch host rescan node1
-
 ceph orch apply osd --all-available-devices --dry-run
 ceph orch apply osd --all-available-devices
 
-ceph orch daemon add osd node1:/dev/sdb
-ceph orch daemon add osd node2:/dev/sdb
-ceph orch daemon add osd node3:/dev/sdb
+ceph orch daemon add osd storage1:/dev/sdb
+ceph orch daemon add osd storage2:/dev/sdb
+ceph orch daemon add osd storage3:/dev/sdb
 
+ceph orch daemon add osd storage1:/dev/sdc
+ceph orch daemon add osd storage2:/dev/sdc
+ceph orch daemon add osd storage3:/dev/sdc
 
 ceph orch osd rm status
-
-
 ```
 从特定主机上的特定设备创建 OSD：
 ```
@@ -849,16 +879,21 @@ ceph orch osd rm status
 在生产环境中，我们经常能够看见将Nova、Cinder、Glance与Ceph RBD进行对接。除此之外，还可以将Swift、Manila分别对接到Ceph RGW与CephFS。Ceph作为统一存储解决方案，有效降低了OpenStack云环境的复杂性与运维成本。
 ### 1.12.1 先决条件
 
+https://docs.ceph.com/en/latest/rbd/rbd-openstack/
 创建RBD存储池
 - images 对接 glance
 - vms对接nova
 - volumes对接cinder
 - backups对接cinder-bakup
 ```
-ceph osd pool create images 128
-ceph osd pool create vms 128
-ceph osd pool create volumes 128
-ceph osd pool create backups 128
+ceph osd pool create images
+ceph osd pool create vms
+ceph osd pool create volumes
+ceph osd pool create backups
+rbd pool init volumes
+rbd pool init images
+rbd pool init backups
+rbd pool init vms
 ```
 
 创建ceph用户
@@ -886,15 +921,19 @@ ceph auth list
 分发keyring
 
 ```
-
+cephadm shell
+if [ ! -e /root/.ssh/id_rsa ];then
+	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N '' &> /dev/null
+fi
+ssh-copy-id root@172.16.250.101
 #用于glance-api,分发至控制节点,存储节点(cinder-volume)
-ceph auth get-or-create client.glance > /etc/ceph/ceph.client.glance.keyring
+ceph auth get-or-create client.glance |ssh root@172.16.250.101 tee /etc/ceph/ceph.client.glance.keyring
 #用于cinder,分发至控制节点,计算节点
-ceph auth get-or-create-key client.cinder > /etc/ceph/ceph.client.cinder.keyring
+ceph auth get-or-create-key client.cinder | ssh root@172.16.250.101 tee /etc/ceph/ceph.client.cinder.keyring
 #用于cinder-backup,分发至控制节点,
-ceph auth get-or-create-key client.cinder-backup > /etc/ceph/ceph.client.cinder-backup.keyring
+ceph auth get-or-create-key client.cinder-backup | ssh root@172.16.250.101 tee  /etc/ceph/ceph.client.cinder-backup.keyring
 #用于nova-compute,分发至计算节点
-ceph auth get-key  client.cinder >/etc/ceph/ceph.client.cinder.key
+ceph auth get-key  client.cinder | ssh root@172.16.250.101 tee /etc/ceph/ceph.client.cinder.key
 
 files='
 ceph.client.glance.keyring
@@ -903,14 +942,14 @@ ceph.client.cinder-backup.keyring
 ceph.client.cinder.key
 '
 srcdir=/etc/ceph
-dstdri=/etc/ceph
+dstdir=/etc/ceph
 for f in $files;do
-  ansible 'all:!admin' -m synchronize -a "src=$srcdir/$f dest=$dstdir/$f"
+  ansible 'storages:!admin' -m synchronize -a "src=$srcdir/$f dest=$dstdir/$f"
 done
 
-ansible all -m shell -a "chown glance:glance ceph.client.glance.keyring"
-ansible all -m shell -a "chown cinder:cinder ceph.client.cinder.keyring"
-ansible all -m shell -a "chown cinder:cinder ceph.client.cinder-backup.keyring"
+ansible storages -m shell -a "chown glance:glance /etc/ceph/ceph.client.glance.keyring"
+ansible storages -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder.keyring"
+ansible storages -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder-backup.keyring"
 
 ```
 
@@ -918,4 +957,40 @@ ansible all -m shell -a "chown cinder:cinder ceph.client.cinder-backup.keyring"
 ceph orch client-keyring ls
 ```
 
+### 1.12.2 Openstack侧
+
+```
+cat << EOF > /etc/kolla/globals.yml
+node_config: "/etc/kolla"   
+kolla_base_distro: "ubuntu"
+openstack_release: "2024.2"
+node_custom_config: "{{ node_config }}/config"
+kolla_internal_vip_address: "172.16.250.110"
+docker_registry: registry.cn-hangzhou.aliyuncs.com
+docker_namespace: "mgt"
+network_interface: "bond1"
+neutron_external_interface: "bond3"
+neutron_plugin_agent: "openvswitch"
+enable_openstack_core: "yes"
+enable_hacluster: "yes"
+enable_haproxy: "yes"
+enable_keepalived: "{{ enable_haproxy | bool }}"
+enable_cinder: "yes"
+enable_cinder_backend_nfs: "no"
+cinder_backend_ceph: "yes"
+#cinder_volume_group: "cinder-volumes"
+# Glance
+ceph_glance_user: "glance"
+ceph_glance_pool_name: "images"
+# Cinder
+ceph_cinder_user: "cinder"
+ceph_cinder_pool_name: "volumes"
+ceph_cinder_backup_user: "cinder-backup"
+ceph_cinder_backup_pool_name: "backups"
+# Nova
+ceph_nova_user: "{{ ceph_cinder_user }}"
+ceph_nova_pool_name: "vms"
+nova_compute_virt_type: "kvm"
+EOF
+```
 # 2. Rook
