@@ -2,23 +2,34 @@
 
 ## 1.1 规划
 
-| 主机名   | bond1_ip       | bond2_ip      | bond4_ip      | fqdn         | 角色  | 备注  |
-| ----- | -------------- | ------------- | ------------- | ------------ | --- | --- |
-| node1 | 198.51.100.111 | 198.51.32.111 | 198.51.33.111 | node1.ait.lo |     |     |
-| node2 | 198.51.100.112 | 198.51.32.112 | 198.51.33.112 | node2.ait.lo |     |     |
-| node3 | 198.51.100.113 | 198.51.32.113 | 198.51.33.113 | node3.ait.lo |     |     |
->[!note]
->1.网卡8块组成4个bond: 
-> bond1: 管理
-> bond2: 控制
-> bond3: 业务 (openstack)
-> bond4: 存储 
->2.硬盘4块:
->sda:操作系统
->sdb: OSD
->sdc: OSD
->sdd: OSD
->3.操作系统:Ubuntu 24.01LTS
+| 主机名         | bond1          | bond2          | bond3 | bond4          | 角色   |
+| ----------- | -------------- | -------------- | ----- | -------------- | ---- |
+| controller1 | 172.16.250.101 | 172.16.251.101 |       | 172.16.254.101 | 控制节点 |
+| controller2 | 172.16.250.102 | 172.16.251.102 |       | 172.16.254.102 | 控制节点 |
+| controller3 | 172.16.250.103 | 172.16.251.103 |       | 172.16.254.103 | 控制节点 |
+| compute1    | 172.16.250.104 | 172.16.251.104 |       | 172.16.254.104 | 计算节点 |
+| compute2    | 172.16.250.105 | 172.16.251.105 |       | 172.16.254.105 | 计算节点 |
+| compute3    | 172.16.250.106 | 172.16.251.106 |       | 172.16.254.106 | 计算节点 |
+| storage1    | 172.16.250.107 |                |       | 172.16.254.107 | 存储节点 |
+| storage2    | 172.16.250.108 |                |       | 172.16.254.108 | 存储节点 |
+| storage3    | 172.16.250.109 |                |       | 172.16.254.109 | 存储节点 |
+
+>[!NOTE]
+>本文档针对storage1-3;前置文档[[快速部署Openstack]]
+1.网卡8块组成4个bond:  
+bond1: 管理  
+bond2: 控制  
+bond3: 业务 (openstack)  
+bond4: 存储  
+2.硬盘4块:  
+sda:操作系统  
+sdb: OSD  
+sdc: OSD  
+sdd: OSD  
+3.操作系统:Ubuntu 24.01LTS
+>4.域名:test.local
+>参考文档:https://docs.ceph.com/en/latest/cephadm/>
+
 ## 1.2 先决条件
 
 - Python 3    
@@ -26,8 +37,8 @@
 - Podman or Docker for running containers    
 - Time synchronization    
 - LVM2 for provisioning storage devices
-### 1.2.1 基础网络配置
-
+### 1.2.1 bond配置
+控制节点和计算节点的bond配置
 ```
 cat << EOF > /etc/modules-load.d/bonding.conf
 bonding
@@ -36,19 +47,20 @@ modprobe bonding
 lsmod | grep bonding
 
 rm -rf /etc/netplan/*
-ip4=111
-bond1_active=ens32
-bond1_backup=ens34
-bond1_addr="198.51.100.${ip4}/24"
-bond1_gw='198.51.100.254'
-bond2_active=ens35
-bond2_backup=ens36
-bond2_addr="198.19.32.${ip4}/24"
-bond3_active=ens37
-bond3_backup=ens38
-bond4_active=ens39
-bond4_backup=ens40
-bond4_addr="198.19.33.${ip4}/24"
+ip4=`ip route |grep -Ev 'default' |awk '{print $NF}' |awk -F . '{print $NF}'`
+bond1_active=ens160
+bond1_backup=ens192
+bond1_addr="172.16.250.${ip4}/24"
+bond1_gw='172.16.250.254'
+bond2_active=ens224
+bond2_backup=ens256
+bond2_addr="172.16.251.${ip4}/24"
+bond3_active=ens161
+bond3_backup=ens193
+bond4_active=ens225
+bond4_backup=ens257
+bond4_addr="172.16.254.${ip4}/24"
+
 cat <<EOF > /etc/netplan/bonds.yaml
 network:
   version: 2
@@ -131,20 +143,102 @@ EOF
 chmod 600 /etc/netplan/bonds.yaml
 netplan apply
 ```
-### 1.2.2 playbook
+
+存储节点的bond配置
+```
+cat << EOF > /etc/modules-load.d/bonding.conf
+bonding
+EOF
+modprobe bonding
+lsmod | grep bonding
+
+rm -rf /etc/netplan/*
+ip4=`ip route |grep -Ev 'default' |awk '{print $NF}' |awk -F . '{print $NF}'`
+bond1_active=ens160
+bond1_backup=ens192
+bond1_addr="172.16.250.${ip4}/24"
+bond1_gw='172.16.250.254'
+bond2_active=ens224
+bond2_backup=ens256
+bond2_addr="172.16.254.${ip4}/24"
+cat <<EOF > /etc/netplan/bonds.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ${bond1_active}:
+      dhcp4: false
+    ${bond1_backup}:
+      dhcp4: false
+    ${bond2_active}:
+      dhcp4: false
+    ${bond2_backup}:
+      dhcp4: false
+  bonds:
+    bond1:
+      addresses:
+      - "${bond1_addr}"
+      nameservers:
+        addresses:
+        - 8.8.8.8
+        - 114.114.114.114
+        search:
+        - local
+      interfaces:
+      - ${bond1_active}
+      - ${bond1_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond1_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+      routes:
+      - to: "default"
+        via: "${bond1_gw}"
+    bond2:
+      addresses:
+      - "${bond2_addr}"
+      interfaces:
+      - ${bond2_active}
+      - ${bond2_backup}
+      parameters:
+        mode: "active-backup"
+        primary: "${bond2_active}"
+        mii-monitor-interval: "1"
+        fail-over-mac-policy: "active"
+        gratuitous-arp: 5
+EOF
+
+chmod 600 /etc/netplan/bonds.yaml
+netplan apply
+```
+### 1.2.2 域名解析
 
 ```
-cat << 'EOF' > /opt/playbook
-198.51.100.111 node1.ait.lo node1 1qaz#EDC
-198.51.100.112 node2.ait.lo node2 1qaz#EDC
-198.51.100.113 node3.ait.lo node3 1qaz#EDC
-198.19.32.111 node1.ait.lo node1 1qaz#EDC
-198.19.32.112 node2.ait.lo node2 1qaz#EDC
-198.19.32.113 node3.ait.lo node3 1qaz#EDC
-198.19.33.111 node1.ait.lo node1 1qaz#EDC
-198.19.33.112 node2.ait.lo node2 1qaz#EDC
-198.19.33.113 node3.ait.lo node3 1qaz#EDC
+cat << 'EOF' > /opt/plan
+172.16.250.101 controller1.test.local controller1 1qaz#EDC
+172.16.250.102 controller2.test.local controller2 1qaz#EDC
+172.16.250.103 controller3.test.local controller3 1qaz#EDC
+172.16.250.104 compute1.test.local compute1 1qaz#EDC
+172.16.250.105 compute2.test.local compute2 1qaz#EDC
+172.16.250.106 compute3.test.local compute3 1qaz#EDC
+172.16.250.107 storage1.test.local storage1 1qaz#EDC
+172.16.250.108 storage2.test.local storage2 1qaz#EDC
+172.16.250.109 storage3.test.local storage3 1qaz#EDC
 EOF
+cat << 'EOF' > /etc/hosts
+127.0.0.1 localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+EOF
+cat /opt/plan |awk '{print $1" "$2" "$3}' >> /etc/hosts
 ```
 ### 1.2.3 配置apt源
 
@@ -174,148 +268,60 @@ apt update &> /dev/null && apt -y upgrade &> /dev/null
 apt -y install lrzsz &> /dev/null
 ```
 
-### 1.2.4 配置域名解析
-
-```
-cat << 'EOF' > /etc/hosts
-127.0.0.1 localhost
-
-# The following lines are desirable for IPv6 capable hosts
-::1     ip6-localhost ip6-loopback
-fe00::0 ip6-localnet
-ff00::0 ip6-mcastprefix
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-# Openstack
-EOF
-cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
-hostip=`ip add show dev bond1 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
-HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
-hostnamectl set-hostname $HostName
-```
-
-### 1.2.5 ssh对等
+### 1.2.4 ssh对等
 
 ```
 apt update &> /dev/null && apt -y install sshpass  &> /dev/null
 if [ ! -e /root/.ssh/id_rsa ];then
 	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ''
 fi
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $1}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $1}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $2}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $2}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $3}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $3}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 ```
 
-### 1.2.6 Ansible
+### 1.2.5 Ansible
 
 ```
-apt update &> /dev/null && apt -y install ansible-core &> /dev/null
+apt -y install ansible &> /dev/null
+cat << EOF > /opt/ansibe-hosts
+[admin]
+`cat /opt/plan |sort |uniq |grep controller1 |awk '{print $1}'`
+[controllers]
+`cat /opt/plan|sort |uniq |grep controller |awk '{print $1}'`
+[computes]
+`cat /opt/plan |sort |uniq |grep compute |awk '{print $1}'`
+[storages]
+`cat /opt/plan |sort |uniq |grep storage |awk '{print $1}'`
+EOF
 if [ ! -e /etc/ansible ];then
 	mkdir -p /etc/ansible
 fi
-cat << EOF > /etc/ansible/hosts
-[admin]
-node1
-####ceph
-[mon]
-node1
-node2
-node3
-[mgr]
-node1
-node2
-node3
-[mds]
-node1
-node2
-node3
-[osd]
-node1
-node2
-node3
-[lb]
-node1
-node2
-node3
-[obj]
-node1
-node2
-node3
-[iscsi]
-node1
-node2
-node3
-[nfs]
-node1
-node2
-node3
-####openstack
-[controllers]
-node1
-node2
-node3
-[computes]
-node1
-node2
-node3
-[storages]
-node1
-node2
-node3
-####k8s
-[master]
-node1
-node2
-node3
-[lb]
-node1
-node2
-node3
-[etcd]
-node1
-node2
-node3
-[reg]
-node1
-node2
-node3
-[node]
-node1
-node2
-node3
-[ipvs:children]
-master
-node
-lb
-[docker:children]
-master
-node
-reg
-[k8s:children]
-master
-node
-EOF
+cat /opt/ansibe-hosts > /etc/ansible/hosts
 ansible all -m ping
 ```
 
-### 1.2.7 基础配置脚本
+### 1.2.6 基础配置脚本
 
 ```
 cat << 'EEOOFF' > /opt/baseconfig.sh
-#1.playbook
-#ansible sync
+#1.Hostname
+mgmtnic=`ip route |grep default |awk '{print $(NF-2)}'`
+hostip=`ip route |grep -Ev "br|docker|default" |grep $mgmtnic |awk '{print $NF}'`
+HostName=`cat /opt/plan |grep $hostip |awk '{print $3}'`
+hostnamectl set-hostname $HostName
 #2.apt源
 echo export DEBIAN_FRONTEND=noninteractive > /etc/profile.d/apt.sh
 source /etc/profile
@@ -357,10 +363,7 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 # Openstack
 EOF
-cat /opt/playbook |awk '{print $1" "$2" "$3}' >> /etc/hosts
-hostip=`ip add show dev bond1 |grep -Ev 'inet6' |grep inet |awk '{print $2}' |awk -F / '{print $1}'`
-HostName=`cat /opt/playbook |grep $hostip |awk '{print $3}'`
-hostnamectl set-hostname $HostName
+cat /opt/plan |awk '{print $1" "$2" "$3}' >> /etc/hosts
 
 #4.Ntp配置
 apt update &> /dev/null
@@ -385,7 +388,7 @@ EOF
 ulimit -a &> /dev/null
 
 #6.安装docker组件
-apt install docker.io -y &> /dev/null
+#apt install docker.io -y &> /dev/null
 #7.关闭swap
 swapoff -a
 sed -i "s|/swap|#/swap|" /etc/fstab
@@ -394,7 +397,7 @@ systemctl disable ufw apparmor --now
 EEOOFF
 
 files='
-playbook
+plan
 baseconfig.sh
 '
 for f in $files;do
@@ -403,7 +406,6 @@ done
 
 ansible all -m shell -a "bash /opt/baseconfig.sh"
 ```
-
 
 ## 1.3 安装cephadm
 
@@ -414,6 +416,7 @@ apt install cephadm -y
 ## 1.4 Ceph容器镜像
 
 cephadm的版本并从官方镜像站下载镜像文件,最新版:[https://quay.io/repository/ceph/ceph](https://quay.io/repository/ceph/ceph)旧版本: [https://hub.docker.com/r/ceph](https://hub.docker.com/r/ceph)
+
 ```
 apt show cephadm |grep Version |uniq |awk '{print $NF}' 
 ```
@@ -430,7 +433,7 @@ docker tag  registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0 quay.io/ceph/ceph
 创建新 Ceph 集群的第一步是在 Ceph 集群的第一台主机上运行`cephadm bootstrap`命令。运行的行为 Ceph 集群第一台主机上的`cephadm bootstrap`命令创建 Ceph 集群的第一个 Monitor 守护进程。您必须将 Ceph 集群第一台主机的 IP 地址传递给`ceph bootstrap`命令，因此您需要知道该主机的 IP 地址。
 
 ```
-cephadm bootstrap --mon-ip 198.19.33.111
+cephadm bootstrap --mon-ip 172.16.254.107
 ```
 运行结果:
 - 在本地主机上为新集群创建监视器和管理器守护程序。

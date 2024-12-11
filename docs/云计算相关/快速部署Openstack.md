@@ -581,10 +581,17 @@ pip install python-openstackclient -c https://releases.openstack.org/constraints
 
 使用客户端
 ```
+source /usr/local/kolla/bin/activate
 source /etc/kolla/admin-openrc.sh
 ```
 
 执行初始化
 ```
 source /usr/local/kolla/share/kolla-ansible/init-runonce
+```
+
+# 6.相关维护命令
+
+```
+
 ```
