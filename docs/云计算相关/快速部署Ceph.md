@@ -887,4 +887,4 @@ ansible all -m shell -a "chown cinder:cinder ceph.client.cinder-backup.keyring"
 ceph orch client-keyring ls
 ```
 
-# 2. 
+# 2. Rook

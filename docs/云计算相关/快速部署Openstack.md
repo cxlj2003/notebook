@@ -29,7 +29,7 @@ sdd: OSD
 >参考文档: https://docs.openstack.org/kolla-ansible/2024.2/user/quickstart.html
 
 ## 1.1 bond配置
-控制计算节点
+控制节点和计算节点的bond配置
 ```
 cat << EOF > /etc/modules-load.d/bonding.conf
 bonding
@@ -135,7 +135,7 @@ chmod 600 /etc/netplan/bonds.yaml
 netplan apply
 ```
 
-存储节点
+存储节点的bond配置
 ```
 cat << EOF > /etc/modules-load.d/bonding.conf
 bonding
@@ -218,9 +218,6 @@ cat << 'EOF' > /opt/plan
 172.16.250.108 storage2.test.local storage2 1qaz#EDC
 172.16.250.109 storage3.test.local storage3 1qaz#EDC
 EOF
-```
-
-```
 cat << 'EOF' > /etc/hosts
 127.0.0.1 localhost
 
@@ -420,14 +417,21 @@ fi
 python3 -m pip install kolla &> /dev/null
 python3 -m pip install docker &> /dev/null
 
-images=`kolla-build -b ubuntu --list-images |awk  '{print $NF}'`
-imgtag='2024.2-ubuntu-noble'
-for i in $images;do
-  docker pull kolla/$i:$imgtag
-  docker tag kolla/$i:$imgtag registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
-  docker push registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
-  docker rmi registry.cn-hangzhou.aliyuncs.com/mgt/$i:$imgtag
-  docker rmi kolla/$i:$imgtag
+public_registry=docker.io
+image_namespace=kolla
+private_registry=registry.cn-hangzhou.aliyuncs.com
+private_namespace=mgt
+#2024.2 对应 ubuntu-noble
+#2024.1 对应 ubuntu-jammy
+openstack_release=2024.2
+image_base_os=ubuntu-noble
+image_list=`kolla-build -b ubuntu --openstack-release ${openstack_release} --list-images |awk  '{print $NF}'`
+for image in $image_list;do
+        docker pull $public_registry/$image_namespace/$image:$openstack_release-$image_base_os
+        docker tag $public_registry/$image_namespace/$image:$openstack_release-$image_base_os $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
+        docker push $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
+        docker rmi  $public_registry/$image_namespace/$image:$openstack_release-$image_base_os
+        docker rmi $private_registry/$private_namespace/$image:$openstack_release-$image_base_os
 done
 deactivate
 ```
@@ -509,7 +513,7 @@ enable_keepalived: "{{ enable_haproxy | bool }}"
 # Nova
 #ceph_nova_user: "{{ ceph_cinder_user }}"
 #ceph_nova_pool_name: "vms"
-#nova_compute_virt_type: "qemu"
+nova_compute_virt_type: "kvm"
 EOF
 ```
 
@@ -582,6 +586,5 @@ source /etc/kolla/admin-openrc.sh
 
 执行初始化
 ```
-source /usr/local/kolla/share/kolla-ansible/init-runonce 
-
+source /usr/local/kolla/share/kolla-ansible/init-runonce
 ```
