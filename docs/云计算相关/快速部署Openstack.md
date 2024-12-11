@@ -543,9 +543,9 @@ sed -i -e '
 #Docker 安装报错处理
 sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collections/ansible_collections/openstack/kolla/roles/docker/defaults/main.yml
 #计算节点自动注册
-sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: true/g" /usr/local/kolla/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
+sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: true/g" $venv_path/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
 #nova-compute容器启动认证报错
-sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" /usr/local/kolla/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
+sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" $venv_path/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
 ```
 
 ```
@@ -581,13 +581,60 @@ pip install python-openstackclient -c https://releases.openstack.org/constraints
 
 使用客户端
 ```
-source /usr/local/kolla/bin/activate
+venv_path=/usr/local/kolla
+source $venv_path/bin/activate
 source /etc/kolla/admin-openrc.sh
 ```
 
 执行初始化
 ```
-source /usr/local/kolla/share/kolla-ansible/init-runonce
+openstack network create  --share --external \
+  --provider-physical-network physnet1 \
+  --provider-network-type flat public1
+  
+START_IP_ADDRESS=172.16.252.1
+END_IP_ADDRESS=172.16.252.100
+DNS_RESOLVER=8.8.8.8
+PROVIDER_NETWORK_GATEWAY=172.16.252.254
+PROVIDER_NETWORK_CIDR=172.16.252.0/24
+openstack subnet create --network public1 \
+  --allocation-pool start=$START_IP_ADDRESS,end=$END_IP_ADDRESS \
+  --dns-nameserver $DNS_RESOLVER --gateway $PROVIDER_NETWORK_GATEWAY \
+  --subnet-range $PROVIDER_NETWORK_CIDR public1
+
+openstack network create selfservice
+DNS_RESOLVER=8.8.8.8
+SELFSERVICE_NETWORK_GATEWAY=172.16.0.254
+SELFSERVICE_NETWORK_CIDR=172.16.0.0/24
+openstack subnet create --network selfservice \
+  --dns-nameserver $DNS_RESOLVER --gateway $SELFSERVICE_NETWORK_GATEWAY \
+  --subnet-range $SELFSERVICE_NETWORK_CIDR selfservice
+
+openstack router create router
+openstack router add subnet router selfservice
+openstack router set router --external-gateway public1
+
+openstack flavor create --id 0 --vcpus 1 --ram 1024 --disk 20 m1.nano
+
+openstack keypair create --public-key ~/.ssh/id_rsa.pub mykey
+openstack security group rule create --proto icmp default
+openstack security group rule create --proto tcp --dst-port 22 default
+
+
+PROVIDER_NET_ID=`openstack network list | awk '/ public1 / { print $2 }'`
+openstack server create --flavor m1.nano --image cirros \
+  --nic net-id=$PROVIDER_NET_ID  \
+  --key-name mykey provider-instance
+
+SELFSERVICE_NET_ID=`openstack network list | awk '/ selfservice / { print $2 }'`
+openstack server create --flavor m1.nano --image cirros \
+  --nic net-id=$SELFSERVICE_NET_ID  \
+  --key-name mykey selfservice-instance
+
+openstack server list
+
+openstack floating ip create public1
+
 ```
 
 # 6.相关维护命令

@@ -422,9 +422,19 @@ apt show cephadm |grep Version |uniq |awk '{print $NF}'
 ```
 
 ```
+docker pull quay.io/ceph/ceph:v17.2.8
+docker tag quay.io/ceph/ceph:v17.2.8 registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
+docker push registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
+
+docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
+docker tag registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8 quay.io/ceph/ceph:v17.2.8
+```
+
+```
 docker pull quay.io/ceph/ceph:v19.2.0
 docker tag quay.io/ceph/ceph:v19.2.0 registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
 docker push registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
+
 docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0
 docker tag  registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0 quay.io/ceph/ceph:v19.2.0
 ```
@@ -605,29 +615,47 @@ ceph orch host ls
 
 ### 1.7.1 向群集中添加主机
 
-更新密钥
+存储1向所有存储免密
 ```
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $1}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $1}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $2}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $2}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
-hosts=`cat /opt/playbook |sort |uniq |awk '{print $3}' |xargs`
+hosts=`cat /opt/plan |sort |uniq |awk '{print $3}' |xargs`
 for host in $hosts;do
- os_password=`cat /opt/playbook|sort |uniq |grep $host |awk '{print $NF}'`
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
  sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
+hosts='172.16.250.107
+172.16.250.108
+172.16.250.109
+'
+for host in $hosts;do
+ os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+done
+
+hosts='172.16.254.107
+172.16.254.108
+172.16.254.109
+'
+for host in $hosts;do
+ os_password='1qaz#EDC'
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host
 done
 ```
 
 ```
 ceph orch apply mon 5
-ceph orch host add node2 198.19.33.112 --labels _admin
-ceph orch host add node3 198.19.33.113 --labels _admin
+ceph orch host add storage2 172.16.254.102 --labels _admin
+ceph orch host add storage3 172.16.254.103 --labels _admin
 
 ceph orch host label add node2  _admin
 ceph orch host label add node3  _admin
