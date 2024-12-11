@@ -565,7 +565,7 @@ kolla-ansible deploy -i /etc/kolla/multinode
 kolla-ansible post-deploy -i /etc/kolla/multinode
 ```
 
-验证部署
+验证配置
 ```
 kolla-ansible validate-config -i /etc/kolla/multinode
 ```
@@ -582,6 +582,6 @@ source /etc/kolla/admin-openrc.sh
 
 执行初始化
 ```
-source /usr/local/kolla-ansible/share/kolla/init-runonce
+source /usr/local/kolla/share/kolla-ansible/init-runonce 
 
 ```
