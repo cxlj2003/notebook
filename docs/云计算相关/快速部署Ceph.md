@@ -298,7 +298,7 @@ done
 apt -y install ansible &> /dev/null
 cat << EOF > /opt/ansibe-hosts
 [admin]
-`cat /opt/plan |sort |uniq |grep controller1 |awk '{print $1}'`
+`cat /opt/plan |sort |uniq |grep storage1 |awk '{print $1}'`
 [controllers]
 `cat /opt/plan|sort |uniq |grep controller |awk '{print $1}'`
 [computes]
@@ -594,6 +594,9 @@ cephadm shell -- ceph -s
 cephadm install ceph-common
 ceph -v
 ceph status
+
+ansible all -m shell -a 'apt install cephadm -y'
+ansible all -m shell -a 'cephadm install ceph-common'
 ```
 
 查看组件状态
@@ -618,38 +621,8 @@ ceph orch host ls
 
 ### 1.7.1 向群集中添加主机
 
-存储1向所有存储免密
-```
-if [ ! -e /root/.ssh/id_rsa ];then
-	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ''
-fi
-hosts='
-172.16.250.107
-172.16.250.108
-172.16.250.109
-'
-for host in $hosts;do
- os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id  -o StrictHostKeyChecking=no root@$host &> /dev/null
-done
-
-apt install ansilbe -y
-if [ ! -e /etc/ansible ];then
-	mkdir -p /etc/ansible
-fi
-cat << EOF > /etc/ansible/hosts
-[admin]
-172.16.250.107
-[storages]
-172.16.250.107
-172.16.250.108
-172.16.250.109
-EOF
-ansible storages -m ping
-```
 分发密钥
 ```
-
 hosts='
 172.16.250.107
 172.16.250.108
@@ -698,12 +671,6 @@ ceph orch host add storage3 172.16.254.109 --labels _admin
 
 ceph orch host label add node2  _admin
 ceph orch host label add node3  _admin
-```
-
-```
-alias ceph='cephadm shell -- ceph'
-echo "alias ceph='cephadm shell -- ceph'" >>/root/.bashrc
-source /root/.bashrc
 ```
 
 ```
@@ -880,7 +847,8 @@ ceph orch osd rm status
 ### 1.12.1 先决条件
 
 https://docs.ceph.com/en/latest/rbd/rbd-openstack/
-创建RBD存储池
+
+创建和初始化RBD存储池
 - images 对接 glance
 - vms对接nova
 - volumes对接cinder
@@ -898,11 +866,11 @@ rbd pool init vms
 
 创建ceph用户
 
-| 用户名                  | 访问权限               | 备注                 |
-| -------------------- | ------------------ | ------------------ |
-| client.glance        | images             | controller,storage |
-| client.cinder        | images vms volumes | controller,compute |
-| client.cinder-backup | backups            | controller         |
+| 用户名                  | 访问权限               | 备注                         |
+| -------------------- | ------------------ | -------------------------- |
+| client.glance        | images             | controller,storage         |
+| client.cinder        | images vms volumes | controller,compute,storage |
+| client.cinder-backup | backups            | controller,storage         |
 
 ```
 ceph auth get-or-create client.glance mon 'allow r' osd 'allow class-read object_prefix rbd_children,allow rwx pool=images'
@@ -918,38 +886,33 @@ ceph auth get-or-create client.cinder-backup mon 'profile rbd' osd 'profile rbd 
 ceph auth list
 ```
 
-分发keyring
+分发keyring和配置文件
 
 ```
-cephadm shell
-if [ ! -e /root/.ssh/id_rsa ];then
-	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N '' &> /dev/null
-fi
-ssh-copy-id root@172.16.250.101
+#在存储部署节点上操作
+ceph config generate-minimal-conf |ssh root@172.16.250.101 tee  /etc/ceph/ceph.conf
+
+#ceph.conf分发至计算和控制节点
+sed -i '/^#/d' /etc/ceph/ceph.conf
+sed -i 's/\t//g' /etc/ceph/ceph.conf
+ansible 'controllers:computes:storages' -m synchronize -a "src=/etc/ceph/ceph.conf dest=/etc/ceph/ceph.conf"
+ansible 'controllers:!admin' -m synchronize -a "src=/etc/ceph/ceph.client.admin.keyring dest=/etc/ceph/ceph.client.admin.keyring"
 #用于glance-api,分发至控制节点,存储节点(cinder-volume)
-ceph auth get-or-create client.glance |ssh root@172.16.250.101 tee /etc/ceph/ceph.client.glance.keyring
-#用于cinder,分发至控制节点,计算节点
-ceph auth get-or-create-key client.cinder | ssh root@172.16.250.101 tee /etc/ceph/ceph.client.cinder.keyring
-#用于cinder-backup,分发至控制节点,
-ceph auth get-or-create-key client.cinder-backup | ssh root@172.16.250.101 tee  /etc/ceph/ceph.client.cinder-backup.keyring
+ceph auth get-or-create client.glance > /etc/ceph/ceph.client.glance.keyring
+ansible 'controllers:storages' -m synchronize -a "src=/etc/ceph/ceph.client.glance.keyring dest=/etc/ceph/ceph.client.glance.keyring"
+#用于cinder,分发至控制节点,计算节点,存储节点
+ceph auth get-or-create client.cinder > /etc/ceph/ceph.client.cinder.keyring
+ansible 'controllers:computes:storages' -m synchronize -a "src=/etc/ceph/ceph.client.cinder.keyring dest=/etc/ceph/ceph.client.cinder.keyring"
+#用于cinder-backup,分发至控制节点,存储节点
+ceph auth get-or-create client.cinder-backup >  /etc/ceph/ceph.client.cinder-backup.keyring
+ansible 'controllers:storages' -m synchronize -a "src=/etc/ceph/ceph.client.cinder-backup.keyring dest=/etc/ceph/ceph.client.cinder-backup.keyring"
 #用于nova-compute,分发至计算节点
-ceph auth get-key  client.cinder | ssh root@172.16.250.101 tee /etc/ceph/ceph.client.cinder.key
+ceph auth get-key  client.cinder > /etc/ceph/ceph.client.cinder.key
+ansible 'computes' -m synchronize -a "src=/etc/ceph/ceph.client.cinder.key dest=/etc/ceph/ceph.client.cinder.key"
 
-files='
-ceph.client.glance.keyring
-ceph.client.cinder.keyring
-ceph.client.cinder-backup.keyring
-ceph.client.cinder.key
-'
-srcdir=/etc/ceph
-dstdir=/etc/ceph
-for f in $files;do
-  ansible 'storages:!admin' -m synchronize -a "src=$srcdir/$f dest=$dstdir/$f"
-done
-
-ansible storages -m shell -a "chown glance:glance /etc/ceph/ceph.client.glance.keyring"
-ansible storages -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder.keyring"
-ansible storages -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder-backup.keyring"
+#ansible 'computes:controllers' -m shell -a "chown glance:glance /etc/ceph/ceph.client.glance.keyring"
+#ansible 'controllers:computes' -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder.keyring"
+#ansible controllers -m shell -a "chown cinder:cinder /etc/ceph/ceph.client.cinder-backup.keyring"
 
 ```
 
@@ -976,21 +939,116 @@ enable_hacluster: "yes"
 enable_haproxy: "yes"
 enable_keepalived: "{{ enable_haproxy | bool }}"
 enable_cinder: "yes"
+
 enable_cinder_backend_nfs: "no"
-cinder_backend_ceph: "yes"
 #cinder_volume_group: "cinder-volumes"
 # Glance
+glance_backend_ceph: "yes"
 ceph_glance_user: "glance"
 ceph_glance_pool_name: "images"
 # Cinder
+cinder_cluster_name: "cinder-cluster01"
+cinder_backend_ceph: "yes"
 ceph_cinder_user: "cinder"
 ceph_cinder_pool_name: "volumes"
 ceph_cinder_backup_user: "cinder-backup"
 ceph_cinder_backup_pool_name: "backups"
 # Nova
+nova_backend_ceph: "yes"
 ceph_nova_user: "{{ ceph_cinder_user }}"
 ceph_nova_pool_name: "vms"
 nova_compute_virt_type: "kvm"
 EOF
+```
+glance
+```
+if [ ! -e /etc/kolla/config/glance ];then
+	mkdir -p /etc/kolla/config/glance
+fi
+cat /etc/ceph/ceph.conf > /etc/kolla/config/glance/ceph.conf
+cat /etc/ceph/ceph.client.glance.keyring > /etc/kolla/config/glance/ceph.client.glance.keyring
+
+cat << EOF >> /etc/kolla/config/glance/ceph.conf
+keyring = /etc/ceph/ceph.client.glance.keyring
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+EOF
+cat << EOF > /etc/kolla/config/glance.conf
+[DEFAULT]
+show_image_direct_url = True
+EOF
+
+```
+Cinder
+```
+if [ ! -e /etc/kolla/config/cinder ];then
+	mkdir -p /etc/kolla/config/cinder
+fi
+cat /etc/ceph/ceph.conf > /etc/kolla/config/cinder/ceph.conf
+
+if [ ! -e /etc/kolla/config/cinder/cinder-volume ];then
+	mkdir -p /etc/kolla/config/cinder/cinder-volume
+fi
+cat /etc/ceph/ceph.client.cinder.keyring > /etc/kolla/config/cinder/cinder-volume/ceph.client.cinder.keyring 
+
+if [ ! -e /etc/kolla/config/cinder/cinder-backup ];then
+	mkdir -p /etc/kolla/config/cinder/cinder-backup
+fi
+cat /etc/ceph/ceph.client.cinder.keyring > /etc/kolla/config/cinder/cinder-backup/ceph.client.cinder.keyring 
+cat /etc/ceph/ceph.client.cinder-backup.keyring > /etc/kolla/config/cinder/cinder-backup/ceph.client.cinder-backup.keyring
+
+cat << EOF >> /etc/kolla/config/cinder/ceph.conf
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+EOF
+
+if [ ! -e /etc/kolla/config/nova ];then
+	mkdir -p /etc/kolla/config/nova
+fi
+cat /etc/ceph/ceph.client.cinder.keyring > /etc/kolla/config/nova/ceph.client.cinder.keyring
+
+```
+Nova
+```
+if [ ! -e /etc/kolla/config/nova ];then
+	mkdir -p /etc/kolla/config/nova
+fi
+cat /etc/ceph/ceph.conf > /etc/kolla/config/nova/ceph.conf
+cat /etc/ceph/ceph.client.cinder.keyring > /etc/kolla/config/nova/ceph.client.cinder.keyring
+cat << EOF >> /etc/kolla/config/nova/ceph.conf
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+EOF
+sed -i 's/\t//g' /etc/kolla/config/nova/ceph.conf 
+```
+
+验证
+```
+#glance api
+openstack image create --file cirros-0.6.2-x86_64-disk.img cirros2
+rbd ls images
+
+rbd snap ls images/`rbd ls images`
+rbd info images/`rbd ls images`
+rados ls -p images
+
+#cinder
+openstack volume service list
+
+
+SELFSERVICE_NET_ID=`openstack network list | awk '/ selfservice / { print $2 }'`
+openstack server create --flavor m1.nano --image cirros \
+  --nic net-id=$SELFSERVICE_NET_ID \
+  --key-name mykey selfservice-instance2
+
+openstack volume create --size 1 volume1
+
+INSTANCE_NAME=selfservice-instance2
+VOLUME_NAME=volume1
+openstack server add volume $INSTANCE_NAME $VOLUME_NAME
+
 ```
 # 2. Rook

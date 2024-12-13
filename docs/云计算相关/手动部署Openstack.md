@@ -3231,7 +3231,7 @@ openstack security group list
 
 PROVIDER_NET_ID=`openstack network list | awk '/ provider / { print $2 }'`
 openstack server create --flavor m1.nano --image cirros \
-  --nic net-id=$PROVIDER_NET_ID --security-group default \
+  --nic net-id=$PROVIDER_NET_ID  \
   --key-name mykey provider-instance
 ```
 
@@ -3239,7 +3239,7 @@ openstack server create --flavor m1.nano --image cirros \
 
 SELFSERVICE_NET_ID=`openstack network list | awk '/ selfservice / { print $2 }'`
 openstack server create --flavor m1.nano --image cirros \
-  --nic net-id=$SELFSERVICE_NET_ID --security-group default \
+  --nic net-id=$SELFSERVICE_NET_ID \
   --key-name mykey selfservice-instance
 ```
 
