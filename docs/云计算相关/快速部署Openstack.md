@@ -399,7 +399,7 @@ done
 ansible all -m shell -a "bash /opt/baseconfig.sh"
 ```
 # 2. 先决条件
-## 2.1 docker镜像
+## 2.1 拉取镜像
 
 ```
 apt update &> /dev/null 
