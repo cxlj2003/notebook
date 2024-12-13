@@ -676,8 +676,37 @@ ceph orch host label add node3  _admin
 ```
 ceph orch host ls
 ceph orch ps
+```
 
 ```
+cat > /opt/ceph_hosts <<EOF
+service_type: host
+addr: 172.16.254.107
+hostname: storage1
+labels:
+- mon
+- osd
+- mgr
+---
+service_type: host
+addr: 172.16.254.108
+hostname: storage2
+labels:
+- mon
+- osd
+- mgr
+---
+service_type: host
+addr: 172.16.254.109
+hostname: storage3
+labels:
+- mon
+- osd
+- mgr
+EOF
+ceph orch apply -i /opt/ceph_hosts
+```
+
 ### 1.7.2 删除主机
 
 ```
@@ -715,8 +744,23 @@ ceph orch host rescan <hostname> [--with-summary]
 cephadm 引导过程将集群中的第一个监视器守护进程分配给特定子网。 `cephadm`将该子网指定为集群的默认子网。默认情况下，新的监视器守护进程将分配给该子网，除非 cephadm 收到其他指示。
 如果集群中的所有 ceph 监控守护进程都位于同一子网中， 无需手动管理 ceph 监视器守护进程。 当新主机添加到集群时， `cephadm`将根据需要自动向子网添加最多五个监视器。
 
+```
+ceph orch apply mon 3
+ceph orch apply mon --placement="storage1,storage2,storage3" --dry-run
+ceph orch apply mon --placement="storage1,storage2,storage3"
+```
 
-
+```
+cat > /opt/mon.yaml <<EOF
+service_type: mon
+placement:
+  hosts:
+    - storage1
+    - storage2
+    - storage3
+EOF
+ceph orch apply -i /opt/mon.yaml
+```
 ### 1.8.1 为监视器指定特定子网
 
 要指定 ceph 监控守护进程使用的特定 IP 子网，请使用以下形式的命令，包括[CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation)中的子网地址 格式（例如`10.1.2.0/24` ）：
@@ -776,6 +820,12 @@ ceph orch apply mgr --placement="storage1,storage2,storage3"
 ceph orch ps |grep mgr
 
 ```
+
+```
+ceph orch apply alertmanager 3
+ceph orch apply prometheus 3
+ceph orch apply grafana 3
+```
 ## 1.10 部署osd
 
 ```
@@ -828,9 +878,64 @@ ceph orch osd rm status
 ### 1.11.2  部署RGW
 
 ```
+ceph orch apply rgw myrgw
+ceph orch host label add storage1 rgw # the 'rgw' label can be anything
+ceph orch host label add storage2 rgw  
+ceph orch host label add storage3 rgw
+ceph orch apply rgw myrgw '--placement=label:rgw count-per-host:2' --port=8000
+
 
 ```
 
+```
+radosgw-admin realm create --rgw-realm=test_realm --default
+radosgw-admin zonegroup create --rgw-zonegroup=default  --master --default
+radosgw-admin zone create --rgw-zonegroup=default --rgw-zone=test_zone --master --default
+radosgw-admin period update --rgw-realm=test_realm --commit
+ceph orch apply rgw test --realm=test_realm --zone=test_zone --placement="2 storage1 storage2 storage3"
+
+```
+
+高可用
+```
+cat > /opt/myrgw.yaml <<EOF
+service_type: rgw
+service_id: myrgw
+placement:
+  count_per_host: 2
+  hosts:
+    - storage1
+    - storage2
+    - storage3
+networks:
+- 172.16.254.0/24
+spec:
+  rgw_frontend_port: 8000
+EOF
+ceph orch apply -i /opt/myrgw.yaml
+
+cat > /opt/hargw.yaml <<EOF
+service_type: ingress
+service_id: rgw.myrgw    # adjust to match your existing RGW service Name
+placement:
+  hosts:
+    - storage1
+    - storage2
+    - storage3
+spec:
+  backend_service: rgw.myrgw   # adjust to match your existing RGW service Name
+  virtual_ips_list:
+    - 172.16.254.100              
+  frontend_port: 8100            
+  monitor_port: 8765
+  virtual_interface_networks: 
+    - 172.16.254.0/24
+  #first_virtual_router_id: <integer>  # optional: default 50
+  #health_check_interval: <string>     # optional: Default is 2s.
+  #ssl_cert: |                         # optional: SSL certificate and key
+EOF
+ceph orch apply -i /opt/hargw.yaml
+```
 ### 1.11.3 部署NFS
 
 ```
