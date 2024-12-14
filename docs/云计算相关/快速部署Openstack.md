@@ -539,12 +539,13 @@ sed -i -e '
 ## 4.3 tls
 
 ```
-
 cat >> /etc/kolla/globals.yml <<EOF
+kolla_external_fqdn: "www.test.local"
 kolla_enable_tls_internal: "yes"
-kolla_enable_tls_external: "yes"
+kolla_enable_tls_external: "no"
 kolla_enable_tls_backend: "yes"
 kolla_copy_ca_into_containers: "yes"
+kolla_haproxy_ssl_settings: "modern" # or "intermediate" or "legacy"
 kolla_admin_openrc_cacert: "/etc/ssl/certs/ca-certificates.crt"
 ## debian ubuntu
 openstack_cacert: "/etc/ssl/certs/ca-certificates.crt"
@@ -568,6 +569,8 @@ sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" $venv_path/share/k
 
 ```
 kolla-ansible certificates -i /etc/kolla/multinode
+cp /etc/kolla/certificates/ca/*.crt /usr/local/share/ca-certificates/
+update-ca-certificates
 ```
 
 ```
