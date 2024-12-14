@@ -612,6 +612,7 @@ source /etc/kolla/admin-openrc.sh
 ```
 
 执行初始化
+
 ```
 openstack network create  --share --external \
   --provider-physical-network physnet1 \
