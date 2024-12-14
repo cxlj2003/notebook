@@ -463,7 +463,7 @@ venv_path=/usr/local/kolla
 source $venv_path/bin/activate
 #git clone --branch stable/2024.2 https://opendev.org/openstack/kolla-ansible
 #pip install ./kolla-ansible &> /dev/null
-pip install kolla-ansible==19.1.0
+pip install kolla-ansible==19.1.0 &> /dev/null
 # Install Ansible Galaxy requirements
 kolla-ansible install-deps &> /dev/null
 if [ ! -e /etc/kolla ];then
@@ -489,7 +489,7 @@ kolla_base_distro: "ubuntu"
 openstack_release: "2024.2"
 node_custom_config: "{{ node_config }}/config"
 kolla_internal_vip_address: "172.16.250.110"
-docker_registry: registry.cn-hangzhou.aliyuncs.com
+docker_registry: "registry.cn-hangzhou.aliyuncs.com"
 docker_namespace: "mgt"
 network_interface: "bond1"
 neutron_external_interface: "bond3"
@@ -529,11 +529,29 @@ sed -i -e '/^control./d
 #添加控制,网络,计算,存储,监控
 sed -i -e '
 /^\[control\]/acontroller\[1:3\] ansible_user=root
-/^\[network\]/acontroller\[1:3\] ansible_user=root
+/^\[network\]/acompute\[1:3\] ansible_user=root
 /^\[compute\]/acompute\[1:3\] ansible_user=root
 /^\[storage\]/astorage\[1:3\] ansible_user=root
 /^\[monitoring\]/acontroller\[1:3\] ansible_user=root
 ' /etc/kolla/multinode
+```
+
+## 4.3 tls
+
+```
+
+cat >> /etc/kolla/globals.yml <<EOF
+kolla_enable_tls_internal: "yes"
+kolla_enable_tls_external: "yes"
+kolla_enable_tls_backend: "yes"
+kolla_copy_ca_into_containers: "yes"
+kolla_admin_openrc_cacert: "/etc/ssl/certs/ca-certificates.crt"
+## debian ubuntu
+openstack_cacert: "/etc/ssl/certs/ca-certificates.crt"
+## Rhel Rocky
+## openstack_cacert: "/etc/pki/tls/certs/ca-bundle.crt"
+libvirt_enable_sasl: "False"
+EOF
 ```
 
 # 5. 部署
@@ -546,6 +564,10 @@ sed -i 's#download.docker.com#mirrors.ustc.edu.cn/docker-ce#g' ~/.ansible/collec
 sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: true/g" $venv_path/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
 #nova-compute容器启动认证报错
 sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" $venv_path/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
+```
+
+```
+kolla-ansible certificates -i /etc/kolla/multinode
 ```
 
 ```
@@ -637,8 +659,22 @@ openstack floating ip create public1
 
 ```
 
-# 6.相关维护命令
+# 6.详细配置项
+
+## 6.1 `Compute`
 
 ```
+nova_compute_virt_type: "kvm"
+nova_compute_virt_type: "qemu"
 
+libvirt_enable_sasl: "False"
+libvirt_tls: "yes"
+```
+
+## 6.2 `Neutron`
+
+```
+enable_neutron_provider_networks: yes
+enable_neutron_agent_ha: "yes"
+neutron_external_interface: bond3
 ```

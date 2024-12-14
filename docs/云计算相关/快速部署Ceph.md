@@ -1063,6 +1063,9 @@ nova_backend_ceph: "yes"
 ceph_nova_user: "{{ ceph_cinder_user }}"
 ceph_nova_pool_name: "vms"
 nova_compute_virt_type: "kvm"
+# RGW
+#enable_ceph_rgw: true
+#ceph_rgw_keystone_user: "ceph_rgw"
 EOF
 ```
 glance
