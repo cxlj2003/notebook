@@ -413,6 +413,9 @@ ansible all -m shell -a "bash /opt/baseconfig.sh"
 apt install cephadm -y 
 ```
 
+```
+ansible 'controllers:storages' -m shell -a 'apt install cephadm -y'
+```
 ## 1.4 Ceph容器镜像
 
 cephadm的版本并从官方镜像站下载镜像文件,最新版:[https://quay.io/repository/ceph/ceph](https://quay.io/repository/ceph/ceph)旧版本: [https://hub.docker.com/r/ceph](https://hub.docker.com/r/ceph)
@@ -422,12 +425,50 @@ apt show cephadm |grep Version |uniq |awk '{print $NF}'
 ```
 
 ```
+
+ansible 'controllers:storages' -m shell -a "apt show cephadm |grep Version |uniq |awk '{print $NF}'"
+```
+
+```
+docker pull quay.io/ceph/ceph:v17.2.7
+docker tag quay.io/ceph/ceph:v17.2.7 registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7
+docker push registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7
+docker rmi quay.io/ceph/ceph:v17.2.7
+docker rmi registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7
+```
+
+```
+docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7
+docker tag registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7 quay.io/ceph/ceph:v17.2.7
+```
+
+```
+ansible 'controllers:storages' -m shell -a 'docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7'
+```
+
+```
+ansible 'controllers:storages' -m shell -a 'docker tag registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.7 quay.io/ceph/ceph:v17.2.'
+```
+
+```
+ansible 'controllers:storages' -m shell -a 'docker images'
+```
+
+```
 docker pull quay.io/ceph/ceph:v17.2.8
 docker tag quay.io/ceph/ceph:v17.2.8 registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
 docker push registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
 
 docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8
 docker tag registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8 quay.io/ceph/ceph:v17.2.8
+```
+
+```
+ansible 'controllers:storages' -m shell -a 'docker pull registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8'
+```
+
+```
+ansible 'controllers:storages' -m shell -a 'docker tag registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v17.2.8 quay.io/ceph/ceph:v17.2.8'
 ```
 
 ```
@@ -446,7 +487,7 @@ docker tag  registry.cn-hangzhou.aliyuncs.com/mgt/ceph:v19.2.0 quay.io/ceph/ceph
 if [ ! -e /root/.ssh/id_rsa ];then
 	ssh-keygen -t rsa -b 4096 -f /root/.ssh/id_rsa -N ''
 fi
-cephadm bootstrap --mon-ip 172.16.254.107
+cephadm bootstrap --mon-ip 172.16.254.101
 ```
 运行结果:
 - 在本地主机上为新集群创建监视器和管理器守护程序。
@@ -595,8 +636,8 @@ cephadm install ceph-common
 ceph -v
 ceph status
 
-ansible all -m shell -a 'apt install cephadm -y'
-ansible all -m shell -a 'cephadm install ceph-common'
+ansible 'controllers:storages' -m shell -a 'apt install cephadm -y'
+ansible 'controllers:storages' -m shell -a 'cephadm install ceph-common'
 ```
 
 查看组件状态
@@ -623,54 +664,35 @@ ceph orch host ls
 
 分发密钥
 ```
-hosts='
-172.16.250.107
-172.16.250.108
-172.16.250.109
-'
+hosts=`cat /opt/plan |sort |uniq |awk '{print $1}' |xargs`
 for host in $hosts;do
  os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 
-hosts='
-storage1
-storage2
-storage3
-'
+hosts=`cat /opt/plan |sort |uniq |awk '{print $2}' |xargs`
 for host in $hosts;do
  os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 
-hosts='
-storage1.test.local
-storage2.test.local
-storage3.test.local
-'
+hosts=`cat /opt/plan |sort |uniq |awk '{print $3}' |xargs`
 for host in $hosts;do
  os_password=`cat /opt/plan|sort |uniq |grep $host |awk '{print $NF}'`
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
-done
-
-hosts='
-172.16.254.107
-172.16.254.108
-172.16.254.109
-'
-for host in $hosts;do
- os_password='1qaz#EDC'
- sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub  -o StrictHostKeyChecking=no root@$host &> /dev/null
+ sshpass -p ${os_password}  ssh-copy-id -f -i /etc/ceph/ceph.pub -o StrictHostKeyChecking=no root@$host &> /dev/null
 done
 ```
 
 ```
-ceph orch apply mon 5
-ceph orch host add storage2 172.16.254.108 --labels _admin
-ceph orch host add storage3 172.16.254.109 --labels _admin
+ceph orch apply mon 3
+ceph orch host add controller2 172.16.254.102 --labels _admin
+ceph orch host add controller3 172.16.254.103 --labels _admin
+ceph orch host add storage1 172.16.254.107
+ceph orch host add storage2 172.16.254.108
+ceph orch host add storage3 172.16.254.109
 
-ceph orch host label add node2  _admin
-ceph orch host label add node3  _admin
+ceph orch host label add controller2  _admin
+ceph orch host label add controller3  _admin
 ```
 
 ```
@@ -681,29 +703,45 @@ ceph orch ps
 ```
 cat > /opt/ceph_hosts <<EOF
 service_type: host
+addr: 172.16.254.101
+hostname: controller1
+labels:
+- mon
+- mgr
+---
+service_type: host
+addr: 172.16.254.102
+hostname: controller2
+labels:
+- mon
+- mgr
+---
+service_type: host
+addr: 172.16.254.103
+hostname: controller3
+labels:
+- mon
+- mgr
+---
+service_type: host
 addr: 172.16.254.107
 hostname: storage1
 labels:
-- mon
 - osd
-- mgr
 ---
 service_type: host
 addr: 172.16.254.108
 hostname: storage2
 labels:
-- mon
 - osd
-- mgr
 ---
 service_type: host
 addr: 172.16.254.109
 hostname: storage3
 labels:
-- mon
 - osd
-- mgr
 EOF
+
 ceph orch apply -i /opt/ceph_hosts
 ```
 
@@ -815,16 +853,18 @@ ceph orch apply mon --placement="newhost1,newhost2,newhost3"
 
 ```
 ceph orch apply mgr 3
-ceph orch apply mgr --placement="storage1,storage2,storage3" --dry-run
-ceph orch apply mgr --placement="storage1,storage2,storage3"
+ceph orch apply mgr  --placement="controller1,controller2,controller3"
 ceph orch ps |grep mgr
 
 ```
 
 ```
 ceph orch apply alertmanager 3
-ceph orch apply prometheus 3
+ceph orch apply alertmanager --placement="controller1,controller2,controller3"
+ceph orch apply prometheus 3 
+ceph orch apply prometheus --placement="controller1,controller2,controller3"
 ceph orch apply grafana 3
+ceph orch apply grafana  --placement="controller1,controller2,controller3"
 ```
 ## 1.10 部署osd
 
@@ -840,6 +880,10 @@ ceph orch apply osd --all-available-devices
 ceph orch daemon add osd storage1:/dev/sdb
 ceph orch daemon add osd storage2:/dev/sdb
 ceph orch daemon add osd storage3:/dev/sdb
+
+ceph orch daemon add osd storage1:/dev/sdc
+ceph orch daemon add osd storage2:/dev/sdc
+ceph orch daemon add osd storage3:/dev/sdc
 
 ceph orch daemon add osd storage1:/dev/sdc
 ceph orch daemon add osd storage2:/dev/sdc
@@ -901,6 +945,7 @@ ceph orch apply rgw test --realm=test_realm --zone=test_zone --placement="2 stor
 cat > /opt/myrgw.yaml <<EOF
 service_type: rgw
 service_id: myrgw
+service_name: rgw.myrgw
 placement:
   count_per_host: 2
   hosts:
@@ -936,6 +981,7 @@ spec:
 EOF
 ceph orch apply -i /opt/hargw.yaml
 ```
+
 ### 1.11.3 部署NFS
 
 ```
@@ -994,12 +1040,11 @@ ceph auth list
 分发keyring和配置文件
 
 ```
-#在存储部署节点上操作
-ceph config generate-minimal-conf |ssh root@172.16.250.101 tee  /etc/ceph/ceph.conf
-
+#ceph config generate-minimal-conf | tee root@172.16.254.101 /etc/ceph/ceph.conf
 #ceph.conf分发至计算和控制节点
 sed -i '/^#/d' /etc/ceph/ceph.conf
 sed -i 's/\t//g' /etc/ceph/ceph.conf
+ansible computes -m shell -a 'mkdir /etc/ceph'
 ansible 'controllers:computes:storages' -m synchronize -a "src=/etc/ceph/ceph.conf dest=/etc/ceph/ceph.conf"
 ansible 'controllers:!admin' -m synchronize -a "src=/etc/ceph/ceph.client.admin.keyring dest=/etc/ceph/ceph.client.admin.keyring"
 #用于glance-api,分发至控制节点,存储节点(cinder-volume)
@@ -1044,9 +1089,7 @@ enable_hacluster: "yes"
 enable_haproxy: "yes"
 enable_keepalived: "{{ enable_haproxy | bool }}"
 enable_cinder: "yes"
-
 enable_cinder_backend_nfs: "no"
-#cinder_volume_group: "cinder-volumes"
 # Glance
 glance_backend_ceph: "yes"
 ceph_glance_user: "glance"
@@ -1064,8 +1107,9 @@ ceph_nova_user: "{{ ceph_cinder_user }}"
 ceph_nova_pool_name: "vms"
 nova_compute_virt_type: "kvm"
 # RGW
-#enable_ceph_rgw: true
-#ceph_rgw_keystone_user: "ceph_rgw"
+enable_ceph_rgw: "true"
+ceph_rgw_keystone_user: "ceph_rgw"
+ceph_rgw_port: ""
 EOF
 ```
 glance
@@ -1132,6 +1176,29 @@ auth_client_required = cephx
 EOF
 sed -i 's/\t//g' /etc/kolla/config/nova/ceph.conf 
 ```
+RGW
+```
+openstack service create --name=swift \
+                         --description="Swift Service" \
+                         object-store
+
+openstack endpoint create --region RegionOne \
+     --publicurl   "http://radosgw.example.com:8080/swift/v1" \
+     --adminurl    "http://radosgw.example.com:8080/swift/v1" \
+     --internalurl "http://radosgw.example.com:8080/swift/v1" \
+     swift
+
+openstack endpoint show object-store
+
+echo 'rgw swift account in url = true' >> /etc/ceph/ceph.conf
+
+openstack endpoint create --region RegionOne \
+     --publicurl   "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
+     --adminurl    "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
+     --internalurl "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
+     swift
+
+```
 
 验证
 ```
@@ -1153,6 +1220,7 @@ openstack server create --flavor m1.nano --image cirros \
   --key-name mykey selfservice-instance2
 
 openstack volume create --size 1 volume1
+openstack volume list
 
 INSTANCE_NAME=selfservice-instance2
 VOLUME_NAME=volume1
