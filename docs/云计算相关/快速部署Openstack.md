@@ -542,7 +542,7 @@ sed -i -e '
 cat >> /etc/kolla/globals.yml <<EOF
 kolla_external_fqdn: "www.test.local"
 kolla_enable_tls_internal: "yes"
-kolla_enable_tls_external: "no"
+kolla_enable_tls_external: "yes"
 kolla_enable_tls_backend: "yes"
 kolla_copy_ca_into_containers: "yes"
 kolla_haproxy_ssl_settings: "modern" # or "intermediate" or "legacy"
@@ -566,7 +566,7 @@ sed -i "s/nova_compute_registration_fatal.*/nova_compute_registration_fatal: tru
 #nova-compute容器启动认证报错
 sed -i "s/libvirt_enable_sasl.*/libvirt_enable_sasl: false/g" $venv_path/share/kolla-ansible/ansible/roles/nova-cell/defaults/main.yml
 ```
-
+生成测试证书,并将ca证书设置为可信证书.
 ```
 kolla-ansible certificates -i /etc/kolla/multinode
 cp /etc/kolla/certificates/ca/*.crt /usr/local/share/ca-certificates/
@@ -588,13 +588,13 @@ kolla-ansible prechecks -i /etc/kolla/multinode
 kolla-ansible deploy -i /etc/kolla/multinode
 ```
 
-完成部署
+完成部署,并生成客户端管理文件
 
 ```
 kolla-ansible post-deploy -i /etc/kolla/multinode
 ```
 
-验证配置
+验证配置,仅首次安装有效
 ```
 kolla-ansible validate-config -i /etc/kolla/multinode
 ```
