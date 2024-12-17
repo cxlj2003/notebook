@@ -666,6 +666,15 @@ openstack floating ip create public1
 
 ```
 
+新增节点
+
+```
+kolla-ansible bootstrap-servers -i /etc/kolla/multinode --limit compute4
+kolla-ansible bootstrap-servers -i /etc/kolla/multinode --limit storage4
+
+kolla-ansible deploy -i /etc/kolla/multinode --limit compute4
+kolla-ansible deploy -i /etc/kolla/multinode --limit storage4
+```
 # 6.详细配置项
 
 ## 6.1 `Compute`

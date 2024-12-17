@@ -947,7 +947,7 @@ service_type: rgw
 service_id: myrgw
 service_name: rgw.myrgw
 placement:
-  count_per_host: 2
+  count_per_host: 1
   hosts:
     - storage1
     - storage2
@@ -1107,9 +1107,21 @@ ceph_nova_user: "{{ ceph_cinder_user }}"
 ceph_nova_pool_name: "vms"
 nova_compute_virt_type: "kvm"
 # RGW
-enable_ceph_rgw: "true"
+enable_swift:
+enable_ceph_rgw: "yes"
+enable_ceph_rgw_loadbalancer: "{{ enable_ceph_rgw | bool }}"
+ceph_rgw_hosts:
+  - host: storage1
+    ip: 172.16.254.107
+    port: 8000
+  - host: storage2
+    ip: 172.16.254.108
+    port: 8000
+  - host: storage3
+    ip: 172.16.254.109
+    port: 8000
 ceph_rgw_keystone_user: "ceph_rgw"
-ceph_rgw_port: ""
+ceph_rgw_swift_account_in_url: "true"
 EOF
 ```
 glance
@@ -1176,7 +1188,7 @@ auth_client_required = cephx
 EOF
 sed -i 's/\t//g' /etc/kolla/config/nova/ceph.conf 
 ```
-RGW
+RGW(老版本)
 ```
 openstack service create --name=swift \
                          --description="Swift Service" \
@@ -1190,12 +1202,12 @@ openstack endpoint create --region RegionOne \
 
 openstack endpoint show object-store
 
-echo 'rgw swift account in url = true' >> /etc/ceph/ceph.conf
+#echo 'rgw swift account in url = true' >> /etc/ceph/ceph.conf
 
 openstack endpoint create --region RegionOne \
-     --publicurl   "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
-     --adminurl    "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
-     --internalurl "http://radosgw.example.com:8080/swift/v1/AUTH_$(project_id)s" \
+     --publicurl   "http://172.16.254.100:8100/swift/v1/AUTH_$(project_id)s" \
+     --adminurl    "http://172.16.254.100:8100/swift/v1/AUTH_$(project_id)s" \
+     --internalurl "http://172.16.254.100:8100/swift/v1/AUTH_$(project_id)s" \
      swift
 
 ```
