@@ -1070,6 +1070,20 @@ ansible 'computes' -m synchronize -a "src=/etc/ceph/ceph.client.cinder.key dest=
 ceph orch client-keyring ls
 ```
 
+RGW
+```
+cat << EOF >> /etc/ceph/ceph.conf
+[client.radosgw.gateway]
+rgw keystone api version = 3
+rgw keystone url = https://172.16.250.110:5000
+rgw keystone accepted roles = admin,_member_,member
+rgw keystone token cache size = 500
+rgw keystone implicit tenants = {true for private tenant for each new user}
+rgw keystone admin user = admin
+rgw keystone admin password = 'fdDFl6Tyk1CYWAJuClU4ThrBRRnvNuc7wLKi3ZVA'
+rgw keystone admin project = admin
+EOF
+```
 ### 1.12.2 Openstack侧
 
 ```
