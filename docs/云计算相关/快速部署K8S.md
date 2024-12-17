@@ -1,6 +1,42 @@
 # 1. 使用kubeadm
 
+## 1.1 安装依赖
 
+```
+
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.ipv4.ip_forward = 1
+EOF
+sudo sysctl --system
+sysctl net.ipv4.ip_forward
+```
+
+修改`kubeadm`镜像源
+```
+kubeadm config print init-defaults > kubeadm.conf
+imageRepository: registry.aliyuncs.com/google_containers
+kubeadm config images pull --config kubeadm.conf
+```
+
+## 1.2 安装`kubadm,kubectl,kublet`
+
+```
+apt-get update && apt-get install -y apt-transport-https
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+EOF
+apt update
+apt install kubelet kubeadm kubectl -y
+apt-mark hold kubelet kubeadm kubectl
+```
+
+## 1.3 初始化主节点
+
+```
+kubeadm init --image-repository registry.aliyuncs.com/google_containers
+```
 # 2. 使用kind
 
 用于测试
@@ -135,3 +171,8 @@ EOF
 ```
 kind export logs
 ```
+
+# 3. kubesphere
+
+## 3.1 
+
