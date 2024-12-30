@@ -1303,6 +1303,11 @@ EOF
 
 ## 11.1 ubuntu
 
+
+```
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+```
+
 ```
 
 for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do apt-get remove $pkg -y; done
