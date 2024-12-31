@@ -259,7 +259,7 @@ esac
 if [ ! -e ~/.ssh/id_rsa ];then
 	ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ''
 fi
-os_password='passowrd'
+os_password='password'
 os_hostname='
 192.168.1.1
 192.168.1.2
@@ -1348,4 +1348,12 @@ for image in $image_list;do
 done
 
 set +ex
+```
+
+# 13.`Cloudflare`
+
+## 13.1 Docker加速Worker
+
+```
+
 ```

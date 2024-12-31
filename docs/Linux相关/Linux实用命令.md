@@ -45,6 +45,12 @@ date "+%m%d%y"
 #分 %M
 #秒 %S
 ```
+
+## 2.5 修改Grub启动延时
+
+```
+sed -i "s/set timeout=.*/set timeout=2/g" /boot/grub/grub.cfg
+```
 # 3.`ansible`
 
 ```
