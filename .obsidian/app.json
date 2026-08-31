@@ -1,8 +1,10 @@
 {
   "promptDelete": false,
-  "alwaysUpdateLinks": true,
+  "alwaysUpdateLinks": false,
   "trashOption": "none",
   "attachmentFolderPath": "docs/material",
   "newFileLocation": "folder",
-  "newFileFolderPath": "docs"
+  "newFileFolderPath": "docs",
+  "useMarkdownLinks": true,
+  "newLinkFormat": "relative"
 }
